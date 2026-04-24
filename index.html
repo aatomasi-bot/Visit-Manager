@@ -188,21 +188,21 @@ button { cursor: pointer; }
 .card.c-purple { border-left: 4px solid #4A1F8A; }
 
 /* ── CARD TOP ── */
-.card-top { padding: 16px 16px 0; }
+.card-top { padding: 12px 14px 0; }
 .card-row1 {
   display: flex; align-items: flex-start;
-  justify-content: space-between; gap: 10px;
+  justify-content: space-between; gap: 8px;
   cursor: pointer;
 }
 .card-name {
-  font-size: 18px; font-weight: 800; color: var(--slate-800);
+  font-size: 16px; font-weight: 800; color: var(--slate-800);
   line-height: 1.25; letter-spacing: -.3px;
 }
 .card-meta {
-  font-size: 13px; font-family: 'JetBrains Mono', monospace;
-  color: var(--slate-400); margin-top: 4px;
+  font-size: 12px; font-family: 'JetBrains Mono', monospace;
+  color: var(--slate-400); margin-top: 3px;
 }
-.card-badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.card-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
 
 /* ── BADGE ── */
 .bdg {
@@ -236,44 +236,53 @@ button { cursor: pointer; }
 
 /* ── CARD ACTIONS (collapsed) ── */
 .card-actions {
-  display: flex; flex-wrap: wrap; gap: 8px;
-  padding: 12px 16px 4px;
+  display: flex; flex-wrap: wrap; gap: 6px;
+  padding: 8px 14px 4px;
 }
 
 /* ADDRESS BUTTON */
 .addr-btn {
-  display: inline-flex; align-items: center; gap: 7px;
+  display: inline-flex; align-items: center; gap: 6px;
   background: var(--green-lt); color: var(--green);
-  border: 1.5px solid var(--green-mid); border-radius: 10px;
-  padding: 10px 14px; font-size: 14px; font-weight: 600;
+  border: 1.5px solid var(--green-mid); border-radius: 8px;
+  padding: 7px 12px; font-size: 13px; font-weight: 600;
   text-decoration: none; cursor: pointer;
-  transition: background .15s; min-height: 44px;
+  transition: background .15s; min-height: 36px;
   max-width: 100%; overflow: hidden;
 }
-.addr-btn:active { background: #dcfce7; }
+.addr-btn:active { background: #cceedd; }
 .addr-btn-txt {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  max-width: min(260px, 60vw);
+  max-width: min(220px, 55vw);
 }
 
 /* PHONE BUTTONS */
 .phone-btn {
-  display: inline-flex; align-items: center; gap: 7px;
-  background: var(--blue-lt); color: var(--blue);
-  border: 1.5px solid var(--blue-mid); border-radius: 10px;
-  padding: 10px 14px; font-size: 15px; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--blue-lt); color: var(--blue-btn);
+  border: 1.5px solid var(--blue-mid); border-radius: 8px;
+  padding: 7px 12px; font-size: 13px; font-weight: 600;
   font-family: 'JetBrains Mono', monospace;
   text-decoration: none; white-space: nowrap;
-  transition: background .15s; min-height: 44px; cursor: pointer;
+  transition: background .15s; min-height: 36px; cursor: pointer;
 }
-.phone-btn:active { background: #dbeafe; }
+.phone-btn:active { background: #d4e4f7; }
+
+/* ── PENCIL BUTTON ── */
+.pencil-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 6px; flex-shrink: 0;
+  background: var(--slate-100); color: var(--slate-400);
+  border: none; cursor: pointer; transition: all .15s;
+}
+.pencil-btn:hover { background: var(--blue-lt); color: var(--blue-btn); }
 
 /* ── EXPAND TOGGLE ── */
 .card-expand {
   display: flex; align-items: center; justify-content: center;
-  gap: 6px; padding: 12px; margin-top: 4px;
+  gap: 5px; padding: 8px; margin-top: 2px;
   border-top: 1px solid var(--slate-100); cursor: pointer;
-  font-size: 13px; font-weight: 600; color: var(--slate-400);
+  font-size: 12px; font-weight: 600; color: var(--slate-400);
   transition: background .15s, color .15s;
 }
 .card-expand:active { background: var(--slate-50); }
@@ -284,32 +293,42 @@ button { cursor: pointer; }
 .card-body { display: none; background: var(--slate-50); border-top: 1px solid var(--slate-100); }
 .card.open .card-body { display: block; }
 
-.section { padding: 16px 18px; border-bottom: 1px solid var(--slate-100); }
+.section { padding: 12px 14px; border-bottom: 1px solid var(--slate-100); }
 .section:last-child { border-bottom: none; }
 .sec-title {
-  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
   letter-spacing: 1px; color: var(--slate-400);
-  font-family: 'JetBrains Mono', monospace; margin-bottom: 14px;
+  font-family: 'JetBrains Mono', monospace; margin-bottom: 10px;
 }
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .grid-2 .full { grid-column: 1 / -1; }
-.field { display: flex; flex-direction: column; gap: 4px; }
+.field { display: flex; flex-direction: column; gap: 3px; }
 .field-lbl {
-  font-size: 11px; font-weight: 600; color: var(--slate-400);
+  font-size: 10px; font-weight: 600; color: var(--slate-400);
   text-transform: uppercase; letter-spacing: .5px;
 }
 .field-val {
-  font-size: 15px; font-weight: 500; color: var(--slate-800);
+  font-size: 14px; font-weight: 500; color: var(--slate-800);
   line-height: 1.4;
 }
-.field-mono { font-family: 'JetBrains Mono', monospace; font-size: 14px; }
+.field-mono { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+
+/* ── 2-COLUMN CARD GRID (tablet/desktop) ── */
+.cards-grid { display: grid; grid-template-columns: 1fr; }
+@media(min-width:720px) {
+  .cards-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .cards-grid .date-div  { grid-column: 1 / -1; }
+  .cards-grid .banner    { grid-column: 1 / -1; }
+  .cards-grid .card      { margin-bottom: 0; }
+}
 
 /* ── INPUTS ── */
 .inp {
   width: 100%; background: var(--white);
   border: 1.5px solid var(--slate-200); border-radius: var(--radius-sm);
-  padding: 12px 14px; font-size: 16px; color: var(--slate-900);
-  transition: border-color .15s, box-shadow .15s; min-height: 48px;
+  padding: 9px 12px; font-size: 15px; color: var(--slate-900);
+  transition: border-color .15s, box-shadow .15s; min-height: 40px;
 }
 .inp:focus {
   border-color: var(--blue-btn);
@@ -320,55 +339,55 @@ button { cursor: pointer; }
 .sel {
   width: 100%; background: var(--white);
   border: 1.5px solid var(--slate-200); border-radius: var(--radius-sm);
-  padding: 12px 14px; font-size: 16px; color: var(--slate-900);
-  min-height: 48px; cursor: pointer;
+  padding: 9px 12px; font-size: 15px; color: var(--slate-900);
+  min-height: 40px; cursor: pointer;
 }
 .sel:focus { border-color: var(--blue-btn); }
 .ta {
   width: 100%; background: var(--white);
   border: 1.5px solid var(--slate-200); border-radius: var(--radius-sm);
-  padding: 12px 14px; font-size: 15px; color: var(--slate-900);
-  resize: vertical; min-height: 80px; line-height: 1.6;
+  padding: 9px 12px; font-size: 14px; color: var(--slate-900);
+  resize: vertical; min-height: 70px; line-height: 1.6;
 }
 .ta:focus { border-color: var(--blue-btn); box-shadow: 0 0 0 3px rgba(23,86,166,.10); }
 
 /* ── BUTTONS ── */
 .btn {
   display: inline-flex; align-items: center; justify-content: center;
-  gap: 6px; font-size: 14px; font-weight: 600;
-  padding: 10px 18px; border-radius: var(--radius-sm);
+  gap: 5px; font-size: 13px; font-weight: 600;
+  padding: 7px 13px; border-radius: var(--radius-sm);
   transition: all .15s; white-space: nowrap;
-  min-height: 44px; cursor: pointer; line-height: 1;
+  min-height: 34px; cursor: pointer; line-height: 1;
 }
 .btn:active { transform: scale(.96); }
 .btn.full { width: 100%; }
 .btn-blue    { background: var(--blue-btn); color: #fff; }
 .btn-blue:hover { background: #0F2D52; box-shadow: 0 4px 14px rgba(23,86,166,.40); }
 .btn-green   { background: var(--green); color: #fff; }
-.btn-green:hover { background: #166534; }
-.btn-amber   { background: #d97706; color: #fff; }
-.btn-amber:hover { background: #b45309; }
+.btn-green:hover { background: #0f4d2a; }
+.btn-amber   { background: #b86200; color: #fff; }
+.btn-amber:hover { background: #924e00; }
 .btn-red     { background: var(--red-lt); color: var(--red); border: 1.5px solid var(--red-mid); }
-.btn-red:hover { background: #fee2e2; }
+.btn-red:hover { background: #fbd8d8; }
 .btn-outline { background: var(--white); color: var(--slate-700); border: 1.5px solid var(--slate-200); }
 .btn-outline:hover { background: var(--slate-50); border-color: var(--slate-300); }
 .btn-ghost   { background: transparent; color: var(--slate-500); }
 .btn-ghost:hover { background: var(--slate-100); }
-.btn-sm { padding: 8px 14px; font-size: 13px; min-height: 38px; }
+.btn-sm { padding: 5px 10px; font-size: 12px; min-height: 28px; }
 
 /* ── CONFIRM BOX ── */
 .confirm-box {
   background: var(--green-lt); border: 1.5px solid var(--green-mid);
-  border-radius: var(--radius); padding: 16px;
+  border-radius: var(--radius); padding: 12px;
 }
-.confirm-lbl { font-size: 14px; color: var(--slate-600); margin-bottom: 10px; line-height: 1.5; }
+.confirm-lbl { font-size: 13px; color: var(--slate-600); margin-bottom: 8px; line-height: 1.4; }
 .confirm-lbl strong { color: var(--green); }
 .confirm-inp {
   width: 100%; background: var(--white);
   border: 1.5px solid var(--slate-200); border-radius: var(--radius-sm);
-  padding: 12px 16px; font-family: 'JetBrains Mono', monospace;
-  font-size: 20px; letter-spacing: 5px; text-transform: uppercase;
-  text-align: center; margin-bottom: 10px; min-height: 52px;
+  padding: 9px 14px; font-family: 'JetBrains Mono', monospace;
+  font-size: 17px; letter-spacing: 5px; text-transform: uppercase;
+  text-align: center; margin-bottom: 8px; min-height: 42px;
   transition: border-color .15s;
 }
 .confirm-inp.ok { border-color: var(--green); background: var(--green-lt); }
@@ -508,15 +527,17 @@ button { cursor: pointer; }
 .empty-ico { font-size: 44px; margin-bottom: 12px; }
 .empty-lbl { font-size: 16px; font-weight: 600; color: var(--slate-400); }
 
-/* ── DESKTOP ── */
+/* ── RESPONSIVE ── */
 @media(min-width:640px) {
   .hdr-inner { padding: 0 24px; }
-  .search-wrap { padding: 14px 24px 10px; }
-  .main { padding: 12px 24px 100px; }
-  .card-name { font-size: 17px; }
+  .search-wrap { padding: 12px 24px 8px; }
+  .main { padding: 10px 24px 80px; }
 }
 @media(min-width:960px) {
-  .card-name { font-size: 16px; }
+  .main { max-width: 1200px; padding: 12px 32px 80px; }
+  .tabs-wrap .tabs { max-width: 1200px; }
+  .search-wrap { max-width: 1200px; }
+  .hdr-inner { max-width: 1200px; }
   .tab { padding: 0 16px; font-size: 13px; }
 }
 </style>
@@ -773,11 +794,11 @@ function renderPanel(panel,tabId,list) {
     panel.innerHTML='<div class="empty"><div class="empty-ico">'+(ico[tabId]||'&#x1F4CB;')+'</div><div class="empty-lbl">'+(msg[tabId]||'Nothing here')+'</div></div>';
     return;
   }
-  var html='';
+  var html='<div class="cards-grid">';
   if(tabId==='today'){
     for(var bi=0;bi<list.length;bi++){
       if(list[bi].assignType==='1 Dose Only'){
-        html+='<div class="banner"><span style="font-size:16px">&#9888;</span><span><strong>'+esc(list[bi].patientName)+'</strong> - 1 Dose Only. Confirm continuation after visit.</span></div>';
+        html+='<div class="banner"><span style="font-size:15px">&#9888;</span><span><strong>'+esc(list[bi].patientName)+'</strong> — 1 Dose Only. Confirm continuation after visit.</span></div>';
       }
     }
   }
@@ -791,6 +812,7 @@ function renderPanel(panel,tabId,list) {
   } else {
     for(var ci2=0;ci2<list.length;ci2++)html+=renderCard(list[ci2],tabId);
   }
+  html+='</div>';
   panel.innerHTML=html;
 }
 
@@ -849,7 +871,7 @@ function renderCard(p,tab) {
   if(wk&&tab!=='archived')np='<div class="next-prev"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>After done: '+fmt(addW(tod(),wk))+' (+'+wk+'w)</div>';
 
   var apptV=p.apptDT?new Date(p.apptDT).toISOString().slice(0,16):'';
-  var dueV=p.dueDate?new Date(p.dueDate).toISOString().slice(0,10):'';
+  var PENCIL='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
 
   // Actions
   var acts='';
@@ -922,17 +944,32 @@ function renderCard(p,tab) {
   h+='</div>';
 
   // Schedule
-  h+='<div class="section"><div class="sec-title">Schedule Appointment</div>';
-  h+='<div style="margin-bottom:14px"><label class="field-lbl" style="display:block;margin-bottom:8px">Appointment Date & Time</label>';
-  h+='<input class="inp" type="datetime-local" id="ap-'+fe+'" value="'+apptV+'">';
-  h+='<div class="btn-row"><button onclick="saveAppt(\''+fe+'\')" class="btn btn-blue btn-sm">Confirm Appointment</button><button onclick="clrAppt(\''+fe+'\')" class="btn btn-ghost btn-sm">Clear</button></div></div>';
-  h+='<div><label class="field-lbl" style="display:block;margin-bottom:8px">Due Date</label>';
-  h+='<input class="inp" type="date" id="du-'+fe+'" value="'+dueV+'">';
-  h+='<div class="btn-row"><button onclick="saveDue(\''+fe+'\')" class="btn btn-outline btn-sm">Save Due Date</button></div></div></div>';
+  h+='<div class="section"><div class="sec-title">Appointment';
+  if(p.apptDT)h+='<button class="pencil-btn" onclick="togApptEdit(\''+fe+'\')" title="Edit appointment">'+PENCIL+'</button>';
+  h+='</div>';
+  if(p.apptDT){
+    h+='<div class="field-val field-mono" style="font-size:14px;color:var(--green)">&#10003; '+esc(fmtDT(p.apptDT))+'</div>';
+    h+='<div id="appt-edit-'+fe+'" style="display:none;margin-top:8px">';
+    h+='<input class="inp" type="datetime-local" id="ap-'+fe+'" value="'+apptV+'">';
+    h+='<div class="btn-row"><button onclick="saveAppt(\''+fe+'\')" class="btn btn-blue btn-sm">Save</button>';
+    h+='<button onclick="clrAppt(\''+fe+'\')" class="btn btn-ghost btn-sm">Clear</button></div>';
+    h+='</div>';
+  } else {
+    h+='<input class="inp" type="datetime-local" id="ap-'+fe+'" value="">';
+    h+='<div class="btn-row"><button onclick="saveAppt(\''+fe+'\')" class="btn btn-blue btn-sm">Confirm Appointment</button></div>';
+  }
+  h+='</div>';
 
   // Adverse
-  h+='<div class="section"><div class="sec-title">Adverse Effects</div>';
-  h+=p.adverse?'<div class="adverse">'+esc(p.adverse)+'</div>':'<div style="font-size:14px;color:var(--slate-400);font-style:italic">None recorded</div>';
+  h+='<div class="section"><div class="sec-title">Adverse Effects<button class="pencil-btn" onclick="togAdverse(\''+fe+'\')" title="Edit adverse effects">'+PENCIL+'</button></div>';
+  h+='<div id="adv-view-'+fe+'">';
+  h+=p.adverse?'<div class="adverse">'+esc(p.adverse)+'</div>':'<div style="font-size:13px;color:var(--slate-400);font-style:italic">None recorded</div>';
+  h+='</div>';
+  h+='<div id="adv-edit-'+fe+'" style="display:none;margin-top:8px">';
+  h+='<textarea class="ta" id="adv-'+fe+'">'+esc(p.adverse||'')+'</textarea>';
+  h+='<div class="btn-row"><button onclick="saveAdverse(\''+fe+'\')" class="btn btn-blue btn-sm">Save</button>';
+  h+='<button onclick="togAdverse(\''+fe+'\')" class="btn btn-ghost btn-sm">Cancel</button></div>';
+  h+='</div>';
   h+='</div>';
 
   // Comments
@@ -1155,6 +1192,22 @@ function handlePdf(file){
     xhr.send(JSON.stringify({model:'claude-opus-4-5',max_tokens:4000,messages:[{role:'user',content:[{type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},{type:'text',text:prompt}]}]}));
   };
   r.readAsDataURL(file);
+}
+
+// APPOINTMENT PENCIL EDIT
+function togApptEdit(fn){var el=document.getElementById('appt-edit-'+fn);if(el)el.style.display=el.style.display==='none'?'block':'none';}
+
+// ADVERSE EFFECTS PENCIL EDIT
+function togAdverse(fn){
+  var v=document.getElementById('adv-view-'+fn),e=document.getElementById('adv-edit-'+fn);
+  if(!v||!e)return;
+  var show=e.style.display==='none';
+  v.style.display=show?'none':'';e.style.display=show?'block':'none';
+}
+function saveAdverse(fn){
+  var p=fp(fn);if(!p)return;
+  var ta=document.getElementById('adv-'+fn);if(ta)p.adverse=ta.value.trim();
+  save();push(p);renderAll();toast('Adverse effects saved');
 }
 
 // DOSE PREVIEW IN MODAL

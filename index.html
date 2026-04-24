@@ -759,9 +759,10 @@ function renderAll() {
     renderPanel(panel,id,sorted);
     panel.style.display=curTab===id?'block':'none';
   }
-  if(curTab==='setup'){
-    var sp=document.getElementById('pSetup');
-    if(sp){renderSetup();sp.style.display='block';}
+  var sp=document.getElementById('pSetup');
+  if(sp){
+    if(curTab==='setup'){renderSetup();sp.style.display='block';}
+    else{sp.style.display='none';}
   }
 }
 

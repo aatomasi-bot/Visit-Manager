@@ -1008,10 +1008,11 @@ function openModal(fn){
   h+='<div class="form-field full"><label class="form-lbl">Address</label><input class="inp" id="fa" type="text" value="'+esc(p.address)+'" placeholder="123 Rue, Laval, QC" style="font-size:16px"></div>';
   h+=fi('Phone 1','fp1','tel',p.phone1,'514-000-0000');
   h+=fi('Phone 2','fp2','tel',p.phone2,'450-000-0000');
+  var DOSES=['','7.5 mg','22.5 mg','30 mg','45 mg'];
+  var doseOpts='';for(var di=0;di<DOSES.length;di++)doseOpts+='<option value="'+DOSES[di]+'"'+(DOSES[di]===p.dose?' selected':'')+'>'+( DOSES[di]||'-- Select dose --')+'</option>';
   h+='<div class="form-field"><label class="form-lbl">Dose</label>'+
-     '<input class="inp" id="fd" type="text" list="doseList" value="'+esc(p.dose||'')+'" placeholder="e.g. 22.5 mg" style="font-size:16px" oninput="previewDue()">'+
-     '<datalist id="doseList"><option value="7.5 mg"><option value="22.5 mg"><option value="30 mg"><option value="45 mg"></datalist>'+
-     '<div id="duePreview" style="font-size:12px;color:var(--teal);margin-top:4px;font-family:JetBrains Mono,monospace;display:none"></div></div>';
+     '<select class="sel" id="fd" style="font-size:16px" onchange="previewDue()">'+doseOpts+'</select>'+
+     '<div id="duePreview" style="font-size:12px;color:var(--teal);margin-top:5px;font-family:JetBrains Mono,monospace;display:none"></div></div>';
   h+=fi('Total Doses','ftd','text',p.totalDoses,'6');
   h+=fi('Repeats Left','frl','text',p.repeatsLeft,'5');
   h+='<div class="form-field"><label class="form-lbl">Assignment</label><select class="sel" id="fat" style="font-size:16px">'+so(ATYPES,p.assignType)+'</select></div>';

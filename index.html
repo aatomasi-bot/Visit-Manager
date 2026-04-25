@@ -1107,23 +1107,92 @@ function savePt(){
 // SETUP
 function renderSetup(){
   var panel=document.getElementById('pSetup');if(!panel)return;
-  panel.innerHTML='<div class="setup-card"><div class="setup-title">Connect Google Sheets</div><div class="setup-desc">Paste your Apps Script /exec URL to sync data across all devices in real time.</div><input class="inp" id="surl" value="'+esc(sUrl)+'" placeholder="https://script.google.com/macros/s/.../exec" style="margin-bottom:10px"><div class="btn-row"><button onclick="testConn()" class="btn btn-outline">Test</button><button onclick="saveUrl()" class="btn btn-blue" style="flex:1">Connect & Sync</button></div><div id="tbox" class="test-box"></div></div>'+
-  '<div class="setup-card"><div class="setup-title">Setup Guide</div><div class="setup-steps"><ol><li>Google Sheet &rarr; <strong>Extensions</strong> &rarr; <strong>Apps Script</strong></li><li>Paste <span class="code">Code.gs</span> into the editor</li><li>Create HTML file named <span class="code">index</span> &rarr; paste this file</li><li><strong>Deploy</strong> &rarr; New deployment &rarr; Web app</li><li>Execute as: <strong>Me</strong> &bull; Access: <strong>Anyone</strong></li><li>Authorize &rarr; Copy the <span class="code">/exec</span> URL</li></ol></div></div>';
+  panel.innerHTML=
+    '<div class="setup-card">'+
+    '<div class="setup-title">Connect Google Sheets</div>'+
+    '<div class="setup-desc">Paste your Apps Script /exec URL below.</div>'+
+    '<input class="inp" id="surl" value="'+esc(sUrl)+'" placeholder="https://script.google.com/macros/s/.../exec" style="margin-bottom:10px">'+
+    '<div class="btn-row">'+
+    '<button onclick="diagTest()" class="btn btn-outline" style="flex:1">Run Diagnostics</button>'+
+    '<button onclick="saveUrl()" class="btn btn-blue" style="flex:1">Connect & Sync</button>'+
+    '</div>'+
+    '<div id="tbox" class="test-box" style="line-height:2"></div>'+
+    '</div>'+
+    '<div class="setup-card">'+
+    '<div class="setup-title">Checklist - do all 4 steps</div>'+
+    '<div class="setup-steps"><ol>'+
+    '<li>In Apps Script replace <span class="code">Code.gs</span> with the latest Code.gs file</li>'+
+    '<li><strong>Deploy &rarr; New deployment</strong> (NOT update existing)</li>'+
+    '<li>Type: Web app &bull; Execute as: <strong>Me</strong> &bull; Access: <strong>Anyone</strong></li>'+
+    '<li>Click <strong>Authorize access</strong> &rarr; Allow &rarr; copy the /exec URL</li>'+
+    '</ol></div>'+
+    '<div style="background:var(--red-lt);border-radius:8px;padding:12px 14px;margin-top:10px;font-size:13px;color:var(--red);font-weight:500">'+
+    '&#9888; Every time you edit Code.gs you MUST create a New Deployment. Updating an existing deployment does not apply changes.'+
+    '</div>'+
+    '</div>'+
+    '<div class="setup-card">'+
+    '<div class="setup-title">Manual URL Test</div>'+
+    '<div class="setup-desc">Click the button below to open your Script URL directly in a new tab. You should see JSON data (a list starting with [ ). If you see an error page, your deployment has an issue.</div>'+
+    '<button onclick="openScriptTest()" class="btn btn-outline full">Open Script URL in New Tab</button>'+
+    '</div>';
 }
-function saveUrl(){var u=document.getElementById('surl')?document.getElementById('surl').value.trim():'';if(!u){alert('Enter URL');return;}if(u.indexOf('script.google.com')<0){alert('Not a valid Apps Script URL');return;}sUrl=u;localStorage.setItem('vm_surl',u);curTab='today';loadSheet();renderAll();}
-function testConn(){
+
+function openScriptTest(){
+  var u=document.getElementById('surl')?document.getElementById('surl').value.trim():sUrl;
+  if(!u){alert('Enter your Script URL first');return;}
+  window.open(u+'?action=getAll&t='+Date.now(),'_blank');
+}
+
+function diagTest(){
   var u=document.getElementById('surl')?document.getElementById('surl').value.trim():'';
   var tb=document.getElementById('tbox');if(!tb)return;
-  tb.style.display='block';tb.textContent='Testing...';
-  if(!u){tb.textContent='Enter a URL first';return;}
-  if(!u.endsWith('/exec')){tb.textContent='URL must end in /exec';return;}
-  var prev=sUrl;sUrl=u;
+  tb.style.display='block';
+  var steps=[];
+  function show(){ tb.innerHTML=steps.join('<br>'); }
+
+  // Step 1 - URL format check
+  if(!u){ steps.push('&#10007; No URL entered'); show(); return; }
+  steps.push('&#10003; URL entered');
+  if(!u.startsWith('https://script.google.com/macros/s/')){ steps.push('&#10007; URL does not look like an Apps Script URL'); show(); return; }
+  steps.push('&#10003; URL format looks correct');
+  if(!u.endsWith('/exec')){ steps.push('&#10007; URL must end in /exec'); show(); return; }
+  steps.push('&#10003; URL ends in /exec');
+  steps.push('&#8987; Testing connection via JSONP...');
+  show();
+
+  var prev=sUrl; sUrl=u;
   jsonpCall({action:'getAll'},function(data,err){
-    if(err){tb.textContent='Failed: '+err;sUrl=prev;return;}
-    if(data&&data.error){tb.textContent='Script error: '+data.error;sUrl=prev;return;}
-    if(Array.isArray(data)){tb.textContent='Connected! '+data.length+' patients found.';}
-    else{tb.textContent='Unexpected response. Try a new deployment.';sUrl=prev;}
+    if(err){
+      steps.pop();
+      steps.push('&#10007; Connection failed: '+err);
+      steps.push('');
+      steps.push('<strong>Most likely cause:</strong> Code.gs was not updated or a new deployment was not created.');
+      steps.push('Fix: Go to Apps Script &rarr; paste latest Code.gs &rarr; Deploy &rarr; <strong>New deployment</strong> &rarr; copy URL.');
+      sUrl=prev; show(); return;
+    }
+    if(data&&data.error){
+      steps.pop();
+      steps.push('&#10007; Script error: '+data.error);
+      sUrl=prev; show(); return;
+    }
+    if(Array.isArray(data)){
+      steps.pop();
+      steps.push('&#10003; Connected! Found '+data.length+' patients in Google Sheet.');
+      steps.push('&#10003; JSONP working correctly.');
+      steps.push('You can now click <strong>Connect & Sync</strong>.');
+      show(); return;
+    }
+    steps.pop();
+    steps.push('&#10007; Unexpected response. Try creating a new deployment.');
+    sUrl=prev; show();
   });
+}
+
+function saveUrl(){
+  var u=document.getElementById('surl')?document.getElementById('surl').value.trim():'';
+  if(!u){alert('Enter the URL first');return;}
+  if(u.indexOf('script.google.com')<0){alert('Not a valid Apps Script URL');return;}
+  sUrl=u;localStorage.setItem('vm_surl',u);curTab='today';loadSheet();renderAll();
 }
 
 // IMPORT

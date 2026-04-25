@@ -551,6 +551,34 @@ button { cursor: pointer; }
 .empty-ico { font-size: 44px; margin-bottom: 12px; }
 .empty-lbl { font-size: 16px; font-weight: 600; color: var(--slate-400); }
 
+/* ── REPORT ── */
+.rpt-filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+@media(max-width:480px){ .rpt-filter-grid { grid-template-columns: 1fr; } }
+.rpt-filter-grid .full { grid-column: 1 / -1; }
+.rpt-info {
+  background: var(--blue-lt); border: 1px solid var(--blue-mid);
+  border-radius: var(--radius); padding: 12px 14px;
+  font-size: 13px; color: var(--blue-btn); line-height: 1.6; margin-bottom: 14px;
+}
+.rpt-preview-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 5px 0; border-bottom: 1px solid var(--green-mid);
+  font-size: 13px; gap: 8px;
+}
+.rpt-preview-row:last-child { border-bottom: none; }
+.rpt-preview-name { font-weight: 700; color: var(--slate-800); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rpt-preview-meta { font-family: 'JetBrains Mono',monospace; font-size: 11px; color: var(--slate-400); flex-shrink: 0; text-align: right; }
+.rpt-export-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+.rpt-export-row .btn { flex: 1; min-width: 160px; justify-content: center; }
+.quick-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--purple-lt); color: var(--purple);
+  border: 1.5px solid #c4b0f0; border-radius: 8px;
+  padding: 5px 11px; font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: all .15s; margin: 3px 4px 3px 0;
+}
+.quick-btn:hover { background: #e0d5fa; }
+
 /* ── RESPONSIVE ── */
 @media(min-width:640px) {
   .hdr-inner { padding: 0 24px; }
@@ -587,6 +615,11 @@ button { cursor: pointer; }
   <div class="sheet" id="modalSh"></div>
 </div>
 
+<!-- REPORT MODAL -->
+<div class="overlay" id="rptOv" onclick="if(event.target===this)closeReport()">
+  <div class="sheet" id="rptSh"></div>
+</div>
+
 <!-- IMPORT MODAL -->
 <div class="overlay" id="impOv" onclick="if(event.target===this)closeImp()">
   <div class="sheet" id="impSh"></div>
@@ -603,6 +636,10 @@ button { cursor: pointer; }
     </div>
     <div class="hdr-right">
       <span class="sync-badge" id="syncBadge"></span>
+      <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.3)" onclick="openReport()" title="Generate report">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        Report
+      </button>
       <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.3)" onclick="syncAll()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         Sync
@@ -1151,7 +1188,8 @@ function savePt(){
 function renderSetup(){
   var panel=document.getElementById('pSetup');if(!panel)return;
   panel.innerHTML='<div class="setup-card"><div class="setup-title">Connect Google Sheets</div><div class="setup-desc">Paste your Apps Script /exec URL to sync data across all devices in real time.</div><input class="inp" id="surl" value="'+esc(sUrl)+'" placeholder="https://script.google.com/macros/s/.../exec" style="margin-bottom:10px"><div class="btn-row"><button onclick="testConn()" class="btn btn-outline">Test</button><button onclick="saveUrl()" class="btn btn-blue" style="flex:1">Connect & Sync</button></div><div id="tbox" class="test-box"></div></div>'+
-  '<div class="setup-card"><div class="setup-title">Setup Guide</div><div class="setup-steps"><ol><li>Google Sheet &rarr; <strong>Extensions</strong> &rarr; <strong>Apps Script</strong></li><li>Paste <span class="code">Code.gs</span> into the editor</li><li>Create HTML file named <span class="code">index</span> &rarr; paste this file</li><li><strong>Deploy</strong> &rarr; New deployment &rarr; Web app</li><li>Execute as: <strong>Me</strong> &bull; Access: <strong>Anyone</strong></li><li>Authorize &rarr; Copy the <span class="code">/exec</span> URL</li></ol></div></div>';
+  '<div class="setup-card"><div class="setup-title">Setup Guide</div><div class="setup-steps"><ol><li>Google Sheet &rarr; <strong>Extensions</strong> &rarr; <strong>Apps Script</strong></li><li>Paste <span class="code">Code.gs</span> into the editor</li><li>Create HTML file named <span class="code">index</span> &rarr; paste this file</li><li><strong>Deploy</strong> &rarr; New deployment &rarr; Web app</li><li>Execute as: <strong>Me</strong> &bull; Access: <strong>Anyone</strong></li><li>Authorize &rarr; Copy the <span class="code">/exec</span> URL</li></ol></div></div>'+
+  '<div class="setup-card"><div class="setup-title">Code.gs — Report Action (add this to enable Send to Google Sheets)</div><div class="setup-desc">Add this block inside your <code>doGet</code> function in Apps Script, before the final <code>return</code>:</div><div class="setup-steps" style="font-family:JetBrains Mono,monospace;font-size:12px;white-space:pre-wrap;line-height:1.8">if(p.action===\'report\'){\n  var tab=ss.getSheetByName(p.label)||ss.insertSheet(p.label);\n  tab.clearContents();\n  var hdr=[\'File #\',\'Name\',\'Address\',\'Phone 1\',\'Phone 2\',\'Dose\',\'Total\',\'Repeats\',\'Prev Site\',\'Site\',\'Due Date\',\'Appt\',\'Prev Dates\',\'Type\',\'Special\',\'Adverse\',\'Comments\',\'Status\'];\n  tab.getRange(1,1,1,hdr.length).setValues([hdr]);\n  if(p.rows&&p.rows.length)tab.getRange(2,1,p.rows.length,hdr.length).setValues(p.rows);\n  tab.getRange(1,1,1,hdr.length).setFontWeight(\'bold\').setBackground(\'#0F2D52\').setFontColor(\'#ffffff\');\n  return out(JSON.stringify({ok:true}));\n}</div></div>';
 }
 function saveUrl(){var u=document.getElementById('surl')?document.getElementById('surl').value.trim():'';if(!u){alert('Enter URL');return;}if(u.indexOf('script.google.com')<0){alert('Not a valid Apps Script URL');return;}sUrl=u;localStorage.setItem('vm_surl',u);curTab='today';loadSheet();renderAll();}
 function testConn(){
@@ -1300,6 +1338,190 @@ function toast(msg,withUndo){
   toastTm=setTimeout(hideToast,5000);
 }
 function hideToast(){document.getElementById('toast').classList.remove('on');}
+
+// ── REPORTS ────────────────────────────────────────────────────────────────
+function openReport(){
+  var yr=tod().getFullYear();
+  var yrs=[yr-1,yr,yr+1,yr+2];
+  function mopt(){var s='<option value="">All Months</option>';for(var i=0;i<MONTHS.length;i++)s+='<option value="'+(i+1)+'">'+MONTHS[i]+'</option>';return s;}
+  function yopt(){var s='<option value="">Any Year</option>';for(var i=0;i<yrs.length;i++)s+='<option value="'+yrs[i]+'">'+yrs[i]+'</option>';return s;}
+  function dsel(id,opts){var s='<select class="sel" id="'+id+'" style="font-size:14px">';for(var i=0;i<opts.length;i++)s+='<option value="'+opts[i][0]+'">'+opts[i][1]+'</option>';return s+'</select>';}
+  var curM=tod().getMonth()+1;
+
+  var h='<div class="sheet-handle"></div><div class="sheet-inner">';
+  h+='<div class="sheet-hdr"><div class="sheet-title" style="display:flex;align-items:center;gap:8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue-btn)" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Generate Report</div><button class="sheet-close" onclick="closeReport()">&#x2715;</button></div>';
+
+  // Quick presets
+  var nextM=curM===12?1:curM+1;
+  var nextY=curM===12?yr+1:yr;
+  h+='<div style="margin-bottom:14px"><div class="field-lbl" style="margin-bottom:8px">Quick Presets</div>';
+  h+='<button class="quick-btn" onclick="setRpt('+(curM)+','+yr+',\'all\',\'all\',\'all\',\'all\')">This Month ('+MONTHS[curM-1]+' '+yr+')</button>';
+  h+='<button class="quick-btn" onclick="setRpt('+nextM+','+nextY+',\'all\',\'all\',\'all\',\'all\')">Next Month ('+MONTHS[nextM-1]+' '+nextY+')</button>';
+  h+='<button class="quick-btn" onclick="setRpt('+(curM)+','+yr+',\'all\',\'all\',\'0\',\'all\')">No Repeats Left This Month</button>';
+  h+='<button class="quick-btn" onclick="setRpt(\'\',\'\',\'overdue\',\'all\',\'all\',\'all\')">All Overdue</button>';
+  h+='<button class="quick-btn" onclick="setRpt(\'\',\'\',\'all\',\'all\',\'0\',\'all\')">All — No Repeats Left</button>';
+  h+='</div>';
+
+  h+='<div class="rpt-filter-grid">';
+  h+='<div class="form-field"><label class="form-lbl">Due Month</label><select class="sel" id="rMonth" style="font-size:14px"><option value="">All Months</option>'+mopt()+'</select></div>';
+  h+='<div class="form-field"><label class="form-lbl">Due Year</label><select class="sel" id="rYear" style="font-size:14px"><option value="">Any Year</option>'+yopt()+'</select></div>';
+  h+=dsel_field('rStatus','Status',[['all','All Active'],['today','Today'],['scheduled','Scheduled'],['overdue','Overdue'],['queue','All Patients'],['pending','Pending'],['archived','Archived']]);
+  h+=dsel_field('rDose','Dose',[['all','All Doses'],['7.5 mg','7.5 mg'],['22.5 mg','22.5 mg'],['30 mg','30 mg'],['45 mg','45 mg']]);
+  h+=dsel_field('rRepeats','Repeats Left',[['all','Any'],['0','None (0 left)'],['1','1 left'],['2','2 left'],['3+','3 or more']]);
+  h+=dsel_field('rAssign','Assignment',[['all','All'],['Permanent','Permanent'],['1 Dose Only','1 Dose Only']]);
+  h+='</div>';
+
+  h+='<button onclick="previewReport()" class="btn btn-outline full" style="margin-bottom:12px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> Preview Results</button>';
+  h+='<div id="rptPreview" style="margin-bottom:14px"></div>';
+
+  h+='<div class="rpt-export-row">';
+  h+='<button onclick="dlReport()" class="btn btn-blue"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download CSV (Excel / Sheets)</button>';
+  if(sUrl)h+='<button onclick="sendRptToSheets()" class="btn btn-outline"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Send to Google Sheets</button>';
+  h+='</div>';
+
+  if(sUrl){
+    h+='<div style="margin-top:12px;font-size:12px;color:var(--slate-400);line-height:1.6">&#9432; <em>Send to Google Sheets</em> creates a <strong>Report</strong> tab in your Sheet. Requires Apps Script updated with the report action — see Setup guide for the Code.gs snippet.</div>';
+  }
+  h+='</div>';
+
+  document.getElementById('rptSh').innerHTML=h;
+  document.getElementById('rptOv').classList.add('on');
+  // default year to current
+  var yEl=document.getElementById('rYear');if(yEl)yEl.value=yr;
+}
+
+function dsel_field(id,lbl,opts){
+  var s='<div class="form-field"><label class="form-lbl">'+lbl+'</label><select class="sel" id="'+id+'" style="font-size:14px">';
+  for(var i=0;i<opts.length;i++)s+='<option value="'+opts[i][0]+'">'+opts[i][1]+'</option>';
+  return s+'</select></div>';
+}
+
+function setRpt(m,y,status,dose,repeats,assign){
+  var f=function(id,v){var el=document.getElementById(id);if(el)el.value=String(v);};
+  f('rMonth',m);f('rYear',y);f('rStatus',status);f('rDose',dose);f('rRepeats',repeats);f('rAssign',assign);
+  previewReport();
+}
+
+function closeReport(){document.getElementById('rptOv').classList.remove('on');}
+
+function filterReport(){
+  var month=parseInt(document.getElementById('rMonth')&&document.getElementById('rMonth').value)||0;
+  var year=parseInt(document.getElementById('rYear')&&document.getElementById('rYear').value)||0;
+  var status=document.getElementById('rStatus')?document.getElementById('rStatus').value:'all';
+  var dose=document.getElementById('rDose')?document.getElementById('rDose').value:'all';
+  var repeats=document.getElementById('rRepeats')?document.getElementById('rRepeats').value:'all';
+  var assign=document.getElementById('rAssign')?document.getElementById('rAssign').value:'all';
+
+  return pts.filter(function(p){
+    // archived only if explicitly selected
+    if(p.status==='Archived'&&status!=='archived')return false;
+    // due date filter
+    if(month||year){
+      var due=pd(p.dueDate);if(!due)return false;
+      if(month&&due.getMonth()+1!==month)return false;
+      if(year&&due.getFullYear()!==year)return false;
+    }
+    // status / tab filter
+    if(status&&status!=='all'){if(getTab(p)!==status)return false;}
+    // dose filter
+    if(dose&&dose!=='all'){if(p.dose!==dose)return false;}
+    // repeats filter
+    if(repeats&&repeats!=='all'){
+      var rl=parseInt(p.repeatsLeft);
+      if(repeats==='0'&&(isNaN(rl)||rl!==0))return false;
+      if(repeats==='1'&&(isNaN(rl)||rl!==1))return false;
+      if(repeats==='2'&&(isNaN(rl)||rl!==2))return false;
+      if(repeats==='3+'&&(isNaN(rl)||rl<3))return false;
+    }
+    // assignment type filter
+    if(assign&&assign!=='all'){if(p.assignType!==assign)return false;}
+    return true;
+  });
+}
+
+function previewReport(){
+  var result=filterReport();
+  var prev=document.getElementById('rptPreview');if(!prev)return;
+  if(!result.length){prev.innerHTML='<div style="text-align:center;padding:14px;font-size:13px;color:var(--slate-400);background:var(--slate-100);border-radius:var(--radius)">No patients match these filters.</div>';return;}
+  var sorted=result.slice().sort(function(a,b){var ad=pd(a.dueDate)||new Date(9e15),bd=pd(b.dueDate)||new Date(9e15);return ad-bd;});
+  var h='<div style="background:var(--green-lt);border:1.5px solid var(--green-mid);border-radius:var(--radius);padding:10px 14px">';
+  h+='<div style="font-size:13px;font-weight:800;color:var(--green);margin-bottom:8px">&#10003; '+sorted.length+' patient'+(sorted.length!==1?'s':'')+' match</div>';
+  h+='<div style="max-height:200px;overflow-y:auto">';
+  var show=Math.min(sorted.length,30);
+  for(var i=0;i<show;i++){
+    var p=sorted[i];
+    h+='<div class="rpt-preview-row">';
+    h+='<span class="rpt-preview-name">'+esc(p.patientName)+'</span>';
+    h+='<span class="rpt-preview-meta">#'+esc(p.fileNumber)+(p.dueDate?' · '+fmt(pd(p.dueDate)):'')+(p.repeatsLeft!==undefined&&p.repeatsLeft!==''?' · '+esc(p.repeatsLeft)+' left':'')+'</span>';
+    h+='</div>';
+  }
+  if(sorted.length>show)h+='<div style="font-size:12px;color:var(--slate-500);padding-top:6px;font-style:italic">…and '+(sorted.length-show)+' more</div>';
+  h+='</div></div>';
+  prev.innerHTML=h;
+}
+
+function rptLabel(){
+  var parts=[];
+  var m=document.getElementById('rMonth')?document.getElementById('rMonth').value:'';
+  var y=document.getElementById('rYear')?document.getElementById('rYear').value:'';
+  if(m&&y)parts.push(MONTHS[parseInt(m)-1]+'-'+y);
+  else if(m)parts.push(MONTHS[parseInt(m)-1]);
+  else if(y)parts.push(y);
+  var s=document.getElementById('rStatus')?document.getElementById('rStatus').value:'';
+  if(s&&s!=='all')parts.push(s);
+  var d=document.getElementById('rDose')?document.getElementById('rDose').value:'';
+  if(d&&d!=='all')parts.push(d.replace(/\s/g,''));
+  var r=document.getElementById('rRepeats')?document.getElementById('rRepeats').value:'';
+  if(r&&r!=='all')parts.push(r==='0'?'NoRepeats':r+'left');
+  return parts.length?parts.join('_'):'AllPatients';
+}
+
+function toCSV(rows){
+  return rows.map(function(row){
+    return row.map(function(cell){
+      var s=String(cell===null||cell===undefined?'':cell);
+      if(s.indexOf(',')>=0||s.indexOf('"')>=0||s.indexOf('\n')>=0)s='"'+s.replace(/"/g,'""')+'"';
+      return s;
+    }).join(',');
+  }).join('\r\n');
+}
+
+function dlReport(){
+  var result=filterReport();
+  if(!result.length){toast('No patients match — adjust filters');return;}
+  var sorted=result.slice().sort(function(a,b){var ad=pd(a.dueDate)||new Date(9e15),bd=pd(b.dueDate)||new Date(9e15);return ad-bd;});
+  var HDR=['File Number','Patient Name','Address','Phone 1','Phone 2','Dose','Total Doses','Repeats Left','Previous Site','Current Site','Due Date','Appointment Date & Time','Previous Injection Dates','Assignment Type','Special Instructions','Adverse Effects','Comments','Status'];
+  var rows=[HDR].concat(sorted.map(function(p){
+    return [p.fileNumber,p.patientName,p.address,p.phone1,p.phone2,p.dose,p.totalDoses,p.repeatsLeft,p.prevSite,p.site,
+      p.dueDate?fmt(pd(p.dueDate)):'',p.apptDT?fmtDT(p.apptDT):'',p.prevDates,p.assignType,p.special,p.adverse,p.comments,p.status];
+  }));
+  var csv='﻿'+toCSV(rows);
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download='VisitManager-'+rptLabel()+'-'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Downloaded '+sorted.length+' patients — open in Excel or import to Google Sheets');
+}
+
+function sendRptToSheets(){
+  var result=filterReport();
+  if(!result.length){toast('No patients match — adjust filters');return;}
+  if(!sUrl){toast('No Google Sheets URL — go to Setup');return;}
+  var sorted=result.slice().sort(function(a,b){var ad=pd(a.dueDate)||new Date(9e15),bd=pd(b.dueDate)||new Date(9e15);return ad-bd;});
+  var label=rptLabel();
+  var rows=sorted.map(function(p){
+    return [p.fileNumber,p.patientName,p.address,p.phone1,p.phone2,p.dose,p.totalDoses,p.repeatsLeft,p.prevSite,p.site,
+      p.dueDate?fmt(pd(p.dueDate)):'',p.apptDT?fmtDT(p.apptDT):'',p.prevDates,p.assignType,p.special,p.adverse,p.comments,p.status];
+  });
+  toast('Sending to Google Sheets…');
+  gsCall({action:'report',label:label,rows:rows},function(data,err){
+    if(err){toast('Sheets error: '+err);return;}
+    if(data&&data.ok)toast('Report "'+label+'" sent — '+sorted.length+' rows in Sheets tab');
+    else toast('Apps Script needs report action — see Setup guide');
+  });
+}
 
 // INIT
 function init(){load();if(sUrl){curTab='today';loadSheet();}else{curTab='setup';}renderAll();}

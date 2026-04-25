@@ -663,43 +663,64 @@ function norm(p) {
   };
 }
 
-// SHEETS - uses fetch with redirect:follow which handles Apps Script CORS redirects
-function gsCall(payload, cb) {
-  if(!sUrl){if(cb)cb(null,'No URL');return;}
-  var url=sUrl+'?payload='+encodeURIComponent(JSON.stringify(payload))+'&t='+Date.now();
-  fetch(url,{method:'GET',redirect:'follow'})
-    .then(function(res){return res.text();})
-    .then(function(text){
-      try{
-        var data=JSON.parse(text);
-        if(cb)cb(data,null);
-      }catch(e){
-        if(cb)cb(null,'Parse error: '+text.substring(0,80));
-      }
-    })
-    .catch(function(err){
-      if(cb)cb(null,'Network error: '+err.message);
-    });
+// SHEETS SYNC
+// Reads use JSONP (script tag) - bypasses CORS and redirect issues completely
+// Writes use no-cors fetch (fire and forget - write happens server-side)
+
+function jsonpCall(payload, cb) {
+  if(!sUrl){if(cb)cb(null,'No Script URL');return;}
+  var cbName='vmcb'+Date.now();
+  var script=document.createElement('script');
+  var url=sUrl+'?payload='+encodeURIComponent(JSON.stringify(payload))+'&callback='+cbName+'&t='+Date.now();
+  var done=false;
+  window[cbName]=function(data){
+    done=true;
+    try{document.head.removeChild(script);}catch(e){}
+    delete window[cbName];
+    if(cb)cb(data,null);
+  };
+  script.onerror=function(){
+    if(done)return;
+    try{document.head.removeChild(script);}catch(e){}
+    delete window[cbName];
+    if(cb)cb(null,'Failed to reach Google Apps Script. Check your URL and deployment.');
+  };
+  setTimeout(function(){
+    if(done)return;
+    try{document.head.removeChild(script);}catch(e){}
+    delete window[cbName];
+    if(cb)cb(null,'Request timed out. Check your Script URL.');
+  },12000);
+  document.head.appendChild(script);
+  script.src=url;
 }
-function push(p){if(sUrl)gsCall({action:'upsert',patient:p},null);}
-function del(fn){if(sUrl)gsCall({action:'delete',fileNumber:fn},null);}
+
+function silentWrite(payload){
+  if(!sUrl)return;
+  var url=sUrl+'?payload='+encodeURIComponent(JSON.stringify(payload))+'&t='+Date.now();
+  // no-cors: write executes server-side, we don't need the response
+  fetch(url,{method:'GET',mode:'no-cors',redirect:'follow'}).catch(function(){});
+}
+
+function push(p){if(sUrl)silentWrite({action:'upsert',patient:p});}
+function del(fn){if(sUrl)silentWrite({action:'delete',fileNumber:fn});}
 
 function syncAll() {
   if(!sUrl){toast('No Script URL - go to Setup');return;}
   setSB('Syncing...');
-  var list=pts.slice(),i=0;
-  function nx(){if(i>=list.length){loadSheet();return;}gsCall({action:'upsert',patient:list[i]},function(){i++;nx();});}
-  nx();
+  for(var i=0;i<pts.length;i++){silentWrite({action:'upsert',patient:pts[i]});}
+  setTimeout(function(){loadSheet();},2000);
 }
 function loadSheet() {
-  gsCall({action:'getAll'},function(data,err){
+  setSB('Loading...');
+  jsonpCall({action:'getAll'},function(data,err){
     if(err){setSB('Failed');toast('Sync failed: '+err);return;}
-    if(data&&data.error){setSB('Error');toast('Error: '+data.error);return;}
+    if(data&&data.error){setSB('Error');toast('Script error: '+data.error);return;}
     if(Array.isArray(data)){
       pts=data.map(norm);save();
-      var n=new Date(); setSB((n.getHours()<10?'0':'')+n.getHours()+':'+(n.getMinutes()<10?'0':'')+n.getMinutes());
-      renderAll(); toast('Synced '+pts.length+' patients');
-    }
+      var n=new Date();setSB((n.getHours()<10?'0':'')+n.getHours()+':'+(n.getMinutes()<10?'0':'')+n.getMinutes());
+      renderAll();toast('Synced '+pts.length+' patients');
+    } else {setSB('Failed');toast('Unexpected response. Check Script URL.');}
   });
 }
 function setSB(t){var el=document.getElementById('syncBadge');if(el)el.textContent=t;}
@@ -988,18 +1009,40 @@ function chkDone(inp,fn){
 function confInj(fn){
   var p=fp(fn);if(!p)return;
   lastSnap=JSON.parse(JSON.stringify(p));
-  var wk=DOSE_WEEKS[mgv(p.dose)],now=new Date();
+  var wk=DOSE_WEEKS[mgv(p.dose)];
+  // Use the actual appointment date for calculation, not today
+  // This ensures overdue patients get correct future due date from when they were actually seen
+  var apptDate=p.apptDT?pd(p.apptDT):null;
+  var baseDate=apptDate||new Date(); // appointment date if set, else now
   var prev=p.prevDates?p.prevDates.split(',').map(function(s){return s.trim();}).filter(Boolean):[];
-  prev.push(fmt(now));p.prevDates=prev.join(', ');
+  prev.push(fmt(baseDate));p.prevDates=prev.join(', ');
   p.prevSite=p.site||'';p.site='';
   var rl=parseInt(p.repeatsLeft)||0;if(rl>0)p.repeatsLeft=String(rl-1);
-  if(wk)p.dueDate=addW(now,wk).toISOString().slice(0,10);
-  p.apptDT='';p.lastUpdated=now.toISOString();
-  save();push(p);renderAll();toast(p.patientName+' - injection confirmed',true);
-  if(p.assignType==='1 Dose Only')setTimeout(function(){toast('Reminder: '+p.patientName+' is 1 Dose Only');},3000);
+  // Calculate next due date FROM the appointment date (not today)
+  if(wk)p.dueDate=addW(baseDate,wk).toISOString().slice(0,10);
+  p.apptDT='';p.lastUpdated=new Date().toISOString();
+  save();push(p);
+  // Switch to queue tab so user can see the patient with their new due date
+  curTab='queue';
+  renderAll();
+  toast(p.patientName+' confirmed. Next due: '+fmt(pd(p.dueDate)),true);
+  if(p.assignType==='1 Dose Only')setTimeout(function(){toast('Reminder: '+p.patientName+' is 1 Dose Only');},3500);
 }
+
 function setSite(fn,site){var p=fp(fn);if(!p)return;p.site=site;save();push(p);renderAll();}
-function saveAppt(fn){var inp=document.getElementById('ap-'+fn);if(!inp||!inp.value){toast('Select a date and time first');return;}var p=fp(fn);if(!p)return;p.apptDT=inp.value;save();push(p);renderAll();toast('Appointment confirmed: '+fmtDT(inp.value));}
+
+function saveAppt(fn){
+  var inp=document.getElementById('ap-'+fn);
+  if(!inp||!inp.value){toast('Select a date and time first');return;}
+  var p=fp(fn);if(!p)return;
+  p.apptDT=inp.value;
+  save();push(p);
+  // Switch to the tab where this patient now belongs so they don't appear to disappear
+  var newTab=getTab(p);
+  curTab=newTab;
+  renderAll();
+  toast('Appointment set: '+fmtDT(inp.value)+' (moved to '+newTab+' tab)');
+}
 function clrAppt(fn){var p=fp(fn);if(!p)return;p.apptDT='';save();push(p);renderAll();toast('Appointment cleared');}
 function saveDue(fn){var inp=document.getElementById('du-'+fn);if(!inp||!inp.value){toast('Select a due date first');return;}var p=fp(fn);if(!p)return;p.dueDate=inp.value;save();push(p);renderAll();toast('Due date saved: '+fmt(pd(inp.value)));}
 function saveCom(fn){var p=fp(fn);if(!p)return;var ta=document.getElementById('cm-'+fn);if(ta)p.comments=ta.value.trim();save();push(p);toast('Saved');}
@@ -1074,17 +1117,13 @@ function testConn(){
   tb.style.display='block';tb.textContent='Testing...';
   if(!u){tb.textContent='Enter a URL first';return;}
   if(!u.endsWith('/exec')){tb.textContent='URL must end in /exec';return;}
-  fetch(u+'?action=getAll&t='+Date.now(),{method:'GET',redirect:'follow'})
-    .then(function(res){return res.text();})
-    .then(function(text){
-      try{
-        var d=JSON.parse(text);
-        if(d.error){tb.textContent='Script error: '+d.error;}
-        else if(Array.isArray(d)){tb.textContent='Connected! '+d.length+' patients found.';}
-        else{tb.textContent='Unexpected response: '+text.substring(0,60);}
-      }catch(e){tb.textContent='Parse error. Response: '+text.substring(0,80);}
-    })
-    .catch(function(err){tb.textContent='Network error: '+err.message+'. Check your Script URL.';});
+  var prev=sUrl;sUrl=u;
+  jsonpCall({action:'getAll'},function(data,err){
+    if(err){tb.textContent='Failed: '+err;sUrl=prev;return;}
+    if(data&&data.error){tb.textContent='Script error: '+data.error;sUrl=prev;return;}
+    if(Array.isArray(data)){tb.textContent='Connected! '+data.length+' patients found.';}
+    else{tb.textContent='Unexpected response. Try a new deployment.';sUrl=prev;}
+  });
 }
 
 // IMPORT

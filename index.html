@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Patient Dosing Tracker - Custom Reports</title>
+    <title>Patient Dosing Tracker - Report Tab</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f0f2f5; padding: 12px; padding-bottom: 80px; }
@@ -23,15 +23,8 @@
         .btn-danger { background: #ff3b30; color: white; border: none; padding: 10px 16px; border-radius: 25px; font-weight: 500; cursor: pointer; }
         .add-btn { width: 100%; margin-bottom: 16px; padding: 14px; font-size: 16px; border-radius: 30px; background: #007aff; color: white; border: none; font-weight: 600; cursor: pointer; }
         
-        .report-section { background: white; border-radius: 20px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .report-title { font-weight: 600; margin-bottom: 12px; color: #1a1a2e; }
-        .report-input-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-        .report-input-row input, .report-input-row select { flex: 1; padding: 10px 12px; border: 1px solid #ddd; border-radius: 25px; font-size: 14px; min-width: 120px; }
-        .quick-reports { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee; }
-        .quick-btn { background: #5856d6; color: white; border: none; padding: 6px 12px; border-radius: 20px; font-size: 11px; cursor: pointer; }
-        
         .tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
-        .tab-btn { padding: 10px 18px; background: white; border: 1px solid #ddd; border-radius: 30px; cursor: pointer; font-size: 13px; font-weight: 500; flex-shrink: 0; }
+        .tab-btn { padding: 10px 18px; background: white; border: 1px solid #ddd; border-radius: 30px; cursor: pointer; font-size: 13px; font-weight: 500; flex-shrink: 0; transition: all 0.2s; }
         .tab-btn.active { background: #007aff; color: white; border-color: #007aff; }
         
         .patient-list { display: flex; flex-direction: column; gap: 12px; }
@@ -95,8 +88,17 @@
         .empty-state { text-align: center; padding: 50px 20px; color: #999; }
         .loading { text-align: center; padding: 40px; color: #007aff; }
         
+        /* Report Tab Styles */
+        .report-section { padding: 16px; }
+        .report-title { font-weight: 600; margin-bottom: 16px; color: #1a1a2e; font-size: 18px; }
+        .report-input-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+        .report-input-row input, .report-input-row select { flex: 1; padding: 10px 12px; border: 1px solid #ddd; border-radius: 25px; font-size: 14px; min-width: 120px; background: white; }
+        .quick-reports { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0; padding: 16px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee; }
+        .quick-btn { background: #5856d6; color: white; border: none; padding: 8px 14px; border-radius: 25px; font-size: 12px; cursor: pointer; transition: transform 0.2s; }
+        .quick-btn:hover { transform: scale(1.02); }
         .report-container { background: white; border-radius: 20px; padding: 16px; margin-top: 16px; max-height: 500px; overflow-y: auto; }
-        .report-item { padding: 12px; border-bottom: 1px solid #eee; }
+        .report-item { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.2s; }
+        .report-item:hover { background: #f8f9ff; }
         .report-date { font-weight: 600; color: #007aff; margin-bottom: 8px; font-size: 14px; }
         
         @media (max-width: 600px) {
@@ -136,45 +138,7 @@
             </div>
         </div>
 
-        <!-- Custom Report Section -->
-        <div class="report-section">
-            <div class="report-title">📊 Custom Report Generator</div>
-            <div class="report-input-row">
-                <select id="reportField">
-                    <option value="Due Date">Due Date</option>
-                    <option value="Dose Prescribed">Dose Prescribed (mg)</option>
-                    <option value="Assignment Type">Assignment Type</option>
-                    <option value="Doses Remaining">Doses Remaining</option>
-                    <option value="Appointment Confirmed">Appointment Confirmed</option>
-                    <option value="Pending">Pending Status</option>
-                    <option value="Archived">Archived Status</option>
-                    <option value="Patient Name">Patient Name</option>
-                    <option value="File Number">File Number</option>
-                    <option value="Injection Site">Injection Site</option>
-                </select>
-                <select id="reportCondition">
-                    <option value="equals">Equals</option>
-                    <option value="contains">Contains</option>
-                    <option value="greater">Greater Than</option>
-                    <option value="less">Less Than</option>
-                    <option value="between">Between (for dates)</option>
-                </select>
-                <input type="text" id="reportValue" placeholder="Value (e.g., 2026-05, 7.5, Permanent, 0)">
-                <input type="text" id="reportValueEnd" placeholder="End value (for between)" style="display:none;">
-                <button id="generateReportBtn" class="btn-primary">🔍 Generate Report</button>
-            </div>
-            <div class="quick-reports">
-                <span style="font-size:12px; color:#666;">Quick Reports:</span>
-                <button class="quick-btn" data-quick="dueToday">Due Today</button>
-                <button class="quick-btn" data-quick="dueMay2026">Due May 2026</button>
-                <button class="quick-btn" data-quick="noRepeatsLeft">No Repeats Left</button>
-                <button class="quick-btn" data-quick="pendingPatients">Pending Patients</button>
-                <button class="quick-btn" data-quick="tempPatients">Temporary Patients</button>
-                <button class="quick-btn" data-quick="overdueAppointments">Overdue Appointments</button>
-                <button id="closeReportBtn" class="quick-btn" style="background:#ff3b30; display:none;">Close Report</button>
-            </div>
-        </div>
-
+        <!-- Tabs -->
         <div class="tabs" id="tabsContainer">
             <button class="tab-btn active" data-tab="all">👥 All Patients</button>
             <button class="tab-btn" data-tab="today">📅 Today</button>
@@ -182,15 +146,62 @@
             <button class="tab-btn" data-tab="overdue">⚠️ Overdue</button>
             <button class="tab-btn" data-tab="pending">⏳ Pending</button>
             <button class="tab-btn" data-tab="archived">📦 Archived</button>
+            <button class="tab-btn" data-tab="report">📊 Generate Report</button>
         </div>
 
         <button id="addPatientBtn" class="add-btn">+ Add New Patient</button>
 
+        <!-- Main Patient List View -->
         <div id="patientList" class="patient-list">
             <div class="loading">Loading patients...</div>
         </div>
         
-        <div id="reportView" style="display:none;"></div>
+        <!-- Report View (shown only when Report tab is active) -->
+        <div id="reportView" style="display:none;">
+            <div class="report-section">
+                <div class="report-title">📊 Custom Report Generator</div>
+                <div class="report-input-row">
+                    <select id="reportField">
+                        <option value="Due Date">Due Date</option>
+                        <option value="Dose Prescribed">Dose Prescribed (mg)</option>
+                        <option value="Assignment Type">Assignment Type</option>
+                        <option value="Doses Remaining">Doses Remaining</option>
+                        <option value="Appointment Confirmed">Appointment Confirmed</option>
+                        <option value="Pending">Pending Status</option>
+                        <option value="Archived">Archived Status</option>
+                        <option value="Patient Name">Patient Name</option>
+                        <option value="File Number">File Number</option>
+                        <option value="Injection Site">Injection Site</option>
+                        <option value="Previous Injection Site">Previous Injection Site</option>
+                    </select>
+                    <select id="reportCondition">
+                        <option value="equals">Equals</option>
+                        <option value="contains">Contains</option>
+                        <option value="greater">Greater Than</option>
+                        <option value="less">Less Than</option>
+                        <option value="between">Between (for dates)</option>
+                    </select>
+                    <input type="text" id="reportValue" placeholder="Value (e.g., 2026-05, 7.5, Permanent, 0)">
+                    <input type="text" id="reportValueEnd" placeholder="End value (for between)" style="display:none;">
+                    <button id="generateReportBtn" class="btn-primary">🔍 Generate Report</button>
+                </div>
+                
+                <div class="quick-reports">
+                    <span style="font-size:12px; color:#666;">⚡ Quick Reports:</span>
+                    <button class="quick-btn" data-quick="dueToday">Due Today</button>
+                    <button class="quick-btn" data-quick="dueMay2026">Due May 2026</button>
+                    <button class="quick-btn" data-quick="noRepeatsLeft">No Repeats Left</button>
+                    <button class="quick-btn" data-quick="pendingPatients">Pending Patients</button>
+                    <button class="quick-btn" data-quick="tempPatients">Temporary Patients</button>
+                    <button class="quick-btn" data-quick="overdueAppointments">Overdue Appointments</button>
+                    <button class="quick-btn" data-quick="allPatients">All Active Patients</button>
+                </div>
+                
+                <div id="reportOutput" style="margin-top: 16px;">
+                    <div class="empty-state">✨ Select report criteria above and click "Generate Report"</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Injection Site Modal -->
@@ -297,7 +308,6 @@
         let pendingInjectionFileNumber = null;
 
         const doseToWeeks = { '7.5': 4, '22.5': 12, '30': 16, '45': 24 };
-        const injectionSites = ['Right Side', 'Left Side', 'Right Glute', 'Left Glute'];
 
         // ========== CUSTOM REPORT GENERATOR ==========
         function generateCustomReport() {
@@ -306,21 +316,12 @@
             let value = document.getElementById('reportValue').value.toLowerCase();
             let valueEnd = document.getElementById('reportValueEnd').value;
             
-            // Show/hide end value field for "between" condition
-            if (condition === 'between') {
-                document.getElementById('reportValueEnd').style.display = 'inline-block';
-            } else {
-                document.getElementById('reportValueEnd').style.display = 'none';
-            }
-            
             let filteredPatients = [...patients];
             let title = `Report: ${field} ${condition} ${value}`;
             
-            // Apply filter based on field and condition
             filteredPatients = filteredPatients.filter(p => {
                 let fieldValue = p[field];
                 
-                // Handle different field types
                 if (field === 'Due Date') {
                     if (!fieldValue) return false;
                     const dueDate = new Date(fieldValue);
@@ -363,7 +364,6 @@
                     return isTrue === wantTrue;
                 }
                 else {
-                    // Text fields
                     fieldValue = String(fieldValue || '').toLowerCase();
                     if (condition === 'equals') return fieldValue === value;
                     if (condition === 'contains') return fieldValue.includes(value);
@@ -372,11 +372,10 @@
             });
             
             if (filteredPatients.length === 0) {
-                alert('No patients match your report criteria.');
+                document.getElementById('reportOutput').innerHTML = '<div class="empty-state">📭 No patients match your report criteria.</div>';
                 return;
             }
             
-            // Group by due date for better display
             const groupedByDate = {};
             filteredPatients.forEach(p => {
                 const dueDate = p['Due Date'] ? new Date(p['Due Date']).toLocaleDateString() : 'No Date';
@@ -394,6 +393,7 @@
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
                     <h3>📊 ${title}</h3>
                     <div><strong>${filteredPatients.length}</strong> patients found</div>
+                    <button onclick="exportReportToCSV()" class="btn-primary" style="padding:6px 12px; font-size:12px;">📥 Export CSV</button>
                 </div>`;
             
             for (const date of sortedDates) {
@@ -402,7 +402,7 @@
                     const totalDoses = parseInt(p['Total Doses']) || 4;
                     const dosesRemaining = parseInt(p['Doses Remaining']) || totalDoses;
                     reportHtml += `
-                        <div class="report-item" onclick="openEditModal('${escapeHtml(p['File Number'])}')" style="cursor:pointer;">
+                        <div class="report-item" onclick="openEditModal('${escapeHtml(p['File Number'])}')">
                             <div style="display:flex; justify-content:space-between; flex-wrap:wrap;">
                                 <strong>${escapeHtml(p['Patient Name'])}</strong>
                                 <span style="color:#666;">#${escapeHtml(p['File Number'])}</span>
@@ -417,18 +417,9 @@
                     `;
                 }
             }
+            reportHtml += `</div>`;
             
-            reportHtml += `<div style="margin-top:16px;">
-                <button onclick="closeReport()" class="btn-secondary">Close Report</button>
-                <button onclick="exportReportToCSV()" class="btn-primary" style="margin-left:8px;">📥 Export Report to CSV</button>
-            </div></div>`;
-            
-            document.getElementById('patientList').style.display = 'none';
-            document.getElementById('reportView').style.display = 'block';
-            document.getElementById('reportView').innerHTML = reportHtml;
-            document.getElementById('closeReportBtn').style.display = 'inline-block';
-            
-            // Store last report data for export
+            document.getElementById('reportOutput').innerHTML = reportHtml;
             window.lastReportData = filteredPatients;
         }
         
@@ -496,6 +487,11 @@
                     condition = 'equals';
                     value = 'false';
                     break;
+                case 'allPatients':
+                    field = 'Archived';
+                    condition = 'equals';
+                    value = 'false';
+                    break;
                 default:
                     return;
             }
@@ -508,24 +504,13 @@
             generateCustomReport();
         }
         
-        function closeReport() {
-            document.getElementById('patientList').style.display = 'flex';
-            document.getElementById('reportView').style.display = 'none';
-            document.getElementById('closeReportBtn').style.display = 'none';
-            window.lastReportData = null;
-            renderCurrentTab();
-        }
-        
-        // Show/hide end value field
-        document.addEventListener('DOMContentLoaded', function() {
-            const conditionSelect = document.getElementById('reportCondition');
-            conditionSelect.addEventListener('change', function() {
-                if (this.value === 'between') {
-                    document.getElementById('reportValueEnd').style.display = 'inline-block';
-                } else {
-                    document.getElementById('reportValueEnd').style.display = 'none';
-                }
-            });
+        // Show/hide end value field for "between" condition
+        document.getElementById('reportCondition').addEventListener('change', function() {
+            if (this.value === 'between') {
+                document.getElementById('reportValueEnd').style.display = 'inline-block';
+            } else {
+                document.getElementById('reportValueEnd').style.display = 'none';
+            }
         });
         
         // ========== CSV IMPORT ==========
@@ -621,7 +606,7 @@
             }
         }
 
-        // ========== EXISTING FUNCTIONS ==========
+        // ========== GOOGLE SHEETS LOAD ==========
         async function loadFromGoogleSheets() {
             document.getElementById('syncStatus').innerHTML = '🔄 Loading from Google Sheets...';
             
@@ -974,6 +959,15 @@
         }
 
         function renderCurrentTab() {
+            if (currentTab === 'report') {
+                document.getElementById('patientList').style.display = 'none';
+                document.getElementById('reportView').style.display = 'block';
+                return;
+            }
+            
+            document.getElementById('patientList').style.display = 'flex';
+            document.getElementById('reportView').style.display = 'none';
+            
             const filtered = getFilteredPatients();
             const container = document.getElementById('patientList');
             
@@ -1223,12 +1217,17 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadFromLocalStorage();
 
-            // Tab switching
+            // Tab switching - Updated to include report tab
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     currentTab = btn.getAttribute('data-tab');
+                    
+                    // Reset search when switching tabs
+                    searchQuery = '';
+                    document.getElementById('searchInput').value = '';
+                    
                     renderCurrentTab();
                 });
             });
@@ -1236,17 +1235,23 @@
             // Report buttons
             document.getElementById('generateReportBtn').addEventListener('click', generateCustomReport);
             document.querySelectorAll('.quick-btn').forEach(btn => {
-                if (btn.id !== 'closeReportBtn') {
-                    btn.addEventListener('click', (e) => {
-                        quickReport(btn.getAttribute('data-quick'));
-                    });
-                }
+                btn.addEventListener('click', (e) => {
+                    quickReport(btn.getAttribute('data-quick'));
+                });
             });
-            document.getElementById('closeReportBtn')?.addEventListener('click', closeReport);
 
             const searchInput = document.getElementById('searchInput');
-            searchInput.addEventListener('input', (e) => { searchQuery = e.target.value; renderCurrentTab(); });
-            document.getElementById('clearSearchBtn').addEventListener('click', () => { searchInput.value = ''; searchQuery = ''; renderCurrentTab(); });
+            searchInput.addEventListener('input', (e) => { 
+                if (currentTab !== 'report') {
+                    searchQuery = e.target.value; 
+                    renderCurrentTab();
+                }
+            });
+            document.getElementById('clearSearchBtn').addEventListener('click', () => { 
+                searchInput.value = ''; 
+                searchQuery = ''; 
+                renderCurrentTab();
+            });
 
             document.getElementById('refreshBtn').addEventListener('click', () => { loadFromGoogleSheets(); });
             document.getElementById('addPatientBtn').addEventListener('click', openAddModal);
@@ -1281,9 +1286,10 @@
             document.getElementById('importBtn')?.addEventListener('click', () => { document.getElementById('importFile').click(); });
             document.getElementById('importFile')?.addEventListener('change', (e) => { if (e.target.files[0]) importData(e.target.files[0]); e.target.value = ''; });
             
+            // Make functions available globally
             window.openEditModal = openEditModal;
             window.exportReportToCSV = exportReportToCSV;
-            window.closeReport = closeReport;
+            window.generateCustomReport = generateCustomReport;
         });
     </script>
 </body>

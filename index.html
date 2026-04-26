@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Patient Dosing Tracker - Cloud Sync</title>
+    <title>Patient Dosing Tracker - Google Sheets Sync</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f0f2f5; padding: 12px; padding-bottom: 80px; }
@@ -12,7 +12,7 @@
         
         .header { background: white; padding: 16px; border-radius: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 10; }
         .header h1 { font-size: 20px; color: #1a1a2e; margin-bottom: 12px; }
-        .sync-status { font-size: 12px; color: #34c759; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .sync-status { font-size: 12px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
         .top-bar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: space-between; }
         .search-box { flex: 1; display: flex; gap: 8px; }
         .search-box input { flex: 1; padding: 10px 14px; border: 1px solid #ddd; border-radius: 25px; font-size: 15px; background: #f9f9f9; }
@@ -93,14 +93,14 @@
                     <button id="clearSearchBtn">Clear</button>
                 </div>
                 <div class="header-actions">
-                    <button id="syncBtn" class="btn-secondary">🔄 Sync to Cloud</button>
+                    <button id="refreshBtn" class="btn-secondary">🔄 Load from Sheet</button>
                     <button id="exportBtn" class="btn-secondary">📥 Backup</button>
                     <button id="importBtn" class="btn-secondary">📤 Restore</button>
                     <input type="file" id="importFile" accept=".json" style="display:none">
                 </div>
             </div>
             <div class="sync-status">
-                <span id="syncStatus">⚡ Ready to sync</span>
+                <span id="syncStatus">⚡ Ready to load</span>
                 <span id="recordCount"></span>
             </div>
         </div>
@@ -180,8 +180,8 @@
 
     <script>
         // ========== CONFIGURATION ==========
-        // REPLACE THIS WITH YOUR APPS SCRIPT WEB APP URL
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBLStRqlsBuPSTYz72WRNpTjCO6QeaOlIblr1MyfkHlXXQUVbnaFCehQOtG9sidzyo/exec";
+        // REPLACE THIS WITH YOUR GOOGLE SHEETS PUBLISHED CSV URL
+        const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSYgD018ww2Mbkud6ZYmZHop7EXxcm_0Zl4V9bB2AaY4r4xXTWChAW6v-gUyjD4-2Qmg4H8O0kxryCf/pub?output=csv";
         
         // ========== DATA ==========
         let patients = [];
@@ -192,53 +192,78 @@
 
         const doseToWeeks = { '7.5': 4, '22.5': 12, '30': 16, '45': 24 };
 
-        // ========== API CALLS TO GOOGLE SHEETS ==========
-        async function callAppsScript(action, data = {}) {
-            const params = new URLSearchParams({ action, ...data });
-            const url = `${APPS_SCRIPT_URL}?${params.toString()}`;
+        // ========== LOAD FROM GOOGLE SHEETS (READ ONLY) ==========
+        async function loadFromGoogleSheets() {
+            if (!GOOGLE_SHEETS_CSV_URL || GOOGLE_SHEETS_CSV_URL.includes("YOUR_SHEET_ID")) {
+                document.getElementById('syncStatus').innerHTML = '⚠️ Configure Google Sheets URL first';
+                alert(`To connect to Google Sheets:\n\n1. File → Share → Publish to web\n2. Select "CSV"\n3. Copy the link\n4. Replace the URL in the code`);
+                return false;
+            }
+            
+            document.getElementById('syncStatus').innerHTML = '🔄 Loading from Google Sheets...';
             
             try {
-                const response = await fetch(url);
-                const result = await response.json();
-                return result;
-            } catch (error) {
-                console.error('API Error:', error);
-                return { success: false, error: error.message };
-            }
-        }
-
-        async function syncFromGoogleSheets() {
-            if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === "YOUR_APPS_SCRIPT_URL_HERE") {
-                document.getElementById('syncStatus').innerHTML = '⚠️ Configure Apps Script URL first';
-                alert(`To connect to Google Sheets:\n\n1. Deploy your Apps Script as Web App\n2. Copy the URL\n3. Replace 'YOUR_APPS_SCRIPT_URL_HERE' in the code`);
-                return false;
-            }
-            
-            document.getElementById('syncStatus').innerHTML = '🔄 Syncing with Google Sheets...';
-            const result = await callAppsScript('getPatients');
-            
-            if (result.success && result.patients) {
-                patients = result.patients;
-                saveToLocalStorage();
-                renderCurrentTab();
-                document.getElementById('syncStatus').innerHTML = `✅ Synced ${patients.length} patients from Google Sheets`;
+                const response = await fetch(GOOGLE_SHEETS_CSV_URL);
+                const csvText = await response.text();
+                
+                // Parse CSV
+                const rows = csvText.split('\n');
+                const headers = rows[0].split(',').map(h => h.trim().replace(/"/g, ''));
+                
+                const loadedPatients = [];
+                for (let i = 1; i < rows.length; i++) {
+                    if (!rows[i].trim()) continue;
+                    
+                    // Handle quoted CSV values properly
+                    let values = [];
+                    let inQuote = false;
+                    let currentValue = '';
+                    const row = rows[i];
+                    
+                    for (let j = 0; j < row.length; j++) {
+                        const char = row[j];
+                        if (char === '"') {
+                            inQuote = !inQuote;
+                        } else if (char === ',' && !inQuote) {
+                            values.push(currentValue.trim().replace(/^"|"$/g, ''));
+                            currentValue = '';
+                        } else {
+                            currentValue += char;
+                        }
+                    }
+                    values.push(currentValue.trim().replace(/^"|"$/g, ''));
+                    
+                    const patient = {};
+                    headers.forEach((header, idx) => {
+                        patient[header] = values[idx] || '';
+                    });
+                    
+                    if (patient['Patient Name'] && patient['Patient Name'] !== 'Patient Name') {
+                        // Convert boolean fields
+                        patient['Injection Administered'] = patient['Injection Administered'] === 'TRUE' || patient['Injection Administered'] === true;
+                        patient['Appointment Confirmed'] = patient['Appointment Confirmed'] === 'TRUE' || patient['Appointment Confirmed'] === true;
+                        patient['Pending'] = patient['Pending'] === 'TRUE' || patient['Pending'] === true;
+                        patient['Archived'] = patient['Archived'] === 'TRUE' || patient['Archived'] === true;
+                        
+                        loadedPatients.push(patient);
+                    }
+                }
+                
+                if (loadedPatients.length > 0) {
+                    patients = loadedPatients;
+                    saveToLocalStorage();
+                    renderCurrentTab();
+                    document.getElementById('syncStatus').innerHTML = `✅ Loaded ${patients.length} patients from Google Sheets`;
+                } else {
+                    document.getElementById('syncStatus').innerHTML = '⚠️ No data found in sheet';
+                }
                 return true;
-            } else {
-                document.getElementById('syncStatus').innerHTML = `❌ Sync failed: ${result.error || 'Unknown error'}`;
+            } catch (error) {
+                console.error('Load error:', error);
+                document.getElementById('syncStatus').innerHTML = '❌ Failed to load - check URL and publish settings';
+                alert(`Error loading from Google Sheets:\n\nMake sure your sheet is published:\n1. File → Share → Publish to web\n2. Select "CSV" format\n3. Click "Publish"\n\nThen copy that URL.`);
                 return false;
             }
-        }
-
-        async function addToGoogleSheets(patientData) {
-            return await callAppsScript('addPatient', { data: JSON.stringify(patientData) });
-        }
-
-        async function updateToGoogleSheets(fileNumber, patientData) {
-            return await callAppsScript('updatePatient', { fileNumber, data: JSON.stringify(patientData) });
-        }
-
-        async function deleteFromGoogleSheets(fileNumber) {
-            return await callAppsScript('deletePatient', { fileNumber });
         }
 
         // ========== LOCAL STORAGE ==========
@@ -266,7 +291,7 @@
             return newDate.toISOString().split('T')[0];
         }
 
-        async function administerInjection(fileNumber) {
+        function administerInjection(fileNumber) {
             const patient = patients.find(p => p['File Number'] === fileNumber);
             if (!patient) return;
 
@@ -276,8 +301,8 @@
                 alert('No doses remaining! Patient will be archived.');
                 patient['Archived'] = true;
                 patient['File Status'] = 'Completed';
-                await updateToGoogleSheets(fileNumber, patient);
-                await syncFromGoogleSheets();
+                saveToLocalStorage();
+                renderCurrentTab();
                 return;
             }
 
@@ -312,33 +337,34 @@
                 alert(`${patient['Patient Name']} has completed all doses and has been archived.`);
             }
 
-            await updateToGoogleSheets(fileNumber, patient);
-            await syncFromGoogleSheets();
+            saveToLocalStorage();
+            renderCurrentTab();
             alert(`✅ Injection administered. ${newDosesLeft} doses remaining.`);
         }
 
-        async function confirmAppointment(fileNumber) {
+        function confirmAppointment(fileNumber) {
             const patient = patients.find(p => p['File Number'] === fileNumber);
             if (patient) {
                 patient['Appointment Confirmed'] = true;
-                await updateToGoogleSheets(fileNumber, patient);
-                await syncFromGoogleSheets();
+                saveToLocalStorage();
+                renderCurrentTab();
                 alert(`✅ Appointment confirmed for ${patient['Patient Name']}`);
             }
         }
 
-        async function markPending(fileNumber) {
+        function markPending(fileNumber) {
             const patient = patients.find(p => p['File Number'] === fileNumber);
             if (patient) {
                 patient['Pending'] = true;
-                await updateToGoogleSheets(fileNumber, patient);
-                await syncFromGoogleSheets();
+                saveToLocalStorage();
+                renderCurrentTab();
             }
         }
 
-        async function deletePatient(fileNumber) {
-            await deleteFromGoogleSheets(fileNumber);
-            await syncFromGoogleSheets();
+        function deletePatient(fileNumber) {
+            patients = patients.filter(p => p['File Number'] !== fileNumber);
+            saveToLocalStorage();
+            renderCurrentTab();
         }
 
         // ========== FILTERING ==========
@@ -575,10 +601,15 @@
             document.getElementById('patientModal').style.display = 'block';
         }
 
-        async function savePatientFromModal() {
+        function savePatientFromModal() {
             const fileNumber = document.getElementById('fileNumber').value.trim();
             if (!fileNumber) {
                 alert('File Number is required');
+                return;
+            }
+
+            if (!currentEditFileNumber && patients.find(p => p['File Number'] === fileNumber)) {
+                alert('File Number already exists! Please use a unique number.');
                 return;
             }
 
@@ -606,20 +637,23 @@
                 'Archived': false
             };
 
-            let result;
             if (currentEditFileNumber) {
-                result = await updateToGoogleSheets(currentEditFileNumber, patientData);
+                const index = patients.findIndex(p => p['File Number'] === currentEditFileNumber);
+                if (index !== -1) {
+                    patientData['Injection Administered'] = patients[index]['Injection Administered'];
+                    patientData['Appointment Confirmed'] = patients[index]['Appointment Confirmed'];
+                    patientData['Pending'] = patients[index]['Pending'];
+                    patientData['Archived'] = patients[index]['Archived'];
+                    patients[index] = patientData;
+                }
             } else {
-                result = await addToGoogleSheets(patientData);
+                patients.push(patientData);
             }
 
-            if (result.success) {
-                closeModal();
-                await syncFromGoogleSheets();
-                alert(`Patient saved successfully!`);
-            } else {
-                alert(`Error: ${result.error}`);
-            }
+            saveToLocalStorage();
+            closeModal();
+            renderCurrentTab();
+            alert(`Patient ${patientData['Patient Name']} saved successfully!`);
         }
 
         function closeModal() {
@@ -646,14 +680,13 @@
 
         function importData(file) {
             const reader = new FileReader();
-            reader.onload = async (e) => {
+            reader.onload = (e) => {
                 try {
                     const imported = JSON.parse(e.target.result);
                     if (Array.isArray(imported)) {
-                        for (const patient of imported) {
-                            await addToGoogleSheets(patient);
-                        }
-                        await syncFromGoogleSheets();
+                        patients = imported;
+                        saveToLocalStorage();
+                        renderCurrentTab();
                         alert(`✅ Imported ${imported.length} patients!`);
                     } else {
                         alert('Invalid file format');
@@ -668,11 +701,6 @@
         // ========== INITIALIZATION ==========
         document.addEventListener('DOMContentLoaded', () => {
             loadFromLocalStorage();
-            
-            // Only sync if URL is configured
-            if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== "YOUR_APPS_SCRIPT_URL_HERE") {
-                syncFromGoogleSheets();
-            }
 
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -687,13 +715,13 @@
             searchInput.addEventListener('input', (e) => { searchQuery = e.target.value; renderCurrentTab(); });
             document.getElementById('clearSearchBtn').addEventListener('click', () => { searchInput.value = ''; searchQuery = ''; renderCurrentTab(); });
 
-            document.getElementById('syncBtn').addEventListener('click', () => { syncFromGoogleSheets(); });
+            document.getElementById('refreshBtn').addEventListener('click', () => { loadFromGoogleSheets(); });
             document.getElementById('addPatientBtn').addEventListener('click', openAddModal);
             document.querySelectorAll('.close').forEach(close => { close.addEventListener('click', closeModal); });
             window.addEventListener('click', (e) => { if (e.target === document.getElementById('patientModal')) closeModal(); if (e.target === document.getElementById('confirmModal')) document.getElementById('confirmModal').style.display = 'none'; });
 
             document.getElementById('patientForm').addEventListener('submit', (e) => { e.preventDefault(); savePatientFromModal(); });
-            document.getElementById('deletePatientBtn')?.addEventListener('click', async () => { if (currentEditFileNumber) { await deletePatient(currentEditFileNumber); closeModal(); } });
+            document.getElementById('deletePatientBtn')?.addEventListener('click', () => { if (currentEditFileNumber) { showConfirmDialog('Permanently delete this patient?', () => { deletePatient(currentEditFileNumber); closeModal(); }); } });
 
             document.getElementById('confirmYes')?.addEventListener('click', () => { if (pendingConfirmCallback) pendingConfirmCallback(); document.getElementById('confirmModal').style.display = 'none'; pendingConfirmCallback = null; });
             document.getElementById('confirmNo')?.addEventListener('click', () => { document.getElementById('confirmModal').style.display = 'none'; pendingConfirmCallback = null; });

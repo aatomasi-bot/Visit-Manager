@@ -337,12 +337,31 @@ function parseCSVLine(line){
   return result;
 }
 
-// LOAD from public CSV (no CORS issues)
+// LOAD from public CSV
+// Google Sheets published CSV blocks direct cross-origin fetch from GitHub Pages
+// We try direct first, then fall back through two reliable proxies
 function loadCSV(cb){
-  fetch(CSV_URL+"&t="+Date.now())
-    .then(function(r){return r.text();})
-    .then(function(text){cb(parseCSV(text),null);})
-    .catch(function(e){cb(null,"Cannot load sheet: "+e.message);});
+  var urls = [
+    CSV_URL + "&t=" + Date.now(),
+    "https://corsproxy.io/?" + encodeURIComponent(CSV_URL),
+    "https://api.allorigins.win/raw?url=" + encodeURIComponent(CSV_URL)
+  ];
+  var idx = 0;
+  function tryNext(){
+    if(idx >= urls.length){ cb(null, "All sync methods failed. Check your internet connection."); return; }
+    var url = urls[idx++];
+    fetch(url)
+      .then(function(r){ return r.text(); })
+      .then(function(text){
+        if(!text || text.trim().charAt(0) === "<"){
+          tryNext(); // got HTML error page, try next
+          return;
+        }
+        cb(parseCSV(text), null);
+      })
+      .catch(function(){ tryNext(); });
+  }
+  tryNext();
 }
 
 // WRITE via Apps Script no-cors (fire and forget)

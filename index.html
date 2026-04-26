@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Patient Dosing Tracker - Smart Sort</title>
+    <title>Patient Dosing Tracker - Correct Dose Logic</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f0f2f5; padding: 12px; padding-bottom: 80px; }
@@ -49,7 +49,7 @@
         
         .expanded-view { margin-top: 16px; padding-top: 16px; border-top: 1px solid #eee; display: none; }
         .detail-row { display: flex; padding: 8px 0; border-bottom: 1px solid #f0f0f0; flex-wrap: wrap; }
-        .detail-label { width: 130px; font-weight: 600; color: #555; font-size: 13px; }
+        .detail-label { width: 140px; font-weight: 600; color: #555; font-size: 13px; }
         .detail-value { flex: 1; color: #333; font-size: 13px; }
         .ins-red { color: #ff3b30; font-weight: 500; }
         
@@ -82,7 +82,7 @@
             .action-buttons { justify-content: center; }
             .form-grid { grid-template-columns: 1fr; }
             .form-group.full-width { grid-column: span 1; }
-            .detail-label { width: 110px; }
+            .detail-label { width: 120px; }
         }
     </style>
 </head>
@@ -146,8 +146,13 @@
                             <option value="45">45 mg (24 weeks)</option>
                         </select>
                     </div>
-                    <div class="form-group"><label>Total Doses</label><input type="number" id="totalDoses" value="4" min="1"></div>
-                    <div class="form-group"><label>Doses Left</label><input type="number" id="dosesLeft" value="4" min="0"></div>
+                    <div class="form-group"><label>Total Doses</label>
+                        <input type="number" id="totalDoses" value="4" min="1" onchange="updateDosesLeft()">
+                    </div>
+                    <div class="form-group"><label>Doses Left (Repeats)</label>
+                        <input type="number" id="dosesLeft" value="3" min="0" readonly style="background:#f0f0f0;">
+                        <small style="font-size:10px;color:#666;">Auto-calculated: Total Doses - 1</small>
+                    </div>
                     <div class="form-group"><label>Previous Injection Site</label><input type="text" id="prevInjSite"></div>
                     <div class="form-group"><label>Injection Site</label><input type="text" id="injSite"></div>
                     <div class="form-group"><label>Due Date</label><input type="date" id="dueDate"></div>
@@ -182,6 +187,23 @@
     </div>
 
     <script>
+        // Function to auto-calculate doses left based on total doses
+        function updateDosesLeft() {
+            const totalDoses = parseInt(document.getElementById('totalDoses').value) || 4;
+            // Doses Left = Total Doses - 1 (first dose is the initial, repeats are extra)
+            const dosesLeft = totalDoses - 1;
+            document.getElementById('dosesLeft').value = dosesLeft;
+        }
+        
+        // Call on page load for any existing value
+        document.addEventListener('DOMContentLoaded', function() {
+            const totalDosesInput = document.getElementById('totalDoses');
+            if (totalDosesInput) {
+                totalDosesInput.addEventListener('change', updateDosesLeft);
+                updateDosesLeft();
+            }
+        });
+
         // ========== CONFIGURATION ==========
         const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSYgD018ww2Mbkud6ZYmZHop7EXxcm_0Zl4V9bB2AaY4r4xXTWChAW6v-gUyjD4-2Qmg4H8O0kxryCf/pub?output=csv";
         
@@ -195,14 +217,11 @@
         const doseToWeeks = { '7.5': 4, '22.5': 12, '30': 16, '45': 24 };
 
         // ========== PRIORITY SORT FUNCTION ==========
-        // Priority 1: Appointment confirmed with date/time
-        // Priority 2: Due date
         function prioritySort(patientsList, tabName) {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             
             return patientsList.sort((a, b) => {
-                // For Today and Scheduled tabs, sort by appointment date/time (confirmed first)
                 if (tabName === 'today' || tabName === 'scheduled') {
                     const aHasConfirmedAppt = a['Appointment Date & Time'] && a['Appointment Confirmed'] === true;
                     const bHasConfirmedAppt = b['Appointment Date & Time'] && b['Appointment Confirmed'] === true;
@@ -215,7 +234,6 @@
                     return aTime - bTime;
                 }
                 
-                // For Queue tab: confirmed appointments first, then by due date
                 if (tabName === 'queue') {
                     const aHasConfirmed = a['Appointment Date & Time'] && a['Appointment Confirmed'] === true;
                     const bHasConfirmed = b['Appointment Date & Time'] && b['Appointment Confirmed'] === true;
@@ -223,13 +241,11 @@
                     if (aHasConfirmed && !bHasConfirmed) return -1;
                     if (!aHasConfirmed && bHasConfirmed) return 1;
                     
-                    // Then sort by due date
                     const aDue = a['Due Date'] ? new Date(a['Due Date']) : new Date(8640000000000000);
                     const bDue = b['Due Date'] ? new Date(b['Due Date']) : new Date(8640000000000000);
                     return aDue - bDue;
                 }
                 
-                // Default: sort by due date
                 const aDue = a['Due Date'] ? new Date(a['Due Date']) : new Date(8640000000000000);
                 const bDue = b['Due Date'] ? new Date(b['Due Date']) : new Date(8640000000000000);
                 return aDue - bDue;
@@ -280,6 +296,12 @@
                         patient['Pending'] = patient['Pending'] === 'TRUE' || patient['Pending'] === true;
                         patient['Archived'] = patient['Archived'] === 'TRUE' || patient['Archived'] === true;
                         
+                        // Ensure Doses Left is correctly set based on Total Doses
+                        const totalDoses = parseInt(patient['Total Doses']) || 4;
+                        if (!patient['Doses Repeats Left'] || patient['Doses Repeats Left'] === '') {
+                            patient['Doses Repeats Left'] = (totalDoses - 1).toString();
+                        }
+                        
                         loadedPatients.push(patient);
                     }
                 }
@@ -317,7 +339,11 @@
             renderCurrentTab();
         }
 
-        // ========== DOSING LOGIC ==========
+        // ========== CORRECTED DOSING LOGIC ==========
+        // Formula: Doses Left (Repeats) = Total Doses - 1
+        // Each injection: Doses Left decreases by 1
+        // When Doses Left = 0 → All doses complete → Archive
+        
         function calculateNextDueDate(currentDueDate, dosePrescribed) {
             const weeks = doseToWeeks[dosePrescribed] || 4;
             const newDate = new Date(currentDueDate);
@@ -329,10 +355,14 @@
             const patient = patients.find(p => p['File Number'] === fileNumber);
             if (!patient) return;
 
-            let dosesLeft = parseInt(patient['Doses Repeats Left']) || 0;
-
-            if (dosesLeft <= 0) {
-                alert('No doses remaining! Patient will be archived.');
+            let currentRepeatsLeft = parseInt(patient['Doses Repeats Left']) || 0;
+            const totalDoses = parseInt(patient['Total Doses']) || 4;
+            
+            // Calculate how many injections have been given
+            const injectionsGiven = totalDoses - currentRepeatsLeft;
+            
+            if (currentRepeatsLeft <= 0) {
+                alert('No doses remaining! This patient has completed all doses and will be archived.');
                 patient['Archived'] = true;
                 patient['File Status'] = 'Completed';
                 saveToLocalStorage();
@@ -340,40 +370,48 @@
                 return;
             }
 
-            if (patient['Assignment Type'] === 'x1 dose only' && dosesLeft === parseInt(patient['Total Doses'])) {
+            // Single dose continuation check (for x1 dose only on first injection)
+            if (patient['Assignment Type'] === 'x1 dose only' && injectionsGiven === 0) {
                 if (confirm('This is a single-dose patient. After administration, ask: Do you want to continue treatment?')) {
                     patient['Assignment Type'] = 'Permanent';
                 }
             }
 
+            // Record previous injection date
             const today = new Date().toISOString().split('T')[0];
             const prevDates = patient['Previous Injection Dates'] ? patient['Previous Injection Dates'].split(',').map(d => d.trim()) : [];
             prevDates.push(today);
             patient['Previous Injection Dates'] = prevDates.join(', ');
 
+            // Update injection site tracking
             if (patient['Injection Site']) {
                 patient['Previous Injection Site'] = patient['Injection Site'];
             }
 
-            const newDosesLeft = dosesLeft - 1;
-            patient['Doses Repeats Left'] = newDosesLeft.toString();
+            // Decrease repeats left
+            const newRepeatsLeft = currentRepeatsLeft - 1;
+            patient['Doses Repeats Left'] = newRepeatsLeft.toString();
 
-            if (newDosesLeft > 0) {
+            // Calculate new due date if there are more repeats left
+            if (newRepeatsLeft > 0) {
                 const currentDueDate = patient['Due Date'] || new Date().toISOString().split('T')[0];
                 patient['Due Date'] = calculateNextDueDate(currentDueDate, patient['Dose Prescribed']);
             }
 
             patient['Injection Administered'] = true;
 
-            if (newDosesLeft === 0) {
+            // Archive if no repeats left (all doses completed)
+            if (newRepeatsLeft === 0) {
                 patient['Archived'] = true;
                 patient['File Status'] = 'Completed';
-                alert(`${patient['Patient Name']} has completed all doses and has been archived.`);
+                alert(`${patient['Patient Name']} has completed all ${totalDoses} doses and has been archived.`);
             }
 
             saveToLocalStorage();
             renderCurrentTab();
-            alert(`✅ Injection administered. ${newDosesLeft} doses remaining.`);
+            
+            const injectionsRemaining = newRepeatsLeft;
+            alert(`✅ Injection administered.\n\nDoses given: ${totalDoses - newRepeatsLeft} of ${totalDoses}\nRepeats remaining: ${newRepeatsLeft}\nNew due date: ${patient['Due Date'] || 'Not set'}`);
         }
 
         function confirmAppointment(fileNumber) {
@@ -422,7 +460,6 @@
                     case 'scheduled':
                         return apptDate && apptDate > today && !p['Archived'];
                     case 'overdue':
-                        // Appointment date has passed, injection not recorded
                         return dueDate && dueDate < today && !p['Injection Administered'] && !p['Archived'] && !p['Pending'];
                     case 'queue':
                         return !p['Archived'] && !p['Pending'];
@@ -443,7 +480,6 @@
                 );
             }
 
-            // Apply priority sorting
             return prioritySort(filtered, currentTab);
         }
 
@@ -471,7 +507,9 @@
                 const dueDateStr = patient['Due Date'] ? new Date(patient['Due Date']).toLocaleDateString() : 'Not set';
                 const hasSpecial = patient['Special Instructions'] && patient['Special Instructions'].trim() !== '';
                 const doseMg = patient['Dose Prescribed'] ? `${patient['Dose Prescribed']}mg` : '';
-                const dosesLeft = patient['Doses Repeats Left'] || 0;
+                const totalDoses = parseInt(patient['Total Doses']) || 4;
+                const repeatsLeft = parseInt(patient['Doses Repeats Left']) || 0;
+                const dosesGiven = totalDoses - repeatsLeft;
                 const hasAppointment = patient['Appointment Date & Time'];
                 const isConfirmed = patient['Appointment Confirmed'] === true;
                 const apptDateStr = hasAppointment ? new Date(patient['Appointment Date & Time']).toLocaleString() : 'No appointment';
@@ -488,7 +526,7 @@
                                     ${hasAppointment && !isConfirmed ? '<span class="confirm-needed">⚠️ Needs Confirmation</span>' : ''}
                                 </div>
                                 <div class="patient-address">${escapeHtml(patient['Address'] || 'No address')}</div>
-                                <div class="due-date">📅 Due: ${dueDateStr} | 💊 ${dosesLeft} left</div>
+                                <div class="due-date">📅 Due: ${dueDateStr} | 💉 ${dosesGiven}/${totalDoses} doses given | ${repeatsLeft} repeats left</div>
                                 ${hasAppointment ? `<div class="appt-badge">📆 Appt: ${apptDateStr} ${isConfirmed ? '✅' : '❌'}</div>` : ''}
                             </div>
                             <div class="action-buttons">
@@ -499,9 +537,10 @@
                         </div>
                         <div class="expanded-view">
                             <div class="detail-row"><div class="detail-label">File Number:</div><div class="detail-value">${escapeHtml(patient['File Number'])}</div></div>
-                            <div class="detail-row"><div class="detail-label">💊 Dose Prescribed:</div><div class="detail-value"><strong>${doseMg} (${doseToWeeks[patient['Dose Prescribed']] || 4} weeks)</strong></div></div>
-                            <div class="detail-row"><div class="detail-label">Total Doses:</div><div class="detail-value">${patient['Total Doses'] || 'N/A'}</div></div>
-                            <div class="detail-row"><div class="detail-label">Doses Remaining:</div><div class="detail-value">${dosesLeft}</div></div>
+                            <div class="detail-row"><div class="detail-label">💊 Dose Prescribed:</div><div class="detail-value"><strong>${doseMg} (${doseToWeeks[patient['Dose Prescribed']] || 4} weeks between doses)</strong></div></div>
+                            <div class="detail-row"><div class="detail-label">Total Doses:</div><div class="detail-value">${totalDoses}</div></div>
+                            <div class="detail-row"><div class="detail-label">Doses Given:</div><div class="detail-value">${dosesGiven}</div></div>
+                            <div class="detail-row"><div class="detail-label">Repeats Left:</div><div class="detail-value"><strong>${repeatsLeft}</strong> (Total Doses - 1 = Repeats)</div></div>
                             <div class="detail-row"><div class="detail-label">Previous Injection Site:</div><div class="detail-value">${escapeHtml(patient['Previous Injection Site'] || 'None')}</div></div>
                             <div class="detail-row"><div class="detail-label">Injection Site:</div><div class="detail-value">${escapeHtml(patient['Injection Site'] || 'Not set')}</div></div>
                             <div class="detail-row"><div class="detail-label">Due Date:</div><div class="detail-value"><strong>${dueDateStr}</strong></div></div>
@@ -511,7 +550,7 @@
                             ${patient['Special Instructions'] ? `<div class="detail-row"><div class="detail-label ins-red">⚠️ Special Instructions:</div><div class="detail-value ins-red">${escapeHtml(patient['Special Instructions'])}</div></div>` : ''}
                             <div class="detail-row"><div class="detail-label">Adverse Effects:</div><div class="detail-value">${escapeHtml(patient['Adverse Effects Comments'] || 'None')}</div></div>
                             <div class="action-row">
-                                <button class="action-sm inject-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="inject">💉 Inject</button>
+                                <button class="action-sm inject-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="inject">💉 Inject (${repeatsLeft} repeats left)</button>
                                 ${hasAppointment && !isConfirmed ? `<button class="action-sm confirm-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="confirm">✅ Confirm Appointment</button>` : ''}
                                 ${!patient['Pending'] ? `<button class="action-sm pending-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="pending">⏳ Pending</button>` : ''}
                                 <button class="action-sm edit-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="edit">✏️ Edit</button>
@@ -557,9 +596,22 @@
                     e.stopPropagation();
                     const fileNumber = btn.getAttribute('data-filenumber');
                     const patient = patients.find(p => p['File Number'] === fileNumber);
-                    showConfirmDialog(`Administer injection for ${patient['Patient Name']}?\n\nDose: ${patient['Dose Prescribed']}mg\nDoses left: ${patient['Doses Repeats Left']}`, () => {
-                        administerInjection(fileNumber);
-                    });
+                    const totalDoses = parseInt(patient['Total Doses']) || 4;
+                    const repeatsLeft = parseInt(patient['Doses Repeats Left']) || 0;
+                    const dosesGiven = totalDoses - repeatsLeft;
+                    
+                    showConfirmDialog(
+                        `💉 ADMINISTER INJECTION\n\n` +
+                        `Patient: ${patient['Patient Name']}\n` +
+                        `Dose: ${patient['Dose Prescribed']}mg\n` +
+                        `Doses given so far: ${dosesGiven} of ${totalDoses}\n` +
+                        `Repeats remaining: ${repeatsLeft}\n\n` +
+                        `Due date will advance ${doseToWeeks[patient['Dose Prescribed']] || 4} weeks.\n\n` +
+                        `Proceed?`, 
+                        () => {
+                            administerInjection(fileNumber);
+                        }
+                    );
                 });
             });
 
@@ -575,7 +627,7 @@
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const fileNumber = btn.getAttribute('data-filenumber');
-                    showConfirmDialog('Mark this patient as pending?', () => {
+                    showConfirmDialog('Mark this patient as pending? They will move to the Pending tab.', () => {
                         markPending(fileNumber);
                     });
                 });
@@ -593,7 +645,7 @@
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const fileNumber = btn.getAttribute('data-filenumber');
-                    showConfirmDialog('Permanently delete this patient?', () => {
+                    showConfirmDialog('Permanently delete this patient? This cannot be undone.', () => {
                         deletePatient(fileNumber);
                     });
                 });
@@ -606,11 +658,17 @@
             document.getElementById('modalTitle').innerText = 'Add Patient';
             document.getElementById('patientForm').reset();
             document.getElementById('deletePatientBtn').style.display = 'none';
-            document.getElementById('patientModal').style.display = 'block';
+            
+            // Set defaults
+            const defaultTotalDoses = 4;
+            document.getElementById('totalDoses').value = defaultTotalDoses;
+            document.getElementById('dosesLeft').value = defaultTotalDoses - 1;
             
             const defaultDueDate = new Date();
             defaultDueDate.setDate(defaultDueDate.getDate() + 7);
             document.getElementById('dueDate').value = defaultDueDate.toISOString().split('T')[0];
+            
+            document.getElementById('patientModal').style.display = 'block';
         }
 
         function openEditModal(fileNumber) {
@@ -626,7 +684,14 @@
             document.getElementById('phone2').value = patient['Phone 2'] || '';
             document.getElementById('dosePrescribed').value = patient['Dose Prescribed'] || '7.5';
             document.getElementById('totalDoses').value = patient['Total Doses'] || 4;
-            document.getElementById('dosesLeft').value = patient['Doses Repeats Left'] || 0;
+            
+            // Calculate proper doses left if needed
+            let dosesLeft = patient['Doses Repeats Left'];
+            if (!dosesLeft || dosesLeft === '') {
+                dosesLeft = (parseInt(patient['Total Doses']) || 4) - 1;
+            }
+            document.getElementById('dosesLeft').value = dosesLeft;
+            
             document.getElementById('prevInjSite').value = patient['Previous Injection Site'] || '';
             document.getElementById('injSite').value = patient['Injection Site'] || '';
             document.getElementById('dueDate').value = patient['Due Date'] || '';
@@ -651,6 +716,10 @@
                 return;
             }
 
+            const totalDoses = parseInt(document.getElementById('totalDoses').value) || 4;
+            // Doses Left (Repeats) = Total Doses - 1 (first dose is initial)
+            const calculatedDosesLeft = totalDoses - 1;
+            
             const patientData = {
                 'Patient Name': document.getElementById('patientName').value,
                 'File Number': fileNumber,
@@ -658,8 +727,8 @@
                 'Phone 1': document.getElementById('phone1').value,
                 'Phone 2': document.getElementById('phone2').value,
                 'Dose Prescribed': document.getElementById('dosePrescribed').value,
-                'Total Doses': document.getElementById('totalDoses').value,
-                'Doses Repeats Left': document.getElementById('dosesLeft').value,
+                'Total Doses': totalDoses.toString(),
+                'Doses Repeats Left': calculatedDosesLeft.toString(),
                 'Previous Injection Site': document.getElementById('prevInjSite').value,
                 'Injection Site': document.getElementById('injSite').value,
                 'Due Date': document.getElementById('dueDate').value,
@@ -691,7 +760,7 @@
             saveToLocalStorage();
             closeModal();
             renderCurrentTab();
-            alert(`Patient ${patientData['Patient Name']} saved successfully!`);
+            alert(`Patient ${patientData['Patient Name']} saved successfully!\n\nTotal Doses: ${totalDoses}\nRepeats Left: ${calculatedDosesLeft} (will decrease with each injection)`);
         }
 
         function closeModal() {

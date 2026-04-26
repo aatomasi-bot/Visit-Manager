@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Patient Dosing Tracker - Advanced Features</title>
+    <title>Patient Dosing Tracker - Custom Reports</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f0f2f5; padding: 12px; padding-bottom: 80px; }
@@ -23,8 +23,12 @@
         .btn-danger { background: #ff3b30; color: white; border: none; padding: 10px 16px; border-radius: 25px; font-weight: 500; cursor: pointer; }
         .add-btn { width: 100%; margin-bottom: 16px; padding: 14px; font-size: 16px; border-radius: 30px; background: #007aff; color: white; border: none; font-weight: 600; cursor: pointer; }
         
-        .report-buttons { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-        .report-btn { background: #5856d6; color: white; border: none; padding: 8px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; }
+        .report-section { background: white; border-radius: 20px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .report-title { font-weight: 600; margin-bottom: 12px; color: #1a1a2e; }
+        .report-input-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+        .report-input-row input, .report-input-row select { flex: 1; padding: 10px 12px; border: 1px solid #ddd; border-radius: 25px; font-size: 14px; min-width: 120px; }
+        .quick-reports { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee; }
+        .quick-btn { background: #5856d6; color: white; border: none; padding: 6px 12px; border-radius: 20px; font-size: 11px; cursor: pointer; }
         
         .tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
         .tab-btn { padding: 10px 18px; background: white; border: 1px solid #ddd; border-radius: 30px; cursor: pointer; font-size: 13px; font-weight: 500; flex-shrink: 0; }
@@ -102,6 +106,7 @@
             .form-group.full-width { grid-column: span 1; }
             .detail-label { width: 120px; }
             .header-actions { width: 100%; justify-content: center; }
+            .report-input-row { flex-direction: column; }
         }
     </style>
 </head>
@@ -131,11 +136,43 @@
             </div>
         </div>
 
-        <div class="report-buttons">
-            <button class="report-btn" data-report="dueMay2026">📅 Due in May 2026</button>
-            <button class="report-btn" data-report="noRepeatsLeft">⚠️ No Repeats Left</button>
-            <button class="report-btn" data-report="pendingPatients">⏳ Pending Patients</button>
-            <button id="closeReportBtn" class="report-btn" style="background:#ff3b30; display:none;">❌ Close Report</button>
+        <!-- Custom Report Section -->
+        <div class="report-section">
+            <div class="report-title">📊 Custom Report Generator</div>
+            <div class="report-input-row">
+                <select id="reportField">
+                    <option value="Due Date">Due Date</option>
+                    <option value="Dose Prescribed">Dose Prescribed (mg)</option>
+                    <option value="Assignment Type">Assignment Type</option>
+                    <option value="Doses Remaining">Doses Remaining</option>
+                    <option value="Appointment Confirmed">Appointment Confirmed</option>
+                    <option value="Pending">Pending Status</option>
+                    <option value="Archived">Archived Status</option>
+                    <option value="Patient Name">Patient Name</option>
+                    <option value="File Number">File Number</option>
+                    <option value="Injection Site">Injection Site</option>
+                </select>
+                <select id="reportCondition">
+                    <option value="equals">Equals</option>
+                    <option value="contains">Contains</option>
+                    <option value="greater">Greater Than</option>
+                    <option value="less">Less Than</option>
+                    <option value="between">Between (for dates)</option>
+                </select>
+                <input type="text" id="reportValue" placeholder="Value (e.g., 2026-05, 7.5, Permanent, 0)">
+                <input type="text" id="reportValueEnd" placeholder="End value (for between)" style="display:none;">
+                <button id="generateReportBtn" class="btn-primary">🔍 Generate Report</button>
+            </div>
+            <div class="quick-reports">
+                <span style="font-size:12px; color:#666;">Quick Reports:</span>
+                <button class="quick-btn" data-quick="dueToday">Due Today</button>
+                <button class="quick-btn" data-quick="dueMay2026">Due May 2026</button>
+                <button class="quick-btn" data-quick="noRepeatsLeft">No Repeats Left</button>
+                <button class="quick-btn" data-quick="pendingPatients">Pending Patients</button>
+                <button class="quick-btn" data-quick="tempPatients">Temporary Patients</button>
+                <button class="quick-btn" data-quick="overdueAppointments">Overdue Appointments</button>
+                <button id="closeReportBtn" class="quick-btn" style="background:#ff3b30; display:none;">Close Report</button>
+            </div>
         </div>
 
         <div class="tabs" id="tabsContainer">
@@ -262,36 +299,84 @@
         const doseToWeeks = { '7.5': 4, '22.5': 12, '30': 16, '45': 24 };
         const injectionSites = ['Right Side', 'Left Side', 'Right Glute', 'Left Glute'];
 
-        // ========== REPORT GENERATION ==========
-        function generateReport(reportType) {
-            let filteredPatients = [];
-            let title = '';
+        // ========== CUSTOM REPORT GENERATOR ==========
+        function generateCustomReport() {
+            const field = document.getElementById('reportField').value;
+            const condition = document.getElementById('reportCondition').value;
+            let value = document.getElementById('reportValue').value.toLowerCase();
+            let valueEnd = document.getElementById('reportValueEnd').value;
             
-            switch(reportType) {
-                case 'dueMay2026':
-                    title = '📅 Patients Due in May 2026';
-                    filteredPatients = patients.filter(p => {
-                        if (!p['Due Date']) return false;
-                        const dueDate = new Date(p['Due Date']);
-                        return dueDate.getFullYear() === 2026 && dueDate.getMonth() === 4; // May is month 4
-                    });
-                    break;
-                case 'noRepeatsLeft':
-                    title = '⚠️ Patients with No Repeats Left';
-                    filteredPatients = patients.filter(p => {
-                        const dosesRemaining = parseInt(p['Doses Remaining']) || parseInt(p['Total Doses']) || 0;
-                        return dosesRemaining === 0 && !p['Archived'];
-                    });
-                    break;
-                case 'pendingPatients':
-                    title = '⏳ Pending Patients';
-                    filteredPatients = patients.filter(p => p['Pending'] === true && !p['Archived']);
-                    break;
-                default:
-                    return;
+            // Show/hide end value field for "between" condition
+            if (condition === 'between') {
+                document.getElementById('reportValueEnd').style.display = 'inline-block';
+            } else {
+                document.getElementById('reportValueEnd').style.display = 'none';
             }
             
-            // Group by date
+            let filteredPatients = [...patients];
+            let title = `Report: ${field} ${condition} ${value}`;
+            
+            // Apply filter based on field and condition
+            filteredPatients = filteredPatients.filter(p => {
+                let fieldValue = p[field];
+                
+                // Handle different field types
+                if (field === 'Due Date') {
+                    if (!fieldValue) return false;
+                    const dueDate = new Date(fieldValue);
+                    const valueDate = new Date(value);
+                    
+                    if (condition === 'equals') {
+                        return dueDate.toDateString() === valueDate.toDateString();
+                    } else if (condition === 'greater') {
+                        return dueDate > valueDate;
+                    } else if (condition === 'less') {
+                        return dueDate < valueDate;
+                    } else if (condition === 'between' && valueEnd) {
+                        const endDate = new Date(valueEnd);
+                        return dueDate >= valueDate && dueDate <= endDate;
+                    } else if (condition === 'contains') {
+                        return fieldValue.includes(value);
+                    }
+                }
+                else if (field === 'Dose Prescribed') {
+                    if (condition === 'equals') return fieldValue === value;
+                    if (condition === 'contains') return fieldValue.includes(value);
+                    if (condition === 'greater') return parseFloat(fieldValue) > parseFloat(value);
+                    if (condition === 'less') return parseFloat(fieldValue) < parseFloat(value);
+                }
+                else if (field === 'Doses Remaining') {
+                    const dosesRemaining = parseInt(fieldValue) || 0;
+                    const compareValue = parseInt(value);
+                    if (condition === 'equals') return dosesRemaining === compareValue;
+                    if (condition === 'greater') return dosesRemaining > compareValue;
+                    if (condition === 'less') return dosesRemaining < compareValue;
+                }
+                else if (field === 'Appointment Confirmed') {
+                    const isConfirmed = fieldValue === true || fieldValue === 'true' || fieldValue === 'TRUE';
+                    const wantConfirmed = value === 'true' || value === 'yes' || value === 'confirmed' || value === '1';
+                    return isConfirmed === wantConfirmed;
+                }
+                else if (field === 'Pending' || field === 'Archived') {
+                    const isTrue = fieldValue === true || fieldValue === 'true' || fieldValue === 'TRUE';
+                    const wantTrue = value === 'true' || value === 'yes' || value === '1';
+                    return isTrue === wantTrue;
+                }
+                else {
+                    // Text fields
+                    fieldValue = String(fieldValue || '').toLowerCase();
+                    if (condition === 'equals') return fieldValue === value;
+                    if (condition === 'contains') return fieldValue.includes(value);
+                }
+                return false;
+            });
+            
+            if (filteredPatients.length === 0) {
+                alert('No patients match your report criteria.');
+                return;
+            }
+            
+            // Group by due date for better display
             const groupedByDate = {};
             filteredPatients.forEach(p => {
                 const dueDate = p['Due Date'] ? new Date(p['Due Date']).toLocaleDateString() : 'No Date';
@@ -299,41 +384,150 @@
                 groupedByDate[dueDate].push(p);
             });
             
-            // Sort dates
-            const sortedDates = Object.keys(groupedByDate).sort((a,b) => new Date(a) - new Date(b));
+            const sortedDates = Object.keys(groupedByDate).sort((a,b) => {
+                if (a === 'No Date') return 1;
+                if (b === 'No Date') return -1;
+                return new Date(a) - new Date(b);
+            });
             
-            let reportHtml = `<div class="report-container"><h3 style="margin-bottom:16px;">${title} (${filteredPatients.length} patients)</h3>`;
+            let reportHtml = `<div class="report-container">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+                    <h3>📊 ${title}</h3>
+                    <div><strong>${filteredPatients.length}</strong> patients found</div>
+                </div>`;
             
             for (const date of sortedDates) {
                 reportHtml += `<div class="date-separator">📅 ${date}</div>`;
                 for (const p of groupedByDate[date]) {
-                    const dosesRemaining = parseInt(p['Doses Remaining']) || parseInt(p['Total Doses']) || 0;
                     const totalDoses = parseInt(p['Total Doses']) || 4;
+                    const dosesRemaining = parseInt(p['Doses Remaining']) || totalDoses;
                     reportHtml += `
-                        <div class="report-item">
-                            <strong>${escapeHtml(p['Patient Name'])}</strong> #${escapeHtml(p['File Number'])}<br>
-                            💊 ${p['Dose Prescribed']}mg | 💉 ${totalDoses - dosesRemaining}/${totalDoses} doses given<br>
-                            📞 ${p['Phone 1'] || 'No phone'} | 📍 ${escapeHtml(p['Address'] || 'No address')}
+                        <div class="report-item" onclick="openEditModal('${escapeHtml(p['File Number'])}')" style="cursor:pointer;">
+                            <div style="display:flex; justify-content:space-between; flex-wrap:wrap;">
+                                <strong>${escapeHtml(p['Patient Name'])}</strong>
+                                <span style="color:#666;">#${escapeHtml(p['File Number'])}</span>
+                            </div>
+                            <div style="font-size:12px; color:#666; margin-top:4px;">
+                                💊 ${p['Dose Prescribed']}mg | 💉 ${totalDoses - dosesRemaining}/${totalDoses} doses given
+                                ${p['Phone 1'] ? ` | 📞 ${escapeHtml(p['Phone 1'])}` : ''}
+                                ${p['Address'] ? ` | 📍 ${escapeHtml(p['Address'])}` : ''}
+                            </div>
+                            ${p['Special Instructions'] ? `<div style="font-size:11px; color:#ff3b30; margin-top:4px;">⚠️ ${escapeHtml(p['Special Instructions'])}</div>` : ''}
                         </div>
                     `;
                 }
             }
             
-            reportHtml += `<div style="margin-top:16px;"><button onclick="closeReport()" class="btn-secondary">Close Report</button></div></div>`;
+            reportHtml += `<div style="margin-top:16px;">
+                <button onclick="closeReport()" class="btn-secondary">Close Report</button>
+                <button onclick="exportReportToCSV()" class="btn-primary" style="margin-left:8px;">📥 Export Report to CSV</button>
+            </div></div>`;
             
             document.getElementById('patientList').style.display = 'none';
             document.getElementById('reportView').style.display = 'block';
             document.getElementById('reportView').innerHTML = reportHtml;
             document.getElementById('closeReportBtn').style.display = 'inline-block';
+            
+            // Store last report data for export
+            window.lastReportData = filteredPatients;
+        }
+        
+        function exportReportToCSV() {
+            if (!window.lastReportData || window.lastReportData.length === 0) {
+                alert('No report data to export');
+                return;
+            }
+            
+            const headers = ['Patient Name', 'File Number', 'Address', 'Phone 1', 'Phone 2', 'Dose Prescribed', 'Total Doses', 'Doses Remaining', 'Due Date', 'Appointment Date & Time', 'Assignment Type', 'Special Instructions', 'Appointment Confirmed', 'Pending', 'Archived'];
+            const csvRows = [headers.join(',')];
+            
+            for (const p of window.lastReportData) {
+                const row = headers.map(h => {
+                    let value = p[h] || '';
+                    if (typeof value === 'boolean') value = value ? 'TRUE' : 'FALSE';
+                    if (value.toString().includes(',')) value = `"${value}"`;
+                    return value;
+                });
+                csvRows.push(row.join(','));
+            }
+            
+            const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `report_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function quickReport(type) {
+            let field, condition, value, valueEnd;
+            
+            switch(type) {
+                case 'dueToday':
+                    field = 'Due Date';
+                    condition = 'equals';
+                    value = new Date().toISOString().split('T')[0];
+                    break;
+                case 'dueMay2026':
+                    field = 'Due Date';
+                    condition = 'between';
+                    value = '2026-05-01';
+                    valueEnd = '2026-05-31';
+                    document.getElementById('reportValueEnd').value = valueEnd;
+                    break;
+                case 'noRepeatsLeft':
+                    field = 'Doses Remaining';
+                    condition = 'equals';
+                    value = '0';
+                    break;
+                case 'pendingPatients':
+                    field = 'Pending';
+                    condition = 'equals';
+                    value = 'true';
+                    break;
+                case 'tempPatients':
+                    field = 'Assignment Type';
+                    condition = 'equals';
+                    value = 'Temporary';
+                    break;
+                case 'overdueAppointments':
+                    field = 'Appointment Confirmed';
+                    condition = 'equals';
+                    value = 'false';
+                    break;
+                default:
+                    return;
+            }
+            
+            document.getElementById('reportField').value = field;
+            document.getElementById('reportCondition').value = condition;
+            document.getElementById('reportValue').value = value;
+            if (valueEnd) document.getElementById('reportValueEnd').value = valueEnd;
+            
+            generateCustomReport();
         }
         
         function closeReport() {
             document.getElementById('patientList').style.display = 'flex';
             document.getElementById('reportView').style.display = 'none';
             document.getElementById('closeReportBtn').style.display = 'none';
+            window.lastReportData = null;
             renderCurrentTab();
         }
-
+        
+        // Show/hide end value field
+        document.addEventListener('DOMContentLoaded', function() {
+            const conditionSelect = document.getElementById('reportCondition');
+            conditionSelect.addEventListener('change', function() {
+                if (this.value === 'between') {
+                    document.getElementById('reportValueEnd').style.display = 'inline-block';
+                } else {
+                    document.getElementById('reportValueEnd').style.display = 'none';
+                }
+            });
+        });
+        
         // ========== CSV IMPORT ==========
         function importCSV(file) {
             const reader = new FileReader();
@@ -354,7 +548,6 @@
                         });
                         
                         if (patient['Patient Name'] && patient['Patient Name'] !== 'Patient Name') {
-                            // Check if file number already exists
                             if (!patients.find(p => p['File Number'] === patient['File Number'])) {
                                 patient['Doses Remaining'] = patient['Doses Remaining'] || patient['Total Doses'] || 4;
                                 patient['Injection Administered'] = false;
@@ -377,15 +570,12 @@
             reader.readAsText(file);
         }
         
-        // ========== PDF TEXT EXTRACTION (Basic) ==========
+        // ========== PDF TEXT EXTRACTION ==========
         async function importPDF(file) {
-            // Note: Full PDF extraction requires a library. This is a placeholder that 
-            // demonstrates the structure. For production, use pdf.js library.
             alert(`PDF Import: Please paste the extracted text from your PDF below.\n\nThis allows you to copy patient data from PDF documents.`);
             
             const text = prompt("Paste the extracted text from your PDF here:", "");
             if (text) {
-                // Basic parsing - looks for patterns like "Name: John Smith" or "Patient: John Smith"
                 const lines = text.split('\n');
                 const newPatient = {};
                 
@@ -431,101 +621,7 @@
             }
         }
 
-        // ========== PRIORITY SORT WITH DATE SEPARATORS ==========
-        function renderWithDateSeparators(patientsList) {
-            if (!patientsList.length) return '<div class="empty-state">✨ No patients in this tab</div>';
-            
-            // Group by due date
-            const groupedByDate = {};
-            patientsList.forEach(p => {
-                const dueDate = p['Due Date'] ? new Date(p['Due Date']).toLocaleDateString() : 'No Due Date';
-                if (!groupedByDate[dueDate]) groupedByDate[dueDate] = [];
-                groupedByDate[dueDate].push(p);
-            });
-            
-            // Sort dates
-            const sortedDates = Object.keys(groupedByDate).sort((a,b) => {
-                if (a === 'No Due Date') return 1;
-                if (b === 'No Due Date') return -1;
-                return new Date(a) - new Date(b);
-            });
-            
-            let html = '';
-            for (const date of sortedDates) {
-                html += `<div class="date-separator">📅 ${date}</div>`;
-                for (const patient of groupedByDate[date]) {
-                    html += renderPatientCard(patient);
-                }
-            }
-            return html;
-        }
-        
-        function renderPatientCard(patient) {
-            const dueDateStr = patient['Due Date'] ? new Date(patient['Due Date']).toLocaleDateString() : 'Not set';
-            const specialInstructions = patient['Special Instructions'] || '';
-            const doseMg = patient['Dose Prescribed'] ? `${patient['Dose Prescribed']}mg` : '';
-            const totalDoses = parseInt(patient['Total Doses']) || 4;
-            const dosesRemaining = parseInt(patient['Doses Remaining']) || totalDoses;
-            const dosesGiven = totalDoses - dosesRemaining;
-            const hasAppointment = patient['Appointment Date & Time'];
-            const isConfirmed = patient['Appointment Confirmed'] === true;
-            const apptDateStr = hasAppointment ? new Date(patient['Appointment Date & Time']).toLocaleString() : 'No appointment';
-            const showWarning = patient['Assignment Type'] === 'Temporary' && dosesRemaining === 0;
-            
-            return `
-                <div class="patient-card" data-filenumber="${escapeHtml(patient['File Number'])}">
-                    <div class="collapsed-view">
-                        <div class="patient-info">
-                            <div>
-                                <span class="patient-name">${escapeHtml(patient['Patient Name'])}</span>
-                                <span class="patient-file">#${escapeHtml(patient['File Number'])}</span>
-                                ${doseMg ? `<span class="dose-badge">${doseMg}</span>` : ''}
-                                ${showWarning ? '<span class="warning-badge">⚠️ Doses Complete - Review Needed</span>' : ''}
-                            </div>
-                            <div class="patient-address">${escapeHtml(patient['Address'] || 'No address')}</div>
-                            <div class="due-date">📅 Due: ${dueDateStr} | 💉 ${dosesGiven}/${totalDoses} doses given</div>
-                            ${hasAppointment ? `<div class="appt-badge">📆 Appt: ${apptDateStr} ${isConfirmed ? '✅' : '❌'}</div>` : ''}
-                            ${specialInstructions ? `<div class="special-badge">⚠️ ${escapeHtml(specialInstructions)}</div>` : ''}
-                        </div>
-                        <div class="action-buttons">
-                            ${patient['Phone 1'] ? `<button class="action-icon call-icon" data-phone="${escapeHtml(patient['Phone 1'])}">📞</button>` : ''}
-                            ${patient['Phone 2'] ? `<button class="action-icon call-icon" data-phone="${escapeHtml(patient['Phone 2'])}">📞2</button>` : ''}
-                            ${patient['Address'] ? `<button class="action-icon nav-icon" data-address="${escapeHtml(patient['Address'])}">📍</button>` : ''}
-                        </div>
-                    </div>
-                    <div class="expanded-view">
-                        <div class="detail-row"><div class="detail-label">File Number:</div><div class="detail-value">${escapeHtml(patient['File Number'])}</div></div>
-                        <div class="detail-row"><div class="detail-label">💊 Dose Prescribed:</div><div class="detail-value"><strong>${doseMg} (${doseToWeeks[patient['Dose Prescribed']] || 4} weeks between doses)</strong></div></div>
-                        <div class="detail-row"><div class="detail-label">Total Doses:</div><div class="detail-value">${totalDoses}</div></div>
-                        <div class="detail-row"><div class="detail-label">Doses Given:</div><div class="detail-value">${dosesGiven}</div></div>
-                        <div class="detail-row"><div class="detail-label">Doses Remaining:</div><div class="detail-value"><strong>${dosesRemaining}</strong></div></div>
-                        <div class="detail-row"><div class="detail-label">Previous Injection Site:</div><div class="detail-value">${escapeHtml(patient['Previous Injection Site'] || 'None')}</div></div>
-                        <div class="detail-row"><div class="detail-label">Injection Site:</div><div class="detail-value">${escapeHtml(patient['Injection Site'] || 'Not set')}</div></div>
-                        <div class="detail-row"><div class="detail-label">Due Date:</div><div class="detail-value"><strong>${dueDateStr}</strong></div></div>
-                        <div class="detail-row"><div class="detail-label">Appointment:</div><div class="detail-value">${apptDateStr}</div></div>
-                        <div class="detail-row"><div class="detail-label">Appointment Confirmed:</div><div class="detail-value">
-                            ${isConfirmed ? '✅ Yes' : '❌ No'}
-                            ${!isConfirmed ? `<span class="edit-icon" onclick="openEditModal('${patient['File Number']}')">✏️</span>` : ''}
-                        </div></div>
-                        <div class="detail-row"><div class="detail-label">Assignment:</div><div class="detail-value">${escapeHtml(patient['Assignment Type'])}</div></div>
-                        ${specialInstructions ? `<div class="detail-row"><div class="detail-label ins-red">⚠️ Special Instructions:</div><div class="detail-value ins-red">${escapeHtml(specialInstructions)}</div></div>` : ''}
-                        <div class="detail-row"><div class="detail-label">Adverse Effects:</div><div class="detail-value">${escapeHtml(patient['Adverse Effects Comments'] || 'None')}</div></div>
-                        <div class="action-row">
-                            <button class="action-sm inject-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="inject">💉 Inject (${dosesRemaining} left)</button>
-                            ${hasAppointment && !isConfirmed ? `<button class="action-sm confirm-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="confirm">✅ Confirm Appt</button>` : ''}
-                            ${currentTab === 'pending' || currentTab === 'archived' ? 
-                                `<button class="action-sm move-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="move">🔄 Move to All Patients</button>` : 
-                                `<button class="action-sm pending-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="pending">⏳ Pending</button>`
-                            }
-                            <button class="action-sm edit-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="edit">✏️ Edit</button>
-                            <button class="action-sm delete-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="delete">🗑️ Delete</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        // ========== LOAD FROM GOOGLE SHEETS ==========
+        // ========== EXISTING FUNCTIONS ==========
         async function loadFromGoogleSheets() {
             document.getElementById('syncStatus').innerHTML = '🔄 Loading from Google Sheets...';
             
@@ -589,7 +685,6 @@
             }
         }
 
-        // ========== LOCAL STORAGE ==========
         function saveToLocalStorage() {
             localStorage.setItem('patientTrackerData', JSON.stringify(patients));
             document.getElementById('recordCount').innerHTML = `📋 ${patients.length} total patients`;
@@ -606,7 +701,6 @@
             renderCurrentTab();
         }
 
-        // ========== DOSING LOGIC ==========
         function calculateNextDueDate(currentDueDate, dosePrescribed) {
             const weeks = doseToWeeks[dosePrescribed] || 4;
             const newDate = new Date(currentDueDate);
@@ -644,23 +738,19 @@
                 return;
             }
 
-            // Record previous injection date and site
             const today = new Date().toISOString().split('T')[0];
             const prevDates = patient['Previous Injection Dates'] ? patient['Previous Injection Dates'].split(',').map(d => d.trim()) : [];
             prevDates.push(today);
             patient['Previous Injection Dates'] = prevDates.join(', ');
 
-            // Update injection site tracking
             if (patient['Injection Site']) {
                 patient['Previous Injection Site'] = patient['Injection Site'];
             }
             patient['Injection Site'] = injectionSite;
 
-            // Decrease doses remaining
             const newDosesRemaining = dosesRemaining - 1;
             patient['Doses Remaining'] = newDosesRemaining.toString();
 
-            // Calculate new due date
             if (newDosesRemaining > 0) {
                 const currentDueDate = patient['Due Date'] || new Date().toISOString().split('T')[0];
                 patient['Due Date'] = calculateNextDueDate(currentDueDate, patient['Dose Prescribed']);
@@ -691,7 +781,7 @@
                 patient['Appointment Confirmed'] = true;
                 saveToLocalStorage();
                 renderCurrentTab();
-                alert(`✅ Appointment confirmed for ${patient['Patient Name']}. Patient moved to Scheduled tab.`);
+                alert(`✅ Appointment confirmed for ${patient['Patient Name']}.`);
             }
         }
 
@@ -732,7 +822,6 @@
             return apptDate < today && !patient['Injection Administered'];
         }
 
-        // ========== FILTERING ==========
         function getFilteredPatients() {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
@@ -793,7 +882,97 @@
             });
         }
 
-        // ========== RENDER ==========
+        function renderPatientCard(patient) {
+            const dueDateStr = patient['Due Date'] ? new Date(patient['Due Date']).toLocaleDateString() : 'Not set';
+            const specialInstructions = patient['Special Instructions'] || '';
+            const doseMg = patient['Dose Prescribed'] ? `${patient['Dose Prescribed']}mg` : '';
+            const totalDoses = parseInt(patient['Total Doses']) || 4;
+            const dosesRemaining = parseInt(patient['Doses Remaining']) || totalDoses;
+            const dosesGiven = totalDoses - dosesRemaining;
+            const hasAppointment = patient['Appointment Date & Time'];
+            const isConfirmed = patient['Appointment Confirmed'] === true;
+            const apptDateStr = hasAppointment ? new Date(patient['Appointment Date & Time']).toLocaleString() : 'No appointment';
+            const showWarning = patient['Assignment Type'] === 'Temporary' && dosesRemaining === 0;
+            
+            return `
+                <div class="patient-card" data-filenumber="${escapeHtml(patient['File Number'])}">
+                    <div class="collapsed-view">
+                        <div class="patient-info">
+                            <div>
+                                <span class="patient-name">${escapeHtml(patient['Patient Name'])}</span>
+                                <span class="patient-file">#${escapeHtml(patient['File Number'])}</span>
+                                ${doseMg ? `<span class="dose-badge">${doseMg}</span>` : ''}
+                                ${showWarning ? '<span class="warning-badge">⚠️ Doses Complete - Review Needed</span>' : ''}
+                            </div>
+                            <div class="patient-address">${escapeHtml(patient['Address'] || 'No address')}</div>
+                            <div class="due-date">📅 Due: ${dueDateStr} | 💉 ${dosesGiven}/${totalDoses} doses given</div>
+                            ${hasAppointment ? `<div class="appt-badge">📆 Appt: ${apptDateStr} ${isConfirmed ? '✅' : '❌'}</div>` : ''}
+                            ${specialInstructions ? `<div class="special-badge">⚠️ ${escapeHtml(specialInstructions)}</div>` : ''}
+                        </div>
+                        <div class="action-buttons">
+                            ${patient['Phone 1'] ? `<button class="action-icon call-icon" data-phone="${escapeHtml(patient['Phone 1'])}">📞</button>` : ''}
+                            ${patient['Phone 2'] ? `<button class="action-icon call-icon" data-phone="${escapeHtml(patient['Phone 2'])}">📞2</button>` : ''}
+                            ${patient['Address'] ? `<button class="action-icon nav-icon" data-address="${escapeHtml(patient['Address'])}">📍</button>` : ''}
+                        </div>
+                    </div>
+                    <div class="expanded-view">
+                        <div class="detail-row"><div class="detail-label">File Number:</div><div class="detail-value">${escapeHtml(patient['File Number'])}</div></div>
+                        <div class="detail-row"><div class="detail-label">💊 Dose Prescribed:</div><div class="detail-value"><strong>${doseMg} (${doseToWeeks[patient['Dose Prescribed']] || 4} weeks)</strong></div></div>
+                        <div class="detail-row"><div class="detail-label">Total Doses:</div><div class="detail-value">${totalDoses}</div></div>
+                        <div class="detail-row"><div class="detail-label">Doses Given:</div><div class="detail-value">${dosesGiven}</div></div>
+                        <div class="detail-row"><div class="detail-label">Doses Remaining:</div><div class="detail-value"><strong>${dosesRemaining}</strong></div></div>
+                        <div class="detail-row"><div class="detail-label">Previous Injection Site:</div><div class="detail-value">${escapeHtml(patient['Previous Injection Site'] || 'None')}</div></div>
+                        <div class="detail-row"><div class="detail-label">Injection Site:</div><div class="detail-value">${escapeHtml(patient['Injection Site'] || 'Not set')}</div></div>
+                        <div class="detail-row"><div class="detail-label">Due Date:</div><div class="detail-value"><strong>${dueDateStr}</strong></div></div>
+                        <div class="detail-row"><div class="detail-label">Appointment:</div><div class="detail-value">${apptDateStr}</div></div>
+                        <div class="detail-row"><div class="detail-label">Appointment Confirmed:</div><div class="detail-value">
+                            ${isConfirmed ? '✅ Yes' : '❌ No'}
+                            ${!isConfirmed ? `<span class="edit-icon" onclick="openEditModal('${patient['File Number']}')">✏️</span>` : ''}
+                        </div></div>
+                        <div class="detail-row"><div class="detail-label">Assignment:</div><div class="detail-value">${escapeHtml(patient['Assignment Type'])}</div></div>
+                        ${specialInstructions ? `<div class="detail-row"><div class="detail-label ins-red">⚠️ Special Instructions:</div><div class="detail-value ins-red">${escapeHtml(specialInstructions)}</div></div>` : ''}
+                        <div class="detail-row"><div class="detail-label">Adverse Effects:</div><div class="detail-value">${escapeHtml(patient['Adverse Effects Comments'] || 'None')}</div></div>
+                        <div class="action-row">
+                            <button class="action-sm inject-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="inject">💉 Inject (${dosesRemaining} left)</button>
+                            ${hasAppointment && !isConfirmed ? `<button class="action-sm confirm-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="confirm">✅ Confirm Appt</button>` : ''}
+                            ${currentTab === 'pending' || currentTab === 'archived' ? 
+                                `<button class="action-sm move-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="move">🔄 Move to All Patients</button>` : 
+                                `<button class="action-sm pending-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="pending">⏳ Pending</button>`
+                            }
+                            <button class="action-sm edit-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="edit">✏️ Edit</button>
+                            <button class="action-sm delete-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="delete">🗑️ Delete</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderWithDateSeparators(patientsList) {
+            if (!patientsList.length) return '<div class="empty-state">✨ No patients in this tab</div>';
+            
+            const groupedByDate = {};
+            patientsList.forEach(p => {
+                const dueDate = p['Due Date'] ? new Date(p['Due Date']).toLocaleDateString() : 'No Due Date';
+                if (!groupedByDate[dueDate]) groupedByDate[dueDate] = [];
+                groupedByDate[dueDate].push(p);
+            });
+            
+            const sortedDates = Object.keys(groupedByDate).sort((a,b) => {
+                if (a === 'No Due Date') return 1;
+                if (b === 'No Due Date') return -1;
+                return new Date(a) - new Date(b);
+            });
+            
+            let html = '';
+            for (const date of sortedDates) {
+                html += `<div class="date-separator">📅 ${date}</div>`;
+                for (const patient of groupedByDate[date]) {
+                    html += renderPatientCard(patient);
+                }
+            }
+            return html;
+        }
+
         function renderCurrentTab() {
             const filtered = getFilteredPatients();
             const container = document.getElementById('patientList');
@@ -902,7 +1081,6 @@
             });
         }
 
-        // ========== MODAL ==========
         function openAddModal() {
             currentEditFileNumber = null;
             document.getElementById('modalTitle').innerText = 'Add Patient';
@@ -1045,6 +1223,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadFromLocalStorage();
 
+            // Tab switching
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1055,15 +1234,15 @@
             });
 
             // Report buttons
-            document.querySelectorAll('.report-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    if (btn.id === 'closeReportBtn') {
-                        closeReport();
-                    } else {
-                        generateReport(btn.getAttribute('data-report'));
-                    }
-                });
+            document.getElementById('generateReportBtn').addEventListener('click', generateCustomReport);
+            document.querySelectorAll('.quick-btn').forEach(btn => {
+                if (btn.id !== 'closeReportBtn') {
+                    btn.addEventListener('click', (e) => {
+                        quickReport(btn.getAttribute('data-quick'));
+                    });
+                }
             });
+            document.getElementById('closeReportBtn')?.addEventListener('click', closeReport);
 
             const searchInput = document.getElementById('searchInput');
             searchInput.addEventListener('input', (e) => { searchQuery = e.target.value; renderCurrentTab(); });
@@ -1072,11 +1251,9 @@
             document.getElementById('refreshBtn').addEventListener('click', () => { loadFromGoogleSheets(); });
             document.getElementById('addPatientBtn').addEventListener('click', openAddModal);
             
-            // CSV Import
             document.getElementById('importCSVBtn').addEventListener('click', () => { document.getElementById('csvFileInput').click(); });
             document.getElementById('csvFileInput').addEventListener('change', (e) => { if (e.target.files[0]) importCSV(e.target.files[0]); e.target.value = ''; });
             
-            // PDF Import
             document.getElementById('importPDFBtn').addEventListener('click', () => { document.getElementById('pdfFileInput').click(); });
             document.getElementById('pdfFileInput').addEventListener('change', (e) => { if (e.target.files[0]) importPDF(e.target.files[0]); e.target.value = ''; });
             
@@ -1105,6 +1282,8 @@
             document.getElementById('importFile')?.addEventListener('change', (e) => { if (e.target.files[0]) importData(e.target.files[0]); e.target.value = ''; });
             
             window.openEditModal = openEditModal;
+            window.exportReportToCSV = exportReportToCSV;
+            window.closeReport = closeReport;
         });
     </script>
 </body>

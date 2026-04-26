@@ -65,6 +65,10 @@ SITES        = ["Left Side","Right Side","Left Glute","Right Glute"]
 ASSIGN_TYPES = ["Permanent","1 Dose Only"]
 FILE_STATUSES= ["Active","Pending","Archived"]
 DOSE_WEEKS   = {7.5:4, 22.5:12, 30:16, 45:24}
+COLS = ["fileNumber","patientName","address","phone1","phone2",
+        "dose","totalDoses","repeatsLeft","prevSite","site",
+        "dueDate","apptDT","prevDates","assignType","special",
+        "adverse","comments","status","pendReason","archivedDate","lastUpdated"]
 CSV_URL    = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQQidcM4dXyR4xXYhZQyTqC-_9LmZ5vMkRiV7oluY13fFGO8ySmpkjH1k8xqzzjhLc__yL5vMafIsb9/pub?output=csv"
 SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwNMhrg7E7UCU-GYn3zeSw_kXAOi6OfdVf_JMPfTzXYm75BYp6HaZW6dPDRN0QdNqgh/exec"
 

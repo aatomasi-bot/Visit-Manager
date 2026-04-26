@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,567 +9,256 @@
 <title>Visit Manager</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root {
-  --blue:       #1d4ed8;
-  --blue-lt:    #eff6ff;
-  --blue-mid:   #bfdbfe;
-  --green:      #15803d;
-  --green-lt:   #f0fdf4;
-  --green-mid:  #bbf7d0;
-  --red:        #b91c1c;
-  --red-lt:     #fef2f2;
-  --red-mid:    #fecaca;
-  --amber:      #92400e;
-  --amber-lt:   #fffbeb;
-  --amber-mid:  #fde68a;
-  --purple:     #5b21b6;
-  --purple-lt:  #f5f3ff;
-  --teal:       #0f766e;
-  --teal-lt:    #f0fdfa;
-  --slate-50:   #f8fafc;
-  --slate-100:  #f1f5f9;
-  --slate-200:  #e2e8f0;
-  --slate-300:  #cbd5e1;
-  --slate-400:  #94a3b8;
-  --slate-500:  #64748b;
-  --slate-600:  #475569;
-  --slate-700:  #334155;
-  --slate-800:  #1e293b;
-  --slate-900:  #0f172a;
-  --white:      #ffffff;
-  --radius-sm:  8px;
-  --radius:     12px;
-  --radius-lg:  16px;
-  --radius-xl:  20px;
-  --shadow-sm:  0 1px 2px rgba(0,0,0,.05);
-  --shadow:     0 1px 3px rgba(0,0,0,.07), 0 2px 6px rgba(0,0,0,.05);
-  --shadow-md:  0 4px 16px rgba(0,0,0,.1);
-  --shadow-lg:  0 8px 32px rgba(0,0,0,.14);
+:root{
+  --blue:#1d4ed8;--blue-lt:#eff6ff;--blue-md:#bfdbfe;
+  --green:#15803d;--green-lt:#f0fdf4;--green-md:#bbf7d0;
+  --red:#b91c1c;--red-lt:#fef2f2;--red-md:#fecaca;
+  --amber:#92400e;--amber-lt:#fffbeb;--amber-md:#fde68a;
+  --purple:#5b21b6;--purple-lt:#f5f3ff;
+  --teal:#0f766e;--teal-lt:#f0fdfa;
+  --slate-50:#f8fafc;--slate-100:#f1f5f9;--slate-200:#e2e8f0;
+  --slate-300:#cbd5e1;--slate-400:#94a3b8;--slate-500:#64748b;
+  --slate-600:#475569;--slate-700:#334155;--slate-800:#1e293b;--slate-900:#0f172a;
+  --white:#ffffff;
+  --r:14px;--rs:10px;--rx:8px;
+  --sh:0 1px 3px rgba(0,0,0,.06),0 2px 6px rgba(0,0,0,.04);
+  --shh:0 4px 16px rgba(0,0,0,.1);
 }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{font-size:16px;-webkit-text-size-adjust:100%;}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--slate-100);color:var(--slate-900);min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased;}
+a{text-decoration:none;color:inherit;}
+input,select,textarea,button{font-family:inherit;-webkit-appearance:none;appearance:none;border:none;outline:none;background:none;}
+button{cursor:pointer;}
 
-/* ── RESET ── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html { font-size: 16px; -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
-body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--slate-100); color: var(--slate-900); min-height: 100dvh; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
-img, svg { display: block; }
-a { text-decoration: none; color: inherit; }
-input, select, textarea, button { font-family: inherit; font-size: inherit; border: none; outline: none; -webkit-appearance: none; appearance: none; background: none; }
-button { cursor: pointer; }
+/* HEADER */
+.hdr{position:sticky;top:0;z-index:100;background:var(--white);border-bottom:1px solid var(--slate-200);box-shadow:var(--sh);}
+.hdr-in{max-width:960px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:54px;}
+.logo{display:flex;align-items:center;gap:9px;}
+.logo-mark{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(29,78,216,.3);}
+.logo-name{font-size:18px;font-weight:800;letter-spacing:-.5px;}
+.logo-name b{color:var(--blue);}
+.hdr-right{display:flex;align-items:center;gap:8px;}
+.sync-lbl{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--slate-400);}
 
-/* ── HEADER ── */
-.hdr {
-  position: sticky; top: 0; z-index: 100;
-  background: var(--white);
-  border-bottom: 1px solid var(--slate-200);
-  box-shadow: var(--shadow-sm);
-}
-.hdr-inner {
-  max-width: 960px; margin: 0 auto;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 16px; height: 56px;
-}
-.logo { display: flex; align-items: center; gap: 10px; }
-.logo-mark {
-  width: 36px; height: 36px; border-radius: 10px;
-  background: linear-gradient(135deg, #1d4ed8, #3b82f6);
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; box-shadow: 0 2px 8px rgba(29,78,216,.3);
-}
-.logo-name { font-size: 18px; font-weight: 800; letter-spacing: -.5px; color: var(--slate-900); }
-.logo-name b { color: var(--blue); font-weight: 800; }
-.hdr-right { display: flex; align-items: center; gap: 8px; }
-.sync-badge { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--slate-400); display: none; }
-@media(min-width:480px){ .sync-badge { display: block; } }
+/* TABS */
+.tabs-wrap{position:sticky;top:54px;z-index:90;background:var(--white);border-bottom:1px solid var(--slate-200);overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.tabs-wrap::-webkit-scrollbar{display:none;}
+.tabs{display:flex;max-width:960px;margin:0 auto;padding:0 10px;min-width:max-content;}
+.tab{display:inline-flex;align-items:center;gap:5px;padding:0 13px;height:46px;font-size:13px;font-weight:600;color:var(--slate-400);border-bottom:2.5px solid transparent;cursor:pointer;white-space:nowrap;transition:color .15s;background:none;border-top:none;border-left:none;border-right:none;}
+.tab.on{color:var(--blue);border-bottom-color:var(--blue);}
+.tab:hover:not(.on){color:var(--slate-600);}
+.tab-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.tab-n{font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:20px;background:var(--slate-100);color:var(--slate-500);}
+.tab.on .tab-n{background:var(--blue-lt);color:var(--blue);}
 
-/* ── TABS ── */
-.tabs-wrap {
-  position: sticky; top: 56px; z-index: 90;
-  background: var(--white); border-bottom: 1px solid var(--slate-200);
-  overflow-x: auto; -webkit-overflow-scrolling: touch;
-}
-.tabs-wrap::-webkit-scrollbar { display: none; }
-.tabs {
-  display: flex; max-width: 960px; margin: 0 auto;
-  padding: 0 12px; min-width: max-content;
-}
-.tab {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 0 14px; height: 48px;
-  font-size: 13px; font-weight: 600; color: var(--slate-400);
-  border-bottom: 2.5px solid transparent;
-  transition: color .15s, border-color .15s;
-  white-space: nowrap; cursor: pointer;
-}
-.tab.on { color: var(--blue); border-bottom-color: var(--blue); }
-.tab:hover:not(.on) { color: var(--slate-600); }
-.tab-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.tab-n {
-  font-size: 11px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
-  padding: 2px 7px; border-radius: 20px;
-  background: var(--slate-100); color: var(--slate-500);
-}
-.tab.on .tab-n { background: var(--blue-lt); color: var(--blue); }
+/* SEARCH */
+.srch-wrap{max-width:960px;margin:0 auto;padding:12px 16px 8px;}
+.srch-row{display:flex;gap:8px;align-items:center;}
+.srch-box{flex:1;display:flex;align-items:center;gap:9px;background:var(--white);border:1.5px solid var(--slate-200);border-radius:var(--r);padding:0 13px;height:44px;transition:border-color .15s,box-shadow .15s;}
+.srch-box:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px rgba(29,78,216,.08);}
+.srch-inp{flex:1;font-size:15px;color:var(--slate-900);background:transparent;}
+.srch-inp::placeholder{color:var(--slate-400);}
+.srch-x{color:var(--slate-400);font-size:17px;cursor:pointer;display:none;line-height:1;}
 
-/* ── SEARCH ── */
-.search-wrap { max-width: 960px; margin: 0 auto; padding: 12px 16px 8px; }
-.search-row { display: flex; gap: 8px; align-items: center; }
-.search-field {
-  flex: 1; display: flex; align-items: center; gap: 10px;
-  background: var(--white); border: 1.5px solid var(--slate-200);
-  border-radius: var(--radius); padding: 0 14px; height: 46px;
-  transition: border-color .15s, box-shadow .15s;
-}
-.search-field:focus-within {
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px rgba(29,78,216,.08);
-}
-.search-field svg { flex-shrink: 0; color: var(--slate-400); }
-.search-inp {
-  flex: 1; font-size: 15px; color: var(--slate-900);
-  background: transparent; min-width: 0;
-}
-.search-inp::placeholder { color: var(--slate-400); }
-.search-x {
-  color: var(--slate-400); font-size: 18px; line-height: 1;
-  cursor: pointer; padding: 2px; display: none;
-}
+/* MAIN */
+.main{max-width:960px;margin:0 auto;padding:10px 14px 90px;}
+.panel{display:none;}
+.panel.on{display:block;}
 
-/* ── MAIN ── */
-.main { max-width: 960px; margin: 0 auto; padding: 10px 16px 100px; }
-.panel { display: none; }
-.panel.on { display: block; }
+/* DATE DIVIDER */
+.date-div{display:flex;align-items:center;gap:10px;padding:14px 0 6px;}
+.date-div-line{flex:1;height:1px;background:var(--slate-200);}
+.date-div-lbl{font-size:11px;font-weight:700;color:var(--slate-400);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap;}
 
-/* ── SECTION DIVIDER ── */
-.date-div {
-  display: flex; align-items: center; gap: 12px;
-  padding: 16px 0 8px;
-}
-.date-div-line { flex: 1; height: 1px; background: var(--slate-200); }
-.date-div-lbl {
-  font-size: 12px; font-weight: 700; color: var(--slate-400);
-  text-transform: uppercase; letter-spacing: .8px; white-space: nowrap;
-}
+/* BANNER */
+.banner{display:flex;align-items:flex-start;gap:9px;background:var(--amber-lt);border:1px solid var(--amber-md);border-radius:var(--r);padding:12px 14px;margin-bottom:10px;font-size:14px;color:var(--amber);line-height:1.5;}
 
-/* ── BANNER ── */
-.banner {
-  display: flex; align-items: flex-start; gap: 10px;
-  background: var(--amber-lt); border: 1px solid var(--amber-mid);
-  border-radius: var(--radius); padding: 12px 14px; margin-bottom: 10px;
-  font-size: 14px; color: var(--amber); line-height: 1.5;
-}
+/* CARD */
+.card{background:var(--white);border-radius:var(--r);border:1px solid var(--slate-200);box-shadow:var(--sh);margin-bottom:10px;overflow:hidden;transition:box-shadow .2s;}
+.card:hover{box-shadow:var(--shh);}
+.card.bl-blue  {border-left:4px solid #3b82f6;}
+.card.bl-green {border-left:4px solid #22c55e;}
+.card.bl-red   {border-left:4px solid #ef4444;}
+.card.bl-amber {border-left:4px solid #f59e0b;}
+.card.bl-gray  {border-left:4px solid var(--slate-300);opacity:.7;}
 
-/* ── CARD ── */
-.card {
-  background: var(--white); border-radius: var(--radius-lg);
-  border: 1px solid var(--slate-200); box-shadow: var(--shadow);
-  margin-bottom: 12px; overflow: hidden;
-  transition: box-shadow .2s, transform .1s;
-}
-.card:active { transform: scale(.995); }
-.card.c-blue   { border-left: 4px solid #3b82f6; }
-.card.c-green  { border-left: 4px solid #22c55e; }
-.card.c-red    { border-left: 4px solid #ef4444; }
-.card.c-amber  { border-left: 4px solid #f59e0b; }
-.card.c-gray   { border-left: 4px solid var(--slate-300); opacity: .7; }
-.card.c-purple { border-left: 4px solid #7c3aed; }
+/* CARD TOP */
+.card-top{padding:14px 16px 0;cursor:pointer;}
+.card-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+.card-name{font-size:17px;font-weight:700;color:var(--slate-900);line-height:1.25;letter-spacing:-.2px;}
+.card-meta{font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--slate-400);margin-top:3px;}
+.card-badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+.bdg{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;font-family:'JetBrains Mono',monospace;}
+.bdg-blue  {background:var(--blue-lt);color:var(--blue);}
+.bdg-green {background:var(--green-lt);color:var(--green);}
+.bdg-red   {background:var(--red-lt);color:var(--red);}
+.bdg-amber {background:var(--amber-lt);color:var(--amber);}
+.bdg-purple{background:var(--purple-lt);color:var(--purple);}
+.bdg-teal  {background:var(--teal-lt);color:var(--teal);}
+.bdg-gray  {background:var(--slate-100);color:var(--slate-500);}
 
-/* ── CARD TOP ── */
-.card-top { padding: 16px 16px 0; }
-.card-row1 {
-  display: flex; align-items: flex-start;
-  justify-content: space-between; gap: 10px;
-  cursor: pointer;
-}
-.card-name {
-  font-size: 18px; font-weight: 700; color: var(--slate-900);
-  line-height: 1.25; letter-spacing: -.2px;
-}
-.card-meta {
-  font-size: 13px; font-family: 'JetBrains Mono', monospace;
-  color: var(--slate-400); margin-top: 4px;
-}
-.card-badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+/* SPECIAL */
+.card-special{display:flex;align-items:flex-start;gap:8px;background:var(--amber-lt);border-left:4px solid #f59e0b;border-radius:0 10px 10px 0;padding:10px 14px;margin:10px 14px 0;font-size:13px;font-weight:600;color:var(--amber);line-height:1.5;}
+.card-pend{font-size:12px;color:var(--amber);background:var(--amber-lt);border-radius:var(--rx);margin:6px 14px 0;padding:7px 12px;font-weight:500;}
 
-/* ── BADGE ── */
-.bdg {
-  display: inline-flex; align-items: center; gap: 3px;
-  font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px;
-  font-family: 'JetBrains Mono', monospace; white-space: nowrap;
-}
-.bdg-blue   { background: var(--blue-lt);   color: var(--blue); }
-.bdg-green  { background: var(--green-lt);  color: var(--green); }
-.bdg-red    { background: var(--red-lt);    color: var(--red); }
-.bdg-amber  { background: var(--amber-lt);  color: var(--amber); }
-.bdg-purple { background: var(--purple-lt); color: var(--purple); }
-.bdg-teal   { background: var(--teal-lt);   color: var(--teal); }
-.bdg-gray   { background: var(--slate-100); color: var(--slate-500); }
+/* QUICK ACTIONS */
+.card-actions{display:flex;flex-wrap:wrap;gap:7px;padding:10px 14px 12px;}
+.addr-btn{display:inline-flex;align-items:center;gap:6px;background:var(--green-lt);color:var(--green);border:1.5px solid var(--green-md);border-radius:var(--rs);padding:8px 13px;font-size:13px;font-weight:600;text-decoration:none;max-width:100%;overflow:hidden;min-height:40px;}
+.addr-btn:active{background:#dcfce7;}
+.addr-btn-txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:min(240px,55vw);}
+.phone-btn{display:inline-flex;align-items:center;gap:6px;background:var(--blue-lt);color:var(--blue);border:1.5px solid var(--blue-md);border-radius:var(--rs);padding:8px 13px;font-size:14px;font-weight:600;font-family:'JetBrains Mono',monospace;text-decoration:none;white-space:nowrap;min-height:40px;}
+.phone-btn:active{background:#dbeafe;}
 
-/* ── SPECIAL INSTRUCTIONS ── */
-.card-special {
-  display: flex; align-items: flex-start; gap: 8px;
-  background: var(--amber-lt); border-left: 4px solid #f59e0b;
-  border-radius: 0 10px 10px 0; margin: 12px 16px 0;
-  padding: 10px 14px; font-size: 14px; font-weight: 600;
-  color: var(--amber); line-height: 1.5;
-}
+/* EXPAND TOGGLE */
+.card-tog{display:flex;align-items:center;justify-content:center;gap:5px;padding:10px;border-top:1px solid var(--slate-100);cursor:pointer;font-size:12px;font-weight:600;color:var(--slate-400);transition:background .15s,color .15s;}
+.card-tog:hover{background:var(--slate-50);color:var(--slate-600);}
+.chev{display:inline-block;transition:transform .2s;font-size:11px;}
+.card.open .chev{transform:rotate(180deg);}
 
-/* ── PENDING REASON ── */
-.card-pend-reason {
-  font-size: 13px; color: var(--amber); background: var(--amber-lt);
-  border-radius: var(--radius-sm); margin: 8px 16px 0;
-  padding: 8px 12px; font-weight: 500;
-}
+/* EXPANDED */
+.card-body{display:none;border-top:1px solid var(--slate-100);background:var(--slate-50);}
+.card.open .card-body{display:block;}
+.sec{padding:16px 18px;border-bottom:1px solid var(--slate-100);}
+.sec:last-child{border-bottom:none;}
+.sec-ttl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--slate-400);margin-bottom:12px;font-family:'JetBrains Mono',monospace;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.g2 .full{grid-column:1/-1;}
+.fld{display:flex;flex-direction:column;gap:3px;}
+.fld-l{font-size:10px;font-weight:600;color:var(--slate-400);text-transform:uppercase;letter-spacing:.5px;}
+.fld-v{font-size:14px;font-weight:500;color:var(--slate-800);line-height:1.4;}
+.fld-m{font-family:'JetBrains Mono',monospace;font-size:13px;}
+.next-prev{display:inline-flex;align-items:center;gap:6px;background:var(--blue-lt);color:var(--blue);border-radius:var(--rx);padding:6px 12px;font-size:12px;font-family:'JetBrains Mono',monospace;margin-top:10px;}
+.adverse-box{background:var(--red-lt);border-left:4px solid #ef4444;border-radius:0 var(--rx) var(--rx) 0;padding:10px 14px;font-size:13px;color:var(--red);font-weight:500;line-height:1.5;}
 
-/* ── CARD ACTIONS (collapsed) ── */
-.card-actions {
-  display: flex; flex-wrap: wrap; gap: 8px;
-  padding: 12px 16px 4px;
-}
+/* INPUTS */
+.inp{width:100%;background:var(--white);border:1.5px solid var(--slate-200);border-radius:var(--rx);padding:10px 12px;font-size:15px;color:var(--slate-900);transition:border-color .15s;min-height:44px;}
+.inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(29,78,216,.08);}
+.inp::placeholder{color:var(--slate-400);}
+.inp[type=date],.inp[type=datetime-local]{cursor:pointer;}
+.sel{width:100%;background:var(--white);border:1.5px solid var(--slate-200);border-radius:var(--rx);padding:10px 12px;font-size:15px;color:var(--slate-900);cursor:pointer;min-height:44px;}
+.ta{width:100%;background:var(--white);border:1.5px solid var(--slate-200);border-radius:var(--rx);padding:10px 12px;font-size:14px;color:var(--slate-900);resize:vertical;min-height:76px;line-height:1.6;}
+.ta:focus,.sel:focus,.inp:focus{border-color:var(--blue);}
 
-/* ADDRESS BUTTON */
-.addr-btn {
-  display: inline-flex; align-items: center; gap: 7px;
-  background: var(--green-lt); color: var(--green);
-  border: 1.5px solid var(--green-mid); border-radius: 10px;
-  padding: 10px 14px; font-size: 14px; font-weight: 600;
-  text-decoration: none; cursor: pointer;
-  transition: background .15s; min-height: 44px;
-  max-width: 100%; overflow: hidden;
-}
-.addr-btn:active { background: #dcfce7; }
-.addr-btn-txt {
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  max-width: min(260px, 60vw);
-}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;font-size:13px;font-weight:600;padding:9px 16px;border-radius:var(--rx);cursor:pointer;transition:all .15s;white-space:nowrap;min-height:40px;line-height:1;}
+.btn:active{transform:scale(.96);}
+.btn.full{width:100%;}
+.btn-blue {background:var(--blue);color:#fff;}
+.btn-blue:hover{background:#1e40af;box-shadow:0 4px 12px rgba(29,78,216,.35);}
+.btn-green{background:var(--green);color:#fff;}
+.btn-green:hover{background:#166534;}
+.btn-amber{background:#d97706;color:#fff;}
+.btn-amber:hover{background:#b45309;}
+.btn-red  {background:var(--red-lt);color:var(--red);border:1.5px solid var(--red-md);}
+.btn-red:hover{background:#fee2e2;}
+.btn-out  {background:var(--white);color:var(--slate-700);border:1.5px solid var(--slate-200);}
+.btn-out:hover{background:var(--slate-50);border-color:var(--slate-300);}
+.btn-ghost{background:transparent;color:var(--slate-500);}
+.btn-ghost:hover{background:var(--slate-100);}
+.btn-sm{padding:7px 12px;font-size:12px;min-height:36px;}
+.btn-row{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;}
 
-/* PHONE BUTTONS */
-.phone-btn {
-  display: inline-flex; align-items: center; gap: 7px;
-  background: var(--blue-lt); color: var(--blue);
-  border: 1.5px solid var(--blue-mid); border-radius: 10px;
-  padding: 10px 14px; font-size: 15px; font-weight: 600;
-  font-family: 'JetBrains Mono', monospace;
-  text-decoration: none; white-space: nowrap;
-  transition: background .15s; min-height: 44px; cursor: pointer;
-}
-.phone-btn:active { background: #dbeafe; }
+/* SITE BUTTONS */
+.site-btns{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;}
+.site-btn{padding:7px 14px;border-radius:20px;border:1.5px solid var(--slate-200);background:var(--white);color:var(--slate-500);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;min-height:36px;}
+.site-btn:hover{border-color:var(--blue);color:var(--blue);}
+.sl{background:var(--blue-lt);color:var(--blue);border-color:#93c5fd;}
+.sr{background:var(--amber-lt);color:var(--amber);border-color:var(--amber-md);}
+.sg{background:var(--green-lt);color:var(--green);border-color:var(--green-md);}
 
-/* ── EXPAND TOGGLE ── */
-.card-expand {
-  display: flex; align-items: center; justify-content: center;
-  gap: 6px; padding: 12px; margin-top: 4px;
-  border-top: 1px solid var(--slate-100); cursor: pointer;
-  font-size: 13px; font-weight: 600; color: var(--slate-400);
-  transition: background .15s, color .15s;
-}
-.card-expand:active { background: var(--slate-50); }
-.chev { transition: transform .2s; display: inline-block; }
-.card.open .chev { transform: rotate(180deg); }
+/* CONFIRM */
+.conf-box{background:var(--green-lt);border:1.5px solid var(--green-md);border-radius:var(--r);padding:14px;}
+.conf-lbl{font-size:13px;color:var(--slate-600);margin-bottom:10px;line-height:1.5;}
+.conf-lbl strong{color:var(--green);}
+.conf-inp{width:100%;background:var(--white);border:1.5px solid var(--slate-200);border-radius:var(--rx);padding:11px 14px;font-family:'JetBrains Mono',monospace;font-size:18px;letter-spacing:5px;text-transform:uppercase;text-align:center;margin-bottom:10px;min-height:50px;transition:border-color .15s;}
+.conf-inp.ok{border-color:var(--green);background:var(--green-lt);}
+.conf-sub{opacity:.4;pointer-events:none;}
+.conf-sub.rdy{opacity:1;pointer-events:all;}
 
-/* ── EXPANDED ── */
-.card-body { display: none; background: var(--slate-50); border-top: 1px solid var(--slate-100); }
-.card.open .card-body { display: block; }
+/* PEND FORM */
+.pend-form{background:var(--amber-lt);border:1.5px solid var(--amber-md);border-radius:var(--r);padding:14px;margin-top:10px;display:none;}
 
-.section { padding: 16px 18px; border-bottom: 1px solid var(--slate-100); }
-.section:last-child { border-bottom: none; }
-.sec-title {
-  font-size: 11px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 1px; color: var(--slate-400);
-  font-family: 'JetBrains Mono', monospace; margin-bottom: 14px;
-}
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.grid-2 .full { grid-column: 1 / -1; }
-.field { display: flex; flex-direction: column; gap: 4px; }
-.field-lbl {
-  font-size: 11px; font-weight: 600; color: var(--slate-400);
-  text-transform: uppercase; letter-spacing: .5px;
-}
-.field-val {
-  font-size: 15px; font-weight: 500; color: var(--slate-800);
-  line-height: 1.4;
-}
-.field-mono { font-family: 'JetBrains Mono', monospace; font-size: 14px; }
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end;justify-content:center;}
+.overlay.on{display:flex;}
+.sheet{background:var(--white);width:100%;max-width:960px;border-radius:20px 20px 0 0;max-height:94dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 0 0;animation:slideUp .25s ease;}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.sheet-handle{width:36px;height:4px;background:var(--slate-200);border-radius:2px;margin:0 auto 16px;}
+.sheet-in{padding:0 18px 48px;}
+.sheet-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.sheet-ttl{font-size:20px;font-weight:800;}
+.sheet-x{width:34px;height:34px;border-radius:50%;background:var(--slate-100);color:var(--slate-500);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+.fg .full{grid-column:1/-1;}
+.ff{display:flex;flex-direction:column;gap:5px;}
+.fl{font-size:11px;font-weight:700;color:var(--slate-500);text-transform:uppercase;letter-spacing:.5px;}
 
-/* ── INPUTS ── */
-.inp {
-  width: 100%; background: var(--white);
-  border: 1.5px solid var(--slate-200); border-radius: var(--radius-sm);
-  padding: 12px 14px; font-size: 16px; color: var(--slate-900);
-  transition: border-color .15s, box-shadow .15s; min-height: 48px;
-}
-.inp:focus {
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px rgba(29,78,216,.1);
-}
-.inp::placeholder { color: var(--slate-400); }
-.inp[type=date], .inp[type=datetime-local] { cursor: pointer; }
-.sel {
-  width: 100%; background: var(--white);
-  border: 1.5px solid var(--slate-200); border-radius: var(--radius-sm);
-  padding: 12px 14px; font-size: 16px; color: var(--slate-900);
-  min-height: 48px; cursor: pointer;
-}
-.sel:focus { border-color: var(--blue); }
-.ta {
-  width: 100%; background: var(--white);
-  border: 1.5px solid var(--slate-200); border-radius: var(--radius-sm);
-  padding: 12px 14px; font-size: 15px; color: var(--slate-900);
-  resize: vertical; min-height: 80px; line-height: 1.6;
-}
-.ta:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(29,78,216,.1); }
+/* FAB */
+.fab{position:fixed;z-index:150;width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.2);cursor:pointer;transition:transform .15s;border:none;}
+.fab:active{transform:scale(.92);}
+.fab-add{bottom:22px;right:14px;background:var(--blue);color:#fff;font-size:26px;box-shadow:0 4px 16px rgba(29,78,216,.4);}
+.fab-add:hover{background:#1e40af;}
 
-/* ── BUTTONS ── */
-.btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  gap: 6px; font-size: 14px; font-weight: 600;
-  padding: 10px 18px; border-radius: var(--radius-sm);
-  transition: all .15s; white-space: nowrap;
-  min-height: 44px; cursor: pointer; line-height: 1;
-}
-.btn:active { transform: scale(.96); }
-.btn.full { width: 100%; }
-.btn-blue    { background: var(--blue); color: #fff; }
-.btn-blue:hover { background: #1e40af; box-shadow: 0 4px 12px rgba(29,78,216,.35); }
-.btn-green   { background: var(--green); color: #fff; }
-.btn-green:hover { background: #166534; }
-.btn-amber   { background: #d97706; color: #fff; }
-.btn-amber:hover { background: #b45309; }
-.btn-red     { background: var(--red-lt); color: var(--red); border: 1.5px solid var(--red-mid); }
-.btn-red:hover { background: #fee2e2; }
-.btn-outline { background: var(--white); color: var(--slate-700); border: 1.5px solid var(--slate-200); }
-.btn-outline:hover { background: var(--slate-50); border-color: var(--slate-300); }
-.btn-ghost   { background: transparent; color: var(--slate-500); }
-.btn-ghost:hover { background: var(--slate-100); }
-.btn-sm { padding: 8px 14px; font-size: 13px; min-height: 38px; }
+/* TOAST */
+.toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--slate-900);color:#f8fafc;padding:11px 18px;border-radius:12px;font-size:14px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:999;display:flex;align-items:center;gap:12px;min-width:220px;max-width:340px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:all;}
+.toast-undo{color:#fbbf24;font-weight:700;cursor:pointer;flex-shrink:0;}
 
-/* ── CONFIRM BOX ── */
-.confirm-box {
-  background: var(--green-lt); border: 1.5px solid var(--green-mid);
-  border-radius: var(--radius); padding: 16px;
-}
-.confirm-lbl { font-size: 14px; color: var(--slate-600); margin-bottom: 10px; line-height: 1.5; }
-.confirm-lbl strong { color: var(--green); }
-.confirm-inp {
-  width: 100%; background: var(--white);
-  border: 1.5px solid var(--slate-200); border-radius: var(--radius-sm);
-  padding: 12px 16px; font-family: 'JetBrains Mono', monospace;
-  font-size: 20px; letter-spacing: 5px; text-transform: uppercase;
-  text-align: center; margin-bottom: 10px; min-height: 52px;
-  transition: border-color .15s;
-}
-.confirm-inp.ok { border-color: var(--green); background: var(--green-lt); }
-.confirm-sub { opacity: .45; pointer-events: none; }
-.confirm-sub.rdy { opacity: 1; pointer-events: all; }
+/* EMPTY */
+.empty{text-align:center;padding:56px 20px;}
+.empty-ico{font-size:44px;margin-bottom:12px;}
+.empty-lbl{font-size:15px;font-weight:600;color:var(--slate-400);}
 
-/* ── ADVERSE BOX ── */
-.adverse {
-  background: var(--red-lt); border-left: 4px solid #ef4444;
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  padding: 12px 14px; font-size: 14px; color: var(--red);
-  font-weight: 500; line-height: 1.5;
-}
-
-/* ── PENDING FORM ── */
-.pend-form {
-  background: var(--amber-lt); border: 1.5px solid var(--amber-mid);
-  border-radius: var(--radius); padding: 14px; margin-top: 10px; display: none;
-}
-
-/* ── NEXT PREVIEW ── */
-.next-prev {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: var(--blue-lt); color: var(--blue);
-  border-radius: var(--radius-sm); padding: 7px 12px;
-  font-size: 13px; font-family: 'JetBrains Mono', monospace;
-  margin-top: 10px;
-}
-
-/* ── SITE BUTTONS ── */
-.site-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
-.site-btn {
-  padding: 8px 16px; border-radius: 20px;
-  border: 1.5px solid var(--slate-200); background: var(--white);
-  color: var(--slate-500); font-size: 13px; font-weight: 600;
-  cursor: pointer; transition: all .15s; min-height: 38px;
-}
-.site-btn:hover { border-color: var(--blue); color: var(--blue); }
-.sl { background: var(--blue-lt);   color: var(--blue);   border-color: #93c5fd; }
-.sr { background: var(--amber-lt);  color: var(--amber);  border-color: var(--amber-mid); }
-.sg { background: var(--green-lt);  color: var(--green);  border-color: var(--green-mid); }
-
-/* ── BTN ROW ── */
-.btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-
-/* ── MODAL ── */
-.overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 200;
-  display: none; align-items: flex-end; justify-content: center;
-}
-.overlay.on { display: flex; }
-.sheet {
-  background: var(--white); width: 100%; max-width: 960px;
-  border-radius: 20px 20px 0 0; max-height: 94dvh; overflow-y: auto;
-  -webkit-overflow-scrolling: touch; padding: 6px 0 0;
-  animation: slideUp .25s ease;
-}
-@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-.sheet-handle {
-  width: 36px; height: 4px; background: var(--slate-200);
-  border-radius: 2px; margin: 0 auto 16px;
-}
-.sheet-inner { padding: 0 18px 48px; }
-.sheet-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-.sheet-title { font-size: 20px; font-weight: 800; color: var(--slate-900); }
-.sheet-close {
-  width: 34px; height: 34px; border-radius: 50%;
-  background: var(--slate-100); color: var(--slate-500);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px; cursor: pointer;
-}
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.form-grid .full { grid-column: 1 / -1; }
-.form-field { display: flex; flex-direction: column; gap: 6px; }
-.form-lbl { font-size: 12px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; letter-spacing: .5px; }
-@media(max-width:500px){
-  .form-grid { grid-template-columns: 1fr; }
-  .form-grid .full { grid-column: 1; }
-}
-
-/* ── FAB ── */
-.fab {
-  position: fixed; z-index: 150;
-  width: 56px; height: 56px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: var(--shadow-lg); cursor: pointer;
-  transition: transform .15s, box-shadow .15s; border: none;
-}
-.fab:active { transform: scale(.92); }
-.fab-add { bottom: 24px; right: 16px; background: var(--blue); color: #fff; font-size: 26px; }
-.fab-add:hover { background: #1e40af; box-shadow: 0 8px 24px rgba(29,78,216,.4); }
-.fab-imp { bottom: 90px; right: 16px; background: var(--slate-800); color: #fff; font-size: 22px; }
-.fab-imp:hover { background: var(--slate-700); }
-
-/* ── TOAST ── */
-.toast {
-  position: fixed; bottom: 84px; left: 50%;
-  transform: translateX(-50%) translateY(8px);
-  background: var(--slate-900); color: var(--white);
-  padding: 12px 18px; border-radius: 12px;
-  font-size: 14px; font-weight: 500;
-  box-shadow: var(--shadow-lg); z-index: 999;
-  display: flex; align-items: center; gap: 12px;
-  min-width: 220px; max-width: 360px;
-  opacity: 0; pointer-events: none;
-  transition: opacity .25s, transform .25s;
-}
-.toast.on { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: all; }
-.toast-undo { color: #fbbf24; font-weight: 700; cursor: pointer; flex-shrink: 0; }
-
-/* ── SETUP ── */
-.setup-card {
-  background: var(--white); border-radius: var(--radius-lg);
-  border: 1px solid var(--slate-200); padding: 20px; margin-bottom: 14px;
-  box-shadow: var(--shadow-sm);
-}
-.setup-title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
-.setup-desc { font-size: 14px; color: var(--slate-500); line-height: 1.6; margin-bottom: 14px; }
-.setup-steps { background: var(--slate-50); border-radius: var(--radius-sm); padding: 14px 16px; font-size: 14px; color: var(--slate-500); line-height: 2.1; }
-.setup-steps ol { padding-left: 20px; }
-.code { background: var(--slate-100); border-radius: 4px; padding: 1px 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
-.test-box { font-size: 13px; background: var(--slate-50); border-radius: var(--radius-sm); padding: 10px 14px; margin-top: 10px; display: none; border: 1px solid var(--slate-200); }
-
-/* ── IMPORT ── */
-.drop-zone {
-  border: 2px dashed var(--slate-200); border-radius: var(--radius);
-  padding: 28px 20px; text-align: center; cursor: pointer;
-  transition: border-color .2s, background .2s;
-}
-.drop-zone:hover, .drop-zone.drag { border-color: var(--blue); background: var(--blue-lt); }
-.drop-zone input[type=file] { display: none; }
-.import-log { font-size: 13px; background: var(--slate-50); border-radius: var(--radius-sm); padding: 10px 14px; margin-top: 10px; display: none; }
-.import-ok { background: var(--green-lt); border: 1px solid var(--green-mid); }
-
-/* ── EMPTY ── */
-.empty { text-align: center; padding: 56px 20px; }
-.empty-ico { font-size: 44px; margin-bottom: 12px; }
-.empty-lbl { font-size: 16px; font-weight: 600; color: var(--slate-400); }
-
-/* ── DESKTOP ── */
-@media(min-width:640px) {
-  .hdr-inner { padding: 0 24px; }
-  .search-wrap { padding: 14px 24px 10px; }
-  .main { padding: 12px 24px 100px; }
-  .card-name { font-size: 17px; }
-}
-@media(min-width:960px) {
-  .card-name { font-size: 16px; }
-  .tab { padding: 0 16px; font-size: 13px; }
-}
+@media(min-width:640px){.hdr-in,.srch-wrap,.main{padding-left:24px;padding-right:24px;}.fg{grid-template-columns:1fr 1fr 1fr;}}
+@media(max-width:480px){.g2{grid-template-columns:1fr;}.g2 .full{grid-column:1;}.card-name{font-size:16px;}}
 </style>
 </head>
 <body>
 
-<!-- TOAST -->
 <div class="toast" id="toast">
-  <span id="toastMsg" style="flex:1"></span>
-  <span class="toast-undo" id="toastUndo" onclick="undoAct()" style="display:none">Undo</span>
+  <span id="tMsg" style="flex:1"></span>
+  <span class="toast-undo" id="tUndo" onclick="undoAct()" style="display:none">Undo</span>
 </div>
 
-<!-- FABs -->
-<button class="fab fab-imp" onclick="openImp()" title="Import CSV/PDF">
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
-</button>
-<button class="fab fab-add" onclick="openModal(null)" title="Add patient">
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-</button>
+<button class="fab fab-add" onclick="openModal(null)">+</button>
 
-<!-- ADD/EDIT MODAL -->
 <div class="overlay" id="modalOv" onclick="if(event.target===this)closeModal()">
   <div class="sheet" id="modalSh"></div>
 </div>
 
-<!-- IMPORT MODAL -->
-<div class="overlay" id="impOv" onclick="if(event.target===this)closeImp()">
-  <div class="sheet" id="impSh"></div>
-</div>
-
-<!-- HEADER -->
 <header class="hdr">
-  <div class="hdr-inner">
+  <div class="hdr-in">
     <div class="logo">
       <div class="logo-mark">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
       </div>
       <span class="logo-name">Visit<b>.</b>Manager</span>
     </div>
     <div class="hdr-right">
-      <span class="sync-badge" id="syncBadge"></span>
-      <button class="btn btn-outline btn-sm" onclick="syncAll()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      <span class="sync-lbl" id="syncLbl"></span>
+      <button class="btn btn-out btn-sm" onclick="syncNow()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         Sync
       </button>
     </div>
   </div>
 </header>
 
-<!-- TABS -->
-<div class="tabs-wrap"><div class="tabs" id="tabs"></div></div>
+<div class="tabs-wrap"><div class="tabs" id="tabsEl"></div></div>
 
-<!-- SEARCH -->
-<div class="search-wrap">
-  <div class="search-row">
-    <div class="search-field">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input id="sInp" class="search-inp" type="search" placeholder="Name, file #, phone..." oninput="doSearch()">
-      <span class="search-x" id="sX" onclick="clearSearch()">&#x2715;</span>
+<div class="srch-wrap">
+  <div class="srch-row">
+    <div class="srch-box">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="srchInp" class="srch-inp" type="search" placeholder="Search name, file #, phone..." oninput="onSearch()">
+      <span class="srch-x" id="srchX" onclick="clearSearch()">&#x2715;</span>
     </div>
-    <button class="btn btn-blue btn-sm" onclick="doSearch()">Search</button>
+    <button class="btn btn-blue btn-sm" onclick="onSearch()">Search</button>
   </div>
 </div>
 
-<!-- PANELS -->
 <main class="main">
-  <div id="pSetup"     class="panel"></div>
   <div id="pToday"     class="panel"></div>
   <div id="pScheduled" class="panel"></div>
   <div id="pOverdue"   class="panel"></div>
@@ -580,728 +268,562 @@ button { cursor: pointer; }
 </main>
 
 <script>
-// ES5 - No template literals, no arrow functions
+// ES5 compatible
+var CSV_URL    = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQQidcM4dXyR4xXYhZQyTqC-_9LmZ5vMkRiV7oluY13fFGO8ySmpkjH1k8xqzzjhLc__yL5vMafIsb9/pub?output=csv";
+var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwNMhrg7E7UCU-GYn3zeSw_kXAOi6OfdVf_JMPfTzXYm75BYp6HaZW6dPDRN0QdNqgh/exec";
+var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+var SITES  = ["Left Side","Right Side","Left Glute","Right Glute"];
 var DOSE_WEEKS = {7.5:4, 22.5:12, 30:16, 45:24};
-var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-var SITES = ['Left Side','Right Side','Left Glute','Right Glute'];
-var ATYPES = ['Permanent','1 Dose Only'];
-var FSTATUSES = ['Active','Pending','Archived'];
-var AKEY = 'vm_akey';
 
 var pts = [];
-var IS_GAS = window.location.href.indexOf('script.google.com/macros') >= 0;
-var sUrl = IS_GAS ? window.location.href.split('?')[0] : (localStorage.getItem('vm_surl') || '');
-var curTab = sUrl ? 'today' : 'setup';
+var curTab = "today";
+var srchQ  = "";
 var lastSnap = null;
-var toastTm = null;
-var srchQ = '';
+var toastTm  = null;
 
-// DATES
-function tod() { var n=new Date(); return new Date(n.getFullYear(),n.getMonth(),n.getDate()); }
-
-// Parse date string as LOCAL time (not UTC) to avoid timezone shift
-// "2026-07-17" with new Date() = UTC midnight = wrong in UTC-4 (shows July 16)
-// This fix treats date-only strings as local noon to stay safe across all timezones
-function pd(s) {
-  if(!s)return null;
+// DATE UTILS
+function tod(){ var n=new Date(); return new Date(n.getFullYear(),n.getMonth(),n.getDate()); }
+function pd(s){
+  if(!s||String(s).trim()==="")return null;
   s=String(s).trim();
-  // Date-only format YYYY-MM-DD - parse as local to avoid UTC shift
-  var dm=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  var dm=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if(dm)return new Date(parseInt(dm[1]),parseInt(dm[2])-1,parseInt(dm[3]),12,0,0);
-  // datetime-local format YYYY-MM-DDTHH:mm - parse normally (local time)
-  var dtm=s.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
-  if(dtm)return new Date(parseInt(dtm[1]),parseInt(dtm[2])-1,parseInt(dtm[3]),parseInt(dtm[4]),parseInt(dtm[5]),0);
-  // Fallback
-  var d=new Date(s); return isNaN(d.getTime())?null:d;
+  return null;
+}
+function fmtD(d){
+  if(!d)return"";
+  if(typeof d==="string")d=pd(d);
+  if(!d)return"";
+  return d.getDate()+" "+MONTHS[d.getMonth()]+" "+d.getFullYear();
+}
+function fmtDT(s){
+  if(!s)return"";
+  var d=pd(s);
+  if(!d)return s;
+  var parts=s.split("T");
+  var t=parts[1]?parts[1].slice(0,5):"";
+  return fmtD(d)+(t?" "+t:"");
+}
+function addW(d,w){var r=new Date(d);r.setDate(r.getDate()+w*7);return r;}
+function isToday(d){if(!d)return false;var t=tod();return d.getFullYear()===t.getFullYear()&&d.getMonth()===t.getMonth()&&d.getDate()===t.getDate();}
+function getMg(dose){var m=String(dose||"").match(/(\d+(?:\.\d+)?)\s*mg/i);return m?parseFloat(m[1]):0;}
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+
+// CSV PARSING
+function parseCSV(text){
+  var lines=text.split("\n");
+  var headers=parseCSVLine(lines[0]);
+  var result=[];
+  for(var i=1;i<lines.length;i++){
+    var line=lines[i].trim();
+    if(!line)continue;
+    var vals=parseCSVLine(line);
+    var obj={};
+    for(var j=0;j<headers.length;j++) obj[headers[j].trim()]=vals[j]?vals[j].trim():"";
+    if(obj.fileNumber&&obj.fileNumber.trim()) result.push(obj);
+  }
+  return result;
+}
+function parseCSVLine(line){
+  var result=[],cur="",inQ=false;
+  for(var i=0;i<line.length;i++){
+    var c=line[i];
+    if(inQ){if(c==='"'&&line[i+1]==='"'){cur+='"';i++;}else if(c==='"'){inQ=false;}else{cur+=c;}}
+    else if(c==='"'){inQ=true;}
+    else if(c===","){result.push(cur);cur="";}
+    else{cur+=c;}
+  }
+  result.push(cur);
+  return result;
 }
 
-function fmt(d) {
-  if(!d)return'';
-  if(typeof d==='string')d=pd(d);
-  if(!d||isNaN(d.getTime()))return'';
-  return d.getDate()+' '+MONTHS[d.getMonth()]+' '+d.getFullYear();
-}
-function fmtDT(s) {
-  if(!s)return'';
-  var d=pd(s);if(!d)return s;
-  var h=(d.getHours()<10?'0':'')+d.getHours(),m=(d.getMinutes()<10?'0':'')+d.getMinutes();
-  return fmt(d)+' '+h+':'+m;
-}
-function addW(d,w) { var r=new Date(d); r.setDate(r.getDate()+w*7); return r; }
-function isToday(d) { if(!d)return false; var t=tod(); return d.getFullYear()===t.getFullYear()&&d.getMonth()===t.getMonth()&&d.getDate()===t.getDate(); }
-function mgv(dose) { var m=String(dose||'').match(/(\d+(?:\.\d+)?)\s*mg/i); return m?parseFloat(m[1]):0; }
-function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-// STORAGE
-function save() { localStorage.setItem('vm_pts',JSON.stringify(pts)); }
-function load() { try{pts=JSON.parse(localStorage.getItem('vm_pts')||'[]');}catch(e){pts=[];} }
-
-// NORMALIZE
-function norm(p) {
-  return {
-    fileNumber:String(p.fileNumber||p['File number']||''),
-    patientName:p.patientName||p['Patient name']||'',
-    address:p.address||p['Address']||'',
-    phone1:p.phone1||p['Phone 1']||'',
-    phone2:p.phone2||p['Phone 2']||'',
-    dose:p.dose||p['Dose']||'',
-    totalDoses:p.totalDoses||p['Total doses']||'',
-    repeatsLeft:p.repeatsLeft||p['Repeats left']||'',
-    prevSite:p.prevSite||p.previousInjectionSite||'',
-    site:p.site||p.injectionSite||'',
-    dueDate:p.dueDate||p['Due date']||'',
-    apptDT:p.apptDT||p.appointmentDateTime||p['Appointment date and time']||'',
-    prevDates:p.prevDates||p.previousInjectionDates||'',
-    assignType:p.assignType||p.assignmentType||p['Assignment type']||'Permanent',
-    special:p.special||p.specialInstructions||p['Special instructions']||'',
-    adverse:p.adverse||p.adverseEffects||p['Adverse effects']||'',
-    comments:p.comments||p['Comments']||'',
-    status:p.status||p.fileStatus||p['File status']||'Active',
-    pendReason:p.pendReason||p.pendingReason||'',
-    archivedDate:p.archivedDate||'',
-    lastUpdated:p.lastUpdated||''
-  };
+// LOAD from public CSV (no CORS issues)
+function loadCSV(cb){
+  fetch(CSV_URL+"&t="+Date.now())
+    .then(function(r){return r.text();})
+    .then(function(text){cb(parseCSV(text),null);})
+    .catch(function(e){cb(null,"Cannot load sheet: "+e.message);});
 }
 
-// SHEETS SYNC
-// Reads use JSONP (script tag) - bypasses CORS and redirect issues completely
-// Writes use no-cors fetch (fire and forget - write happens server-side)
-
-function jsonpCall(payload, cb) {
-  if(!sUrl){if(cb)cb(null,'No Script URL');return;}
-  var cbName='vmcb'+Date.now();
-  var script=document.createElement('script');
-  var url=sUrl+'?payload='+encodeURIComponent(JSON.stringify(payload))+'&callback='+cbName+'&t='+Date.now();
-  var done=false;
-  window[cbName]=function(data){
-    done=true;
-    try{document.head.removeChild(script);}catch(e){}
-    delete window[cbName];
-    if(cb)cb(data,null);
-  };
-  script.onerror=function(){
-    if(done)return;
-    try{document.head.removeChild(script);}catch(e){}
-    delete window[cbName];
-    if(cb)cb(null,'Failed to reach Google Apps Script. Check your URL and deployment.');
-  };
-  setTimeout(function(){
-    if(done)return;
-    try{document.head.removeChild(script);}catch(e){}
-    delete window[cbName];
-    if(cb)cb(null,'Request timed out. Check your Script URL.');
-  },12000);
-  document.head.appendChild(script);
-  script.src=url;
+// WRITE via Apps Script no-cors (fire and forget)
+function writePatient(p){
+  p.lastUpdated=new Date().toISOString();
+  var payload=JSON.stringify({action:"upsert",patient:p});
+  var url=SCRIPT_URL+"?payload="+encodeURIComponent(payload)+"&t="+Date.now();
+  fetch(url,{mode:"no-cors",redirect:"follow"}).catch(function(){});
+}
+function deleteRemote(fn){
+  var payload=JSON.stringify({action:"delete",fileNumber:fn});
+  var url=SCRIPT_URL+"?payload="+encodeURIComponent(payload)+"&t="+Date.now();
+  fetch(url,{mode:"no-cors",redirect:"follow"}).catch(function(){});
 }
 
-function silentWrite(payload){
-  if(!sUrl)return;
-  var url=sUrl+'?payload='+encodeURIComponent(JSON.stringify(payload))+'&t='+Date.now();
-  // no-cors: write executes server-side, we don't need the response
-  fetch(url,{method:'GET',mode:'no-cors',redirect:'follow'}).catch(function(){});
-}
-
-function push(p){if(sUrl)silentWrite({action:'upsert',patient:p});}
-function del(fn){if(sUrl)silentWrite({action:'delete',fileNumber:fn});}
-
-function syncAll() {
-  if(!sUrl){toast('No Script URL - go to Setup');return;}
-  setSB('Syncing...');
-  for(var i=0;i<pts.length;i++){silentWrite({action:'upsert',patient:pts[i]});}
-  setTimeout(function(){loadSheet();},2000);
-}
-function loadSheet() {
-  setSB('Loading...');
-  jsonpCall({action:'getAll'},function(data,err){
-    if(err){setSB('Failed');toast('Sync failed: '+err);return;}
-    if(data&&data.error){setSB('Error');toast('Script error: '+data.error);return;}
-    if(Array.isArray(data)){
-      pts=data.map(norm);save();
-      var n=new Date();setSB((n.getHours()<10?'0':'')+n.getHours()+':'+(n.getMinutes()<10?'0':'')+n.getMinutes());
-      renderAll();toast('Synced '+pts.length+' patients');
-    } else {setSB('Failed');toast('Unexpected response. Check Script URL.');}
+// SYNC
+function syncNow(){
+  setSyncLbl("Loading...");
+  loadCSV(function(data,err){
+    if(err){setSyncLbl("Failed");toast("Sync failed: "+err);return;}
+    pts=data;
+    var now=new Date();
+    setSyncLbl((now.getHours()<10?"0":"")+now.getHours()+":"+(now.getMinutes()<10?"0":"")+now.getMinutes());
+    renderAll();
+    toast("Synced "+pts.length+" patients");
   });
 }
-function setSB(t){var el=document.getElementById('syncBadge');if(el)el.textContent=t;}
+function setSyncLbl(t){var el=document.getElementById("syncLbl");if(el)el.textContent=t;}
 
 // TAB LOGIC
-function getTab(p) {
-  if(p.status==='Archived')return'archived';
-  if(p.status==='Pending')return'pending';
-  var t=tod(),appt=p.apptDT?pd(p.apptDT):null,due=p.dueDate?pd(p.dueDate):null;
-  if(appt&&appt<t)return'overdue';
-  if(due&&due<t&&!appt)return'overdue';
-  if(appt&&isToday(appt))return'today';
-  if(appt&&appt>t)return'scheduled';
-  if(due&&due>=t)return'queue';
-  return'scheduled';
+function getTab(p){
+  var s=p.status||"Active";
+  if(s==="Archived")return"archived";
+  if(s==="Pending")return"pending";
+  var t=tod();
+  var appt=pd(p.apptDT||"");
+  var due=pd(p.dueDate||"");
+  if(appt&&appt<t)return"overdue";
+  if(due&&due<t&&!appt)return"overdue";
+  if(appt&&isToday(appt))return"today";
+  if(appt&&appt>t)return"scheduled";
+  if(due&&due>=t)return"queue";
+  return"scheduled";
 }
-function sortFor(list,tab) {
+function sortFor(list,tab){
   return list.slice().sort(function(a,b){
-    var ad,bd;
-    if(tab==='today'||tab==='scheduled'){ad=pd(a.apptDT)||new Date(9e15);bd=pd(b.apptDT)||new Date(9e15);if(ad-bd!==0)return ad-bd;return a.patientName.localeCompare(b.patientName);}
-    if(tab==='overdue'){ad=pd(a.apptDT)||pd(a.dueDate)||new Date(0);bd=pd(b.apptDT)||pd(b.dueDate)||new Date(0);return ad-bd;}
-    if(tab==='queue'||tab==='pending'){ad=pd(a.dueDate)||new Date(9e15);bd=pd(b.dueDate)||new Date(9e15);return ad-bd;}
-    if(tab==='archived'){ad=pd(a.archivedDate)||new Date(0);bd=pd(b.archivedDate)||new Date(0);return bd-ad;}
-    return a.patientName.localeCompare(b.patientName);
+    var ad,bd,an=a.patientName||"",bn=b.patientName||"";
+    if(tab==="today"||tab==="scheduled"){
+      ad=pd(a.apptDT)||new Date(9e15);bd=pd(b.apptDT)||new Date(9e15);
+      if(ad-bd!==0)return ad-bd;return an.localeCompare(bn);
+    }
+    if(tab==="overdue"){
+      ad=pd(a.apptDT)||pd(a.dueDate)||new Date(0);
+      bd=pd(b.apptDT)||pd(b.dueDate)||new Date(0);
+      return ad-bd;
+    }
+    if(tab==="queue"||tab==="pending"){
+      ad=pd(a.dueDate)||new Date(9e15);bd=pd(b.dueDate)||new Date(9e15);return ad-bd;
+    }
+    if(tab==="archived"){
+      ad=pd(a.archivedDate)||new Date(0);bd=pd(b.archivedDate)||new Date(0);return bd-ad;
+    }
+    return an.localeCompare(bn);
   });
 }
 
 // SEARCH
-function doSearch() {
-  srchQ=document.getElementById('sInp')?document.getElementById('sInp').value.trim():'';
-  var x=document.getElementById('sX');if(x)x.style.display=srchQ?'block':'none';
+function onSearch(){
+  srchQ=document.getElementById("srchInp")?document.getElementById("srchInp").value.trim():"";
+  var x=document.getElementById("srchX");if(x)x.style.display=srchQ?"block":"none";
   renderAll();
 }
-function clearSearch() {
-  srchQ='';
-  var inp=document.getElementById('sInp');if(inp)inp.value='';
-  var x=document.getElementById('sX');if(x)x.style.display='none';
+function clearSearch(){
+  srchQ="";
+  var inp=document.getElementById("srchInp");if(inp)inp.value="";
+  var x=document.getElementById("srchX");if(x)x.style.display="none";
   renderAll();
 }
-function filtered() {
+function getFiltered(){
   if(!srchQ)return pts;
   var q=srchQ.toLowerCase();
-  return pts.filter(function(p){return p.patientName.toLowerCase().indexOf(q)>=0||p.fileNumber.indexOf(q)>=0||p.phone1.indexOf(q)>=0||p.phone2.indexOf(q)>=0||p.address.toLowerCase().indexOf(q)>=0;});
+  return pts.filter(function(p){
+    return (p.patientName||"").toLowerCase().indexOf(q)>=0||
+           (p.fileNumber||"").indexOf(q)>=0||
+           (p.phone1||"").indexOf(q)>=0||
+           (p.phone2||"").indexOf(q)>=0||
+           (p.address||"").toLowerCase().indexOf(q)>=0;
+  });
 }
 
 // RENDER
-function renderAll() {
-  var f=filtered();
-  var tabs={today:[],scheduled:[],overdue:[],queue:[],pending:[],archived:[]};
-  for(var i=0;i<f.length;i++){var t=getTab(f[i]);if(tabs[t])tabs[t].push(f[i]);}
+function renderAll(){
+  var f=getFiltered();
+  var bkts={today:[],scheduled:[],overdue:[],queue:[],pending:[],archived:[]};
+  for(var i=0;i<f.length;i++){var t=getTab(f[i]);if(bkts[t])bkts[t].push(f[i]);}
 
   var TCFG=[
-    {id:'today',     lbl:'Today',       dot:'#3b82f6'},
-    {id:'scheduled', lbl:'Scheduled',   dot:'#14b8a6'},
-    {id:'overdue',   lbl:'Overdue',     dot:'#ef4444'},
-    {id:'queue',     lbl:'All Patients',dot:'#8b5cf6'},
-    {id:'pending',   lbl:'Pending',     dot:'#f59e0b'},
-    {id:'archived',  lbl:'Archived',    dot:'#94a3b8'}
+    {id:"today",     lbl:"Today",       dot:"#3b82f6"},
+    {id:"scheduled", lbl:"Scheduled",   dot:"#14b8a6"},
+    {id:"overdue",   lbl:"Overdue",     dot:"#ef4444"},
+    {id:"queue",     lbl:"All Patients",dot:"#8b5cf6"},
+    {id:"pending",   lbl:"Pending",     dot:"#f59e0b"},
+    {id:"archived",  lbl:"Archived",    dot:"#94a3b8"}
   ];
 
-  var nav='';
+  var nav="";
   for(var ti=0;ti<TCFG.length;ti++){
     var tc=TCFG[ti],on=curTab===tc.id;
-    nav+='<button class="tab'+(on?' on':'')+'" onclick="switchTab(\''+tc.id+'\')">'+
+    nav+='<button class="tab'+(on?" on":"")+'" onclick="switchTab(\''+tc.id+'\')">'+
          '<span class="tab-dot" style="background:'+tc.dot+'"></span>'+
-         tc.lbl+'<span class="tab-n">'+tabs[tc.id].length+'</span></button>';
+         tc.lbl+'<span class="tab-n">'+bkts[tc.id].length+'</span></button>';
   }
-  document.getElementById('tabs').innerHTML=nav;
+  document.getElementById("tabsEl").innerHTML=nav;
 
   for(var ti2=0;ti2<TCFG.length;ti2++){
-    var id=TCFG[ti2].id;
-    var panelId='p'+id.charAt(0).toUpperCase()+id.slice(1);
-    var panel=document.getElementById(panelId);
+    var tk=TCFG[ti2].id;
+    var pId="p"+tk.charAt(0).toUpperCase()+tk.slice(1);
+    var panel=document.getElementById(pId);
     if(!panel)continue;
-    var sorted=sortFor(tabs[id],id);
-    renderPanel(panel,id,sorted);
-    panel.style.display=curTab===id?'block':'none';
-  }
-  if(curTab==='setup'){
-    var sp=document.getElementById('pSetup');
-    if(sp){renderSetup();sp.style.display='block';}
+    panel.innerHTML=buildPanel(tk,sortFor(bkts[tk],tk));
+    panel.className="panel"+(curTab===tk?" on":"");
   }
 }
 
-function renderPanel(panel,tabId,list) {
+function buildPanel(tab,list){
   if(!list.length){
-    var ico={today:'&#x1F4C5;',scheduled:'&#x1F5D3;',overdue:'&#x26A0;',queue:'&#x1F465;',pending:'&#x23F8;',archived:'&#x1F5C4;'};
-    var msg={today:'No visits today',scheduled:'No scheduled appointments',overdue:'No overdue patients',queue:'No patients found',pending:'No pending patients',archived:'No archived records'};
-    panel.innerHTML='<div class="empty"><div class="empty-ico">'+(ico[tabId]||'&#x1F4CB;')+'</div><div class="empty-lbl">'+(msg[tabId]||'Nothing here')+'</div></div>';
-    return;
+    var icons={today:"&#x1F4C5;",scheduled:"&#x1F5D3;",overdue:"&#x26A0;&#xFE0F;",queue:"&#x1F465;",pending:"&#x23F8;",archived:"&#x1F5C4;"};
+    var msgs={today:"No visits today",scheduled:"No scheduled appointments",overdue:"No overdue patients",queue:"No patients found",pending:"No pending patients",archived:"No archived records"};
+    return '<div class="empty"><div class="empty-ico">'+(icons[tab]||"&#x1F4CB;")+'</div><div class="empty-lbl">'+(msgs[tab]||"Nothing here")+'</div></div>';
   }
-  var html='';
-  if(tabId==='today'){
+  var html="";
+  if(tab==="today"){
     for(var bi=0;bi<list.length;bi++){
-      if(list[bi].assignType==='1 Dose Only'){
-        html+='<div class="banner"><span style="font-size:16px">&#9888;</span><span><strong>'+esc(list[bi].patientName)+'</strong> - 1 Dose Only. Confirm continuation after visit.</span></div>';
+      if(list[bi].assignType==="1 Dose Only"){
+        html+='<div class="banner"><span style="font-size:16px">&#9888;</span><span><strong>'+esc(list[bi].patientName)+'</strong> is 1 Dose Only. Confirm continuation after visit.</span></div>';
       }
     }
   }
-  if(tabId==='queue'){
-    var lastD='';
+  if(tab==="queue"){
+    var lastG="";
     for(var ci=0;ci<list.length;ci++){
-      var ds=fmt(pd(list[ci].dueDate))||'No Due Date';
-      if(ds!==lastD){html+='<div class="date-div"><div class="date-div-line"></div><span class="date-div-lbl">'+ds+'</span><div class="date-div-line"></div></div>';lastD=ds;}
-      html+=renderCard(list[ci],tabId);
+      var g=fmtD(pd(list[ci].dueDate))||"No Due Date";
+      if(g!==lastG){
+        html+='<div class="date-div"><div class="date-div-line"></div><span class="date-div-lbl">'+g+'</span><div class="date-div-line"></div></div>';
+        lastG=g;
+      }
+      html+=buildCard(list[ci],tab,tab+"_"+ci);
     }
   } else {
-    for(var ci2=0;ci2<list.length;ci2++)html+=renderCard(list[ci2],tabId);
+    for(var ci2=0;ci2<list.length;ci2++) html+=buildCard(list[ci2],tab,tab+"_"+ci2);
   }
-  panel.innerHTML=html;
+  return html;
 }
 
-function renderCard(p,tab) {
-  var fn=p.fileNumber,fe=esc(fn);
-  var due=pd(p.dueDate),appt=pd(p.apptDT);
-  var mg=mgv(p.dose),wk=DOSE_WEEKS[mg];
+function buildCard(p,tab,idx){
+  var fn=p.fileNumber||"",fne=esc(fn);
+  var appt=pd(p.apptDT||""),due=pd(p.dueDate||"");
+  var mg=getMg(p.dose||""),wk=DOSE_WEEKS[mg];
+  var today=tod();
 
   // Border
-  var bc='c-blue';
-  if(tab==='overdue')bc='c-red';
-  else if(tab==='today'&&p.apptDT)bc='c-green';
-  else if(tab==='today')bc='c-blue';
-  else if(tab==='pending')bc='c-amber';
-  else if(tab==='archived')bc='c-gray';
+  var bl="bl-blue";
+  if(tab==="overdue")bl="bl-red";
+  else if(tab==="today"&&appt)bl="bl-green";
+  else if(tab==="today")bl="bl-blue";
+  else if(tab==="pending")bl="bl-amber";
+  else if(tab==="archived")bl="bl-gray";
 
   // Badges
-  var bdg='';
-  if(tab==='today'&&p.apptDT)bdg+='<span class="bdg bdg-green">&#10003; '+esc(fmtDT(p.apptDT))+'</span>';
-  else if(tab==='today')bdg+='<span class="bdg bdg-blue">Today</span>';
-  if(tab==='overdue')bdg+='<span class="bdg bdg-red">&#9888; Overdue</span>';
-  if(due)bdg+='<span class="bdg bdg-purple">Due '+esc(fmt(due))+'</span>';
-  if(p.assignType==='1 Dose Only')bdg+='<span class="bdg bdg-amber">1 Dose Only</span>';
+  var bdg="";
+  if(tab==="today"&&appt)bdg+='<span class="bdg bdg-green">&#10003; '+esc(fmtDT(p.apptDT))+'</span>';
+  else if(tab==="today")bdg+='<span class="bdg bdg-blue">Today</span>';
+  if(tab==="overdue")bdg+='<span class="bdg bdg-red">&#9888; Overdue</span>';
+  if(due)bdg+='<span class="bdg bdg-purple">Due '+esc(fmtD(due))+'</span>';
+  if(p.assignType==="1 Dose Only")bdg+='<span class="bdg bdg-amber">1 Dose Only</span>';
   if(p.repeatsLeft)bdg+='<span class="bdg bdg-teal">'+esc(p.repeatsLeft)+' left</span>';
-  if(tab==='pending')bdg+='<span class="bdg bdg-amber">Pending</span>';
+  if(tab==="pending")bdg+='<span class="bdg bdg-amber">Pending</span>';
 
   // Special
-  var spec='';
-  if(p.special)spec='<div class="card-special"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'+esc(p.special)+'</div>';
+  var spec=p.special?'<div class="card-special"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'+esc(p.special)+'</div>':"";
 
   // Pending reason
-  var pr='';
-  if(p.pendReason)pr='<div class="card-pend-reason">Pending: '+esc(p.pendReason)+'</div>';
+  var pend=p.pendReason?'<div class="card-pend">Pending: '+esc(p.pendReason)+'</div>':"";
 
   // Address
-  var mu='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(p.address||'');
-  var addr='';
-  if(p.address)addr='<a href="'+mu+'" target="_blank" rel="noopener" class="addr-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="flex-shrink:0"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg><span class="addr-btn-txt">'+esc(p.address)+'</span></a>';
+  var mu="https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(p.address||"");
+  var addr=p.address?'<a href="'+mu+'" target="_blank" class="addr-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="flex-shrink:0"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg><span class="addr-btn-txt">'+esc(p.address)+'</span></a>':"";
 
   // Phones
-  var phi='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex-shrink:0"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.63 3.4 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.78a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>';
-  var ph='';
-  if(p.phone1)ph+='<a href="tel:'+p.phone1.replace(/\D/g,'')+'" class="phone-btn">'+phi+esc(p.phone1)+'</a>';
-  if(p.phone2)ph+='<a href="tel:'+p.phone2.replace(/\D/g,'')+'" class="phone-btn">'+phi+esc(p.phone2)+'</a>';
+  var phI='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex-shrink:0"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.63 3.4 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.78a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>';
+  var ph="";
+  if(p.phone1)ph+='<a href="tel:'+p.phone1.replace(/\D/g,"")+'" class="phone-btn">'+phI+esc(p.phone1)+'</a>';
+  if(p.phone2)ph+='<a href="tel:'+p.phone2.replace(/\D/g,"")+'" class="phone-btn">'+phI+esc(p.phone2)+'</a>';
 
   // Site buttons
-  var sb='';
-  var scls={'Left Side':'sl','Right Side':'sr','Left Glute':'sg','Right Glute':'sg'};
+  var siteMap={"Left Side":"sl","Right Side":"sr","Left Glute":"sg","Right Glute":"sg"};
+  var siteBtns="";
   for(var si=0;si<SITES.length;si++){
-    var s=SITES[si],on=p.site===s;
-    sb+='<button class="site-btn'+(on?' '+(scls[s]||''):'')+'" onclick="setSite(\''+fe+'\',\''+s+'\')">'+s+'</button>';
+    var s=SITES[si],sel=p.site===s;
+    siteBtns+='<button class="site-btn'+(sel?" "+(siteMap[s]||""):"")+'" onclick="setSite(\''+fne+'\',\''+s+'\')">'+s+'</button>';
   }
 
-  // Next date preview
-  var np='';
-  if(wk&&tab!=='archived')np='<div class="next-prev"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>After done: '+fmt(addW(tod(),wk))+' (+'+wk+'w)</div>';
+  // Next due preview
+  var nextHtml="";
+  if(wk&&tab!=="archived"){
+    var base=appt||today;
+    var nd=addW(base,wk);
+    nextHtml='<div class="next-prev"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>After confirmation: '+fmtD(nd)+' (+'+wk+'w)</div>';
+  }
 
-  var apptV=p.apptDT?new Date(p.apptDT).toISOString().slice(0,16):'';
-  var dueV=p.dueDate?new Date(p.dueDate).toISOString().slice(0,10):'';
+  // Appointment input values
+  var apptISO=p.apptDT?p.apptDT.slice(0,16):"";
+  var dueISO=p.dueDate?p.dueDate.slice(0,10):"";
 
   // Actions
-  var acts='';
-  if(tab!=='archived'){
-    if(tab!=='pending'){
-      acts+='<div class="confirm-box">'+
-            '<div class="confirm-lbl">Type <strong>DONE</strong> to confirm injection administered</div>'+
-            '<input class="confirm-inp" id="ci-'+fe+'" type="text" placeholder="D O N E" autocomplete="off" autocorrect="off" autocapitalize="characters" oninput="chkDone(this,\''+fe+'\')">'+
-            '<button id="cs-'+fe+'" onclick="confInj(\''+fe+'\')" class="btn btn-green full confirm-sub">&#10003; Confirm Injection Administered</button>'+
-            '</div>';
+  var acts="";
+  if(tab!=="archived"){
+    if(tab!=="pending"){
+      acts+='<div class="conf-box"><div class="conf-lbl">Type <strong>DONE</strong> to confirm injection administered</div>'+
+            '<input class="conf-inp" id="ci-'+fne+'" type="text" placeholder="D O N E" autocomplete="off" autocorrect="off" autocapitalize="characters" oninput="chkDone(this,\''+fne+'\')">'+
+            '<button id="cs-'+fne+'" onclick="confInj(\''+fne+'\')" class="btn btn-green full conf-sub">&#10003; Confirm Injection Administered</button></div>';
     }
     acts+='<div class="btn-row">';
-    if(tab==='pending'){acts+='<button onclick="react(\''+fe+'\')" class="btn btn-green btn-sm">Remove Pending</button>';}
-    else{acts+='<button onclick="showPF(\''+fe+'\')" class="btn btn-amber btn-sm">Mark Pending</button>';}
-    acts+='<button onclick="openModal(\''+fe+'\')" class="btn btn-outline btn-sm">Edit</button>';
-    acts+='<button onclick="archPt(\''+fe+'\')" class="btn btn-ghost btn-sm">Archive</button>';
-    acts+='<button onclick="delPt(\''+fe+'\')" class="btn btn-red btn-sm">Delete</button>';
+    if(tab==="pending"){
+      acts+='<button onclick="react(\''+fne+'\')" class="btn btn-green btn-sm">Remove Pending</button>';
+    } else {
+      acts+='<button onclick="showPF(\''+fne+'\')" class="btn btn-amber btn-sm">Mark Pending</button>';
+    }
+    acts+='<button onclick="openModal(\''+fne+'\')" class="btn btn-out btn-sm">Edit</button>';
+    acts+='<button onclick="archPt(\''+fne+'\')" class="btn btn-ghost btn-sm">Archive</button>';
+    acts+='<button onclick="delPt(\''+fne+'\')" class="btn btn-red btn-sm">Delete</button>';
     acts+='</div>';
-    if(tab!=='pending'){
-      acts+='<div class="pend-form" id="pf-'+fe+'">'+
-            '<div style="font-size:13px;font-weight:600;color:var(--amber);margin-bottom:8px">Reason for pending</div>'+
-            '<input class="inp" id="pr-'+fe+'" type="text" placeholder="e.g. travelling, refused..." style="margin-bottom:8px">'+
-            '<div class="btn-row"><button onclick="mrkPend(\''+fe+'\')" class="btn btn-amber btn-sm">Confirm Pending</button>'+
-            '<button onclick="showPF(\''+fe+'\')" class="btn btn-ghost btn-sm">Cancel</button></div></div>';
+    if(tab!=="pending"){
+      acts+='<div class="pend-form" id="pf-'+fne+'">'+
+            '<div style="font-size:12px;font-weight:600;color:var(--amber);margin-bottom:8px">Reason for pending</div>'+
+            '<input class="inp" id="pr-'+fne+'" type="text" placeholder="Travelling, refused..." style="margin-bottom:8px">'+
+            '<div class="btn-row"><button onclick="mrkPend(\''+fne+'\')" class="btn btn-amber btn-sm">Confirm Pending</button>'+
+            '<button onclick="showPF(\''+fne+'\')" class="btn btn-ghost btn-sm">Cancel</button></div></div>';
     }
   } else {
     acts='<div class="btn-row">'+
-         '<button onclick="react(\''+fe+'\')" class="btn btn-green btn-sm">Reactivate</button>'+
-         '<button onclick="openModal(\''+fe+'\')" class="btn btn-outline btn-sm">Edit</button>'+
-         '<button onclick="delPt(\''+fe+'\')" class="btn btn-red btn-sm">Delete</button>'+
+         '<button onclick="react(\''+fne+'\')" class="btn btn-green btn-sm">Reactivate</button>'+
+         '<button onclick="openModal(\''+fne+'\')" class="btn btn-out btn-sm">Edit</button>'+
+         '<button onclick="delPt(\''+fne+'\')" class="btn btn-red btn-sm">Delete</button>'+
          '</div>';
   }
 
-  var h='<div class="card '+bc+'" id="pc-'+fe+'">';
-  // Collapsed
-  h+='<div class="card-top">';
-  h+='<div class="card-row1" onclick="togCard(\''+fe+'\')">';
+  var h='<div class="card '+bl+'" id="pc-'+fne+'">';
+  h+='<div class="card-top" onclick="togCard(\''+fne+'\')">';
+  h+='<div class="card-row">';
   h+='<div style="flex:1;min-width:0">';
-  h+='<div class="card-name">'+esc(p.patientName)+'</div>';
-  h+='<div class="card-meta">#'+fe+(p.dose?' &middot; '+esc(p.dose):'')+(p.assignType?' &middot; '+esc(p.assignType):'')+'</div>';
+  h+='<div class="card-name">'+esc(p.patientName||"")+'</div>';
+  h+='<div class="card-meta">#'+fne+(p.dose?" &middot; "+esc(p.dose):"")+'</div>';
   if(bdg)h+='<div class="card-badges">'+bdg+'</div>';
   h+='</div>';
-  h+='<svg id="cv-'+fe+'" class="chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--slate-300)" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>';
+  h+='<svg id="chev-'+fne+'" style="flex-shrink:0;transition:transform .2s;margin-top:2px" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--slate-300)" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>';
   h+='</div></div>';
   h+=spec;
-  h+=pr;
+  h+=pend;
   if(addr||ph)h+='<div class="card-actions">'+addr+ph+'</div>';
-  h+='<div class="card-expand" onclick="togCard(\''+fe+'\')"><span style="font-size:13px">Details</span> <span class="chev" id="cv2-'+fe+'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></span></div>';
+  h+='<div class="card-tog" onclick="togCard(\''+fne+'\')">';
+  h+='<span id="togTxt-'+fne+'" style="font-size:12px">Show details</span>';
+  h+='<span class="chev" id="togChev-'+fne+'">&#9660;</span></div>';
 
-  // Expanded
-  h+='<div class="card-body" id="cb-'+fe+'">';
+  // Expanded body
+  h+='<div class="card-body" id="cb-'+fne+'">';
 
-  // Dosing
-  h+='<div class="section"><div class="sec-title">Dosing & Schedule</div><div class="grid-2">';
-  h+='<div class="field"><div class="field-lbl">Dose</div><div class="field-val field-mono">'+esc(p.dose||'--')+'</div></div>';
-  h+='<div class="field"><div class="field-lbl">Assignment</div><div class="field-val">'+esc(p.assignType||'--')+'</div></div>';
-  h+='<div class="field"><div class="field-lbl">Total Doses</div><div class="field-val field-mono">'+esc(p.totalDoses||'--')+'</div></div>';
-  h+='<div class="field"><div class="field-lbl">Repeats Left</div><div class="field-val field-mono">'+esc(p.repeatsLeft||'--')+'</div></div>';
-  h+='<div class="field"><div class="field-lbl">Due Date</div><div class="field-val field-mono">'+(fmt(pd(p.dueDate))||'--')+'</div></div>';
-  h+='<div class="field"><div class="field-lbl">Appointment</div><div class="field-val field-mono">'+(fmtDT(p.apptDT)||'--')+'</div></div>';
-  h+='</div>'+np+'</div>';
+  // Dosing section
+  h+='<div class="sec"><div class="sec-ttl">Dosing &amp; Schedule</div><div class="g2">';
+  h+='<div class="fld"><div class="fld-l">Dose</div><div class="fld-v fld-m">'+esc(p.dose||"--")+'</div></div>';
+  h+='<div class="fld"><div class="fld-l">Assignment</div><div class="fld-v">'+esc(p.assignType||"--")+'</div></div>';
+  h+='<div class="fld"><div class="fld-l">Total Doses</div><div class="fld-v fld-m">'+esc(p.totalDoses||"--")+'</div></div>';
+  h+='<div class="fld"><div class="fld-l">Repeats Left</div><div class="fld-v fld-m">'+esc(p.repeatsLeft||"--")+'</div></div>';
+  h+='<div class="fld"><div class="fld-l">Due Date</div><div class="fld-v fld-m">'+(fmtD(due)||"--")+'</div></div>';
+  h+='<div class="fld"><div class="fld-l">Appointment</div><div class="fld-v fld-m">'+(fmtDT(p.apptDT)||"--")+'</div></div>';
+  h+='</div>'+nextHtml+'</div>';
 
-  // Site
-  h+='<div class="section"><div class="sec-title">Injection Site</div>';
-  h+='<div class="grid-2" style="margin-bottom:12px">';
-  h+='<div class="field"><div class="field-lbl">Previous</div><div class="field-val">'+esc(p.prevSite||'None')+'</div></div>';
-  h+='<div class="field"><div class="field-lbl">Current</div><div class="field-val">'+esc(p.site||'Not set')+'</div></div>';
-  h+='</div><div class="site-btns">'+sb+'</div>';
-  if(p.prevDates)h+='<div style="margin-top:12px"><div class="field-lbl" style="margin-bottom:4px">Previous Dates</div><div class="field-val field-mono" style="font-size:13px">'+esc(p.prevDates)+'</div></div>';
+  // Injection site
+  h+='<div class="sec"><div class="sec-ttl">Injection Site</div>';
+  h+='<div class="g2" style="margin-bottom:10px"><div class="fld"><div class="fld-l">Previous</div><div class="fld-v">'+esc(p.prevSite||"None")+'</div></div>';
+  h+='<div class="fld"><div class="fld-l">Current</div><div class="fld-v">'+esc(p.site||"Not set")+'</div></div></div>';
+  h+='<div class="site-btns">'+siteBtns+'</div>';
+  if(p.prevDates)h+='<div style="margin-top:10px;font-size:12px;color:var(--slate-400);font-family:monospace">Prev dates: '+esc(p.prevDates)+'</div>';
   h+='</div>';
 
   // Schedule
-  h+='<div class="section"><div class="sec-title">Schedule Appointment</div>';
-  h+='<div style="margin-bottom:14px"><label class="field-lbl" style="display:block;margin-bottom:8px">Appointment Date & Time</label>';
-  h+='<input class="inp" type="datetime-local" id="ap-'+fe+'" value="'+apptV+'">';
-  h+='<div class="btn-row"><button onclick="saveAppt(\''+fe+'\')" class="btn btn-blue btn-sm">Confirm Appointment</button><button onclick="clrAppt(\''+fe+'\')" class="btn btn-ghost btn-sm">Clear</button></div></div>';
-  h+='<div><label class="field-lbl" style="display:block;margin-bottom:8px">Due Date</label>';
-  h+='<input class="inp" type="date" id="du-'+fe+'" value="'+dueV+'">';
-  h+='<div class="btn-row"><button onclick="saveDue(\''+fe+'\')" class="btn btn-outline btn-sm">Save Due Date</button></div></div></div>';
+  h+='<div class="sec"><div class="sec-ttl">Schedule Appointment</div>';
+  h+='<div style="display:flex;flex-direction:column;gap:10px">';
+  h+='<div><label style="font-size:11px;font-weight:600;color:var(--slate-400);text-transform:uppercase;display:block;margin-bottom:6px">Appointment Date &amp; Time</label>';
+  h+='<input class="inp" type="datetime-local" id="ap-'+fne+'" value="'+apptISO+'">';
+  h+='<div class="btn-row"><button onclick="saveAppt(\''+fne+'\')" class="btn btn-blue btn-sm">Confirm Appointment</button>';
+  if(apptISO)h+='<button onclick="clrAppt(\''+fne+'\')" class="btn btn-ghost btn-sm">Clear</button>';
+  h+='</div></div>';
+  h+='<div><label style="font-size:11px;font-weight:600;color:var(--slate-400);text-transform:uppercase;display:block;margin-bottom:6px">Due Date</label>';
+  h+='<input class="inp" type="date" id="du-'+fne+'" value="'+dueISO+'">';
+  h+='<div class="btn-row"><button onclick="saveDue(\''+fne+'\')" class="btn btn-out btn-sm">Save Due Date</button></div></div>';
+  h+='</div></div>';
 
-  // Adverse
-  h+='<div class="section"><div class="sec-title">Adverse Effects</div>';
-  h+=p.adverse?'<div class="adverse">'+esc(p.adverse)+'</div>':'<div style="font-size:14px;color:var(--slate-400);font-style:italic">None recorded</div>';
+  // Adverse effects
+  h+='<div class="sec"><div class="sec-ttl">Adverse Effects</div>';
+  h+=p.adverse?'<div class="adverse-box">'+esc(p.adverse)+'</div>':'<div style="font-size:13px;color:var(--slate-400);font-style:italic">None recorded</div>';
   h+='</div>';
 
   // Comments
-  h+='<div class="section"><div class="sec-title">Comments</div>';
-  h+='<textarea class="ta" id="cm-'+fe+'" placeholder="Add notes...">'+esc(p.comments||'')+'</textarea>';
-  h+='<div class="btn-row"><button onclick="saveCom(\''+fe+'\')" class="btn btn-blue btn-sm">Save</button></div></div>';
+  h+='<div class="sec"><div class="sec-ttl">Comments</div>';
+  h+='<textarea class="ta" id="cm-'+fne+'" placeholder="Add notes...">'+esc(p.comments||"")+'</textarea>';
+  h+='<div class="btn-row"><button onclick="saveCom(\''+fne+'\')" class="btn btn-blue btn-sm">Save Comments</button></div></div>';
 
   // Actions
-  h+='<div class="section">'+acts+'</div>';
+  h+='<div class="sec">'+acts+'</div>';
   h+='</div></div>';
   return h;
 }
 
-// TOGGLE
-function togCard(fn) {
-  var card=document.getElementById('pc-'+fn);
-  var body=document.getElementById('cb-'+fn);
+// CARD TOGGLE - tap anywhere on card top
+function togCard(fn){
+  var card=document.getElementById("pc-"+fn);
+  var body=document.getElementById("cb-"+fn);
+  var chev=document.getElementById("chev-"+fn);
+  var togChev=document.getElementById("togChev-"+fn);
+  var togTxt=document.getElementById("togTxt-"+fn);
   if(!card||!body)return;
-  var open=card.classList.contains('open');
-  if(open){card.classList.remove('open');body.style.display='none';}
-  else{card.classList.add('open');body.style.display='block';}
+  var open=card.classList.contains("open");
+  if(open){
+    card.classList.remove("open");
+    body.style.display="none";
+    if(chev)chev.style.transform="";
+    if(togChev)togChev.innerHTML="&#9660;";
+    if(togTxt)togTxt.textContent="Show details";
+  } else {
+    card.classList.add("open");
+    body.style.display="block";
+    if(chev)chev.style.transform="rotate(180deg)";
+    if(togChev)togChev.innerHTML="&#9650;";
+    if(togTxt)togTxt.textContent="Hide details";
+  }
 }
 
-// FIND
+// FIND PATIENT
 function fp(fn){for(var i=0;i<pts.length;i++){if(pts[i].fileNumber===fn)return pts[i];}return null;}
+function sp(p){for(var i=0;i<pts.length;i++){if(pts[i].fileNumber===p.fileNumber){pts[i]=p;return;}}pts.push(p);}
 
 // ACTIONS
 function chkDone(inp,fn){
-  var v=inp.value.trim().toUpperCase()==='DONE';
-  if(v)inp.classList.add('ok');else inp.classList.remove('ok');
-  var b=document.getElementById('cs-'+fn);
-  if(b){if(v)b.classList.add('rdy');else b.classList.remove('rdy');}
+  var v=inp.value.trim().toUpperCase()==="DONE";
+  if(v)inp.classList.add("ok");else inp.classList.remove("ok");
+  var b=document.getElementById("cs-"+fn);
+  if(b){if(v)b.classList.add("rdy");else b.classList.remove("rdy");}
 }
 
 function confInj(fn){
   var p=fp(fn);if(!p)return;
   lastSnap=JSON.parse(JSON.stringify(p));
-  var wk=DOSE_WEEKS[mgv(p.dose)];
-  // Use the actual appointment date for calculation, not today
-  // This ensures overdue patients get correct future due date from when they were actually seen
-  var apptDate=p.apptDT?pd(p.apptDT):null;
-  var baseDate=apptDate||new Date(); // appointment date if set, else now
-  var prev=p.prevDates?p.prevDates.split(',').map(function(s){return s.trim();}).filter(Boolean):[];
-  prev.push(fmt(baseDate));p.prevDates=prev.join(', ');
-  p.prevSite=p.site||'';p.site='';
-  var rl=parseInt(p.repeatsLeft)||0;if(rl>0)p.repeatsLeft=String(rl-1);
-  // Calculate next due date FROM the appointment date (not today)
-  if(wk)p.dueDate=addW(baseDate,wk).toISOString().slice(0,10);
-  p.apptDT='';p.lastUpdated=new Date().toISOString();
-  save();push(p);
-  // Switch to queue tab so user can see the patient with their new due date
-  curTab='queue';
-  renderAll();
-  toast(p.patientName+' confirmed. Next due: '+fmt(pd(p.dueDate)),true);
-  if(p.assignType==='1 Dose Only')setTimeout(function(){toast('Reminder: '+p.patientName+' is 1 Dose Only');},3500);
+  var mg=getMg(p.dose||""),wk=DOSE_WEEKS[mg];
+  var appt=pd(p.apptDT||""),today=tod();
+  var base=appt||today;
+  var prev=(p.prevDates?p.prevDates.split(",").map(function(s){return s.trim();}).filter(Boolean):[]);
+  prev.push(fmtD(base));p.prevDates=prev.join(", ");
+  p.prevSite=p.site||"";p.site="";
+  var rl=parseInt(p.repeatsLeft||"0")||0;if(rl>0)p.repeatsLeft=String(rl-1);
+  if(wk){var nd=addW(base,wk);p.dueDate=nd.getFullYear()+"-"+(nd.getMonth()<9?"0":"")+(nd.getMonth()+1)+"-"+(nd.getDate()<10?"0":"")+nd.getDate();}
+  p.apptDT="";p.lastUpdated=new Date().toISOString();
+  sp(p);writePatient(p);renderAll();
+  var ndStr=fmtD(pd(p.dueDate));
+  toast(p.patientName+" confirmed. Next due: "+ndStr,true);
+  if(p.assignType==="1 Dose Only")setTimeout(function(){toast("Reminder: "+p.patientName+" is 1 Dose Only");},3000);
 }
 
-function setSite(fn,site){var p=fp(fn);if(!p)return;p.site=site;save();push(p);renderAll();}
+function setSite(fn,site){var p=fp(fn);if(!p)return;p.site=site;sp(p);writePatient(p);renderAll();}
 
 function saveAppt(fn){
-  var inp=document.getElementById('ap-'+fn);
-  if(!inp||!inp.value){toast('Select a date and time first');return;}
+  var inp=document.getElementById("ap-"+fn);
+  if(!inp||!inp.value){toast("Select a date and time first");return;}
   var p=fp(fn);if(!p)return;
-  p.apptDT=inp.value;
-  save();push(p);
-  // Switch to the tab where this patient now belongs so they don't appear to disappear
-  var newTab=getTab(p);
-  curTab=newTab;
-  renderAll();
-  toast('Appointment set: '+fmtDT(inp.value)+' (moved to '+newTab+' tab)');
+  p.apptDT=inp.value;sp(p);writePatient(p);
+  var newTab=getTab(p);curTab=newTab;
+  renderAll();toast("Appointment confirmed: "+fmtDT(inp.value));
 }
-function clrAppt(fn){var p=fp(fn);if(!p)return;p.apptDT='';save();push(p);renderAll();toast('Appointment cleared');}
-function saveDue(fn){var inp=document.getElementById('du-'+fn);if(!inp||!inp.value){toast('Select a due date first');return;}var p=fp(fn);if(!p)return;p.dueDate=inp.value;save();push(p);renderAll();toast('Due date saved: '+fmt(pd(inp.value)));}
-function saveCom(fn){var p=fp(fn);if(!p)return;var ta=document.getElementById('cm-'+fn);if(ta)p.comments=ta.value.trim();save();push(p);toast('Saved');}
-function showPF(fn){var f=document.getElementById('pf-'+fn);if(f)f.style.display=f.style.display==='block'?'none':'block';}
-function mrkPend(fn){var p=fp(fn);if(!p)return;var inp=document.getElementById('pr-'+fn);p.pendReason=inp?inp.value.trim():'No reason given';p.status='Pending';p.apptDT='';save();push(p);renderAll();switchTab('pending');toast(p.patientName+' moved to Pending');}
-function react(fn){var p=fp(fn);if(!p)return;p.status='Active';p.pendReason='';p.archivedDate='';save();push(p);renderAll();toast(p.patientName+' reactivated');}
-function archPt(fn){var p=fp(fn);if(!p)return;lastSnap=JSON.parse(JSON.stringify(p));p.status='Archived';p.archivedDate=new Date().toISOString().slice(0,10);save();push(p);renderAll();toast(p.patientName+' archived',true);}
-function delPt(fn){if(!confirm('Delete this patient?'))return;var idx=-1;for(var i=0;i<pts.length;i++){if(pts[i].fileNumber===fn){idx=i;break;}}if(idx<0)return;lastSnap=JSON.parse(JSON.stringify(pts[idx]));pts.splice(idx,1);save();del(fn);renderAll();toast('Patient deleted',true);}
-function undoAct(){if(!lastSnap)return;var found=false;for(var i=0;i<pts.length;i++){if(pts[i].fileNumber===lastSnap.fileNumber){pts[i]=lastSnap;found=true;break;}}if(!found)pts.push(lastSnap);lastSnap=null;save();renderAll();hideToast();}
+function clrAppt(fn){var p=fp(fn);if(!p)return;p.apptDT="";sp(p);writePatient(p);renderAll();toast("Appointment cleared");}
+function saveDue(fn){
+  var inp=document.getElementById("du-"+fn);
+  if(!inp||!inp.value){toast("Select a due date");return;}
+  var p=fp(fn);if(!p)return;p.dueDate=inp.value;sp(p);writePatient(p);renderAll();toast("Due date saved: "+fmtD(pd(inp.value)));
+}
+function saveCom(fn){var p=fp(fn);if(!p)return;var ta=document.getElementById("cm-"+fn);if(ta)p.comments=ta.value.trim();sp(p);writePatient(p);toast("Saved");}
+function showPF(fn){var f=document.getElementById("pf-"+fn);if(f)f.style.display=f.style.display==="block"?"none":"block";}
+function mrkPend(fn){
+  var p=fp(fn);if(!p)return;
+  var inp=document.getElementById("pr-"+fn);
+  p.pendReason=inp?inp.value.trim():"No reason given";
+  p.status="Pending";p.apptDT="";
+  sp(p);writePatient(p);renderAll();switchTab("pending");toast(p.patientName+" moved to Pending");
+}
+function react(fn){var p=fp(fn);if(!p)return;p.status="Active";p.pendReason="";p.archivedDate="";sp(p);writePatient(p);renderAll();toast(p.patientName+" reactivated");}
+function archPt(fn){
+  var p=fp(fn);if(!p)return;lastSnap=JSON.parse(JSON.stringify(p));
+  p.status="Archived";p.archivedDate=new Date().toISOString().slice(0,10);
+  sp(p);writePatient(p);renderAll();toast(p.patientName+" archived",true);
+}
+function delPt(fn){
+  if(!confirm("Delete this patient permanently?"))return;
+  var idx=-1;for(var i=0;i<pts.length;i++){if(pts[i].fileNumber===fn){idx=i;break;}}
+  if(idx<0)return;
+  lastSnap=JSON.parse(JSON.stringify(pts[idx]));
+  pts.splice(idx,1);deleteRemote(fn);renderAll();toast("Patient deleted",true);
+}
+function undoAct(){
+  if(!lastSnap)return;
+  sp(lastSnap);lastSnap=null;renderAll();hideToast();
+}
 
 // MODAL
 function openModal(fn){
-  var p=fn?fp(fn):norm({});if(!p)return;
-  var ae=!!fn;
-  var av=p.apptDT?new Date(p.apptDT).toISOString().slice(0,16):'';
-  var dv=p.dueDate?new Date(p.dueDate).toISOString().slice(0,10):'';
-  function so(opts,cur){var s='';for(var i=0;i<opts.length;i++)s+='<option'+(opts[i]===cur?' selected':'')+'>'+opts[i]+'</option>';return s;}
-  function fi(lbl,id,type,val,ph,ro){return '<div class="form-field"><label class="form-lbl">'+lbl+'</label><input class="inp" id="'+id+'" type="'+(type||'text')+'" value="'+esc(val||'')+'" placeholder="'+(ph||'')+'"'+(ro?' readonly':'')+' style="font-size:16px"></div>';}
-  function ta(lbl,id,val){return '<div class="form-field full"><label class="form-lbl">'+lbl+'</label><textarea class="ta" id="'+id+'" style="font-size:15px">'+esc(val||'')+'</textarea></div>';}
-  var h='<div class="sheet-handle"></div><div class="sheet-inner">';
-  h+='<div class="sheet-hdr"><div class="sheet-title">'+(ae?'Edit Patient':'New Patient')+'</div><button class="sheet-close" onclick="closeModal()">&#x2715;</button></div>';
-  h+='<div class="form-grid">';
-  h+=fi('File Number *','ff','text',p.fileNumber,'29754',ae);
-  h+=fi('Patient Name *','fn','text',p.patientName,'First Last');
-  h+='<div class="form-field full"><label class="form-lbl">Address</label><input class="inp" id="fa" type="text" value="'+esc(p.address)+'" placeholder="123 Rue, Laval, QC" style="font-size:16px"></div>';
-  h+=fi('Phone 1','fp1','tel',p.phone1,'514-000-0000');
-  h+=fi('Phone 2','fp2','tel',p.phone2,'450-000-0000');
-  h+=fi('Dose','fd','text',p.dose,'45 mg x 6');
-  h+=fi('Total Doses','ftd','text',p.totalDoses,'6');
-  h+=fi('Repeats Left','frl','text',p.repeatsLeft,'5');
-  h+='<div class="form-field"><label class="form-lbl">Assignment</label><select class="sel" id="fat" style="font-size:16px">'+so(ATYPES,p.assignType)+'</select></div>';
-  h+='<div class="form-field"><label class="form-lbl">Status</label><select class="sel" id="fst" style="font-size:16px">'+so(FSTATUSES,p.status)+'</select></div>';
-  h+='<div class="form-field full"><label class="form-lbl">Appointment Date & Time</label><input class="inp" id="fat2" type="datetime-local" value="'+av+'" style="font-size:16px"></div>';
-  h+='<div class="form-field full"><label class="form-lbl">Due Date</label><input class="inp" id="fdu" type="date" value="'+dv+'" style="font-size:16px"></div>';
-  h+=ta('Special Instructions','fsp',p.special);
-  h+=ta('Adverse Effects','fad',p.adverse);
-  h+=ta('Comments','fco',p.comments);
-  h+='</div>';
-  h+='<div class="btn-row" style="margin-top:20px"><button onclick="closeModal()" class="btn btn-outline" style="flex-shrink:0">Cancel</button><button onclick="savePt()" class="btn btn-blue" style="flex:1">Save Patient</button></div>';
-  h+='</div>';
-  document.getElementById('modalSh').innerHTML=h;
-  document.getElementById('modalOv').classList.add('on');
-}
-function closeModal(){document.getElementById('modalOv').classList.remove('on');}
-function gv(id){var el=document.getElementById(id);return el?el.value.trim():'';}
-function savePt(){
-  var fn=gv('ff');if(!fn){alert('File number required.');return;}
-  if(!gv('fn')){alert('Patient name required.');return;}
-  var p=norm({fileNumber:fn,patientName:gv('fn'),address:gv('fa'),phone1:gv('fp1'),phone2:gv('fp2'),dose:gv('fd'),totalDoses:gv('ftd'),repeatsLeft:gv('frl'),assignType:gv('fat'),status:gv('fst'),apptDT:gv('fat2'),dueDate:gv('fdu'),special:gv('fsp'),adverse:gv('fad'),comments:gv('fco'),lastUpdated:new Date().toISOString()});
-  var found=false;
-  for(var i=0;i<pts.length;i++){
-    if(pts[i].fileNumber===fn){
-      p.prevSite=pts[i].prevSite||'';p.prevDates=pts[i].prevDates||'';
-      p.pendReason=pts[i].pendReason||'';p.archivedDate=pts[i].archivedDate||'';
-      p.site=pts[i].site||'';pts[i]=p;found=true;break;
-    }
+  var p=fn?fp(fn):{};if(!p)p={};
+  var isEdit=!!fn;
+  var av=p.apptDT?p.apptDT.slice(0,16):"";
+  var dv=p.dueDate?p.dueDate.slice(0,10):"";
+  function sel(opts,cur){var s="";for(var i=0;i<opts.length;i++)s+="<option"+(opts[i]===cur?" selected":"")+">"+opts[i]+"</option>";return s;}
+  function fi(lbl,id,type,val,ph,ro){
+    return '<div class="ff"><label class="fl">'+lbl+'</label><input class="inp" id="'+id+'" type="'+(type||"text")+'" value="'+esc(val||"")+'" placeholder="'+(ph||"")+'"'+(ro?" readonly":"")+' style="font-size:15px"></div>';
   }
-  if(!found)pts.push(p);
-  save();push(p);closeModal();renderAll();toast(p.patientName+' saved');
+
+  var h='<div class="sheet-handle"></div><div class="sheet-in">';
+  h+='<div class="sheet-hdr"><div class="sheet-ttl">'+(isEdit?"Edit Patient":"New Patient")+'</div><button class="sheet-x" onclick="closeModal()">&#x2715;</button></div>';
+  h+='<div class="fg">';
+  h+=fi("File Number *","ff","text",p.fileNumber,"29754",isEdit);
+  h+=fi("Patient Name *","fn2","text",p.patientName,"First Last");
+  h+='<div class="ff full"><label class="fl">Address</label><input class="inp" id="fa" type="text" value="'+esc(p.address||"")+'" placeholder="123 Rue, Montreal, QC" style="font-size:15px"></div>';
+  h+=fi("Phone 1","fp1","tel",p.phone1,"514-000-0000");
+  h+=fi("Phone 2","fp2","tel",p.phone2,"450-000-0000");
+  h+=fi("Dose","fd","text",p.dose,"45 mg x 6");
+  h+=fi("Total Doses","ftd","text",p.totalDoses,"6");
+  h+=fi("Repeats Left","frl","text",p.repeatsLeft,"5");
+  h+='<div class="ff"><label class="fl">Assignment</label><select class="sel" id="fat">'+sel(["Permanent","1 Dose Only"],p.assignType||"Permanent")+'</select></div>';
+  h+='<div class="ff"><label class="fl">Status</label><select class="sel" id="fst">'+sel(["Active","Pending","Archived"],p.status||"Active")+'</select></div>';
+  h+='<div class="ff full"><label class="fl">Appointment Date &amp; Time</label><input class="inp" id="fat2" type="datetime-local" value="'+av+'" style="font-size:15px"></div>';
+  h+='<div class="ff full"><label class="fl">Due Date</label><input class="inp" id="fdu" type="date" value="'+dv+'" style="font-size:15px"></div>';
+  h+='<div class="ff full"><label class="fl">Special Instructions</label><textarea class="ta" id="fsp">'+esc(p.special||"")+'</textarea></div>';
+  h+='<div class="ff full"><label class="fl">Adverse Effects</label><textarea class="ta" id="fad">'+esc(p.adverse||"")+'</textarea></div>';
+  h+='<div class="ff full"><label class="fl">Comments</label><textarea class="ta" id="fco">'+esc(p.comments||"")+'</textarea></div>';
+  h+='</div>';
+  h+='<div class="btn-row" style="margin-top:20px"><button onclick="closeModal()" class="btn btn-out" style="flex-shrink:0">Cancel</button><button onclick="savePt(\''+esc(fn||"")+'\')" class="btn btn-blue" style="flex:1">Save Patient</button></div>';
+  h+='</div>';
+  document.getElementById("modalSh").innerHTML=h;
+  document.getElementById("modalOv").classList.add("on");
 }
-
-// SETUP
-function renderSetup(){
-  var panel=document.getElementById('pSetup');if(!panel)return;
-  panel.innerHTML=
-    '<div class="setup-card">'+
-    '<div class="setup-title">Connect Google Sheets</div>'+
-    '<div class="setup-desc">Paste your Apps Script /exec URL below.</div>'+
-    '<input class="inp" id="surl" value="'+esc(sUrl)+'" placeholder="https://script.google.com/macros/s/.../exec" style="margin-bottom:10px">'+
-    '<div class="btn-row">'+
-    '<button onclick="diagTest()" class="btn btn-outline" style="flex:1">Run Diagnostics</button>'+
-    '<button onclick="saveUrl()" class="btn btn-blue" style="flex:1">Connect & Sync</button>'+
-    '</div>'+
-    '<div id="tbox" class="test-box" style="line-height:2"></div>'+
-    '</div>'+
-    '<div class="setup-card">'+
-    '<div class="setup-title">Checklist - do all 4 steps</div>'+
-    '<div class="setup-steps"><ol>'+
-    '<li>In Apps Script replace <span class="code">Code.gs</span> with the latest Code.gs file</li>'+
-    '<li><strong>Deploy &rarr; New deployment</strong> (NOT update existing)</li>'+
-    '<li>Type: Web app &bull; Execute as: <strong>Me</strong> &bull; Access: <strong>Anyone</strong></li>'+
-    '<li>Click <strong>Authorize access</strong> &rarr; Allow &rarr; copy the /exec URL</li>'+
-    '</ol></div>'+
-    '<div style="background:var(--red-lt);border-radius:8px;padding:12px 14px;margin-top:10px;font-size:13px;color:var(--red);font-weight:500">'+
-    '&#9888; Every time you edit Code.gs you MUST create a New Deployment. Updating an existing deployment does not apply changes.'+
-    '</div>'+
-    '</div>'+
-    '<div class="setup-card">'+
-    '<div class="setup-title">Manual URL Test</div>'+
-    '<div class="setup-desc">Click the button below to open your Script URL directly in a new tab. You should see JSON data (a list starting with [ ). If you see an error page, your deployment has an issue.</div>'+
-    '<button onclick="openScriptTest()" class="btn btn-outline full">Open Script URL in New Tab</button>'+
-    '</div>';
-}
-
-function openScriptTest(){
-  var u=document.getElementById('surl')?document.getElementById('surl').value.trim():sUrl;
-  if(!u){alert('Enter your Script URL first');return;}
-  window.open(u+'?action=getAll&t='+Date.now(),'_blank');
-}
-
-function diagTest(){
-  var u=document.getElementById('surl')?document.getElementById('surl').value.trim():'';
-  var tb=document.getElementById('tbox');if(!tb)return;
-  tb.style.display='block';
-  var steps=[];
-  function show(){ tb.innerHTML=steps.join('<br>'); }
-
-  // Step 1 - URL format check
-  if(!u){ steps.push('&#10007; No URL entered'); show(); return; }
-  steps.push('&#10003; URL entered');
-  if(!u.startsWith('https://script.google.com/macros/s/')){ steps.push('&#10007; URL does not look like an Apps Script URL'); show(); return; }
-  steps.push('&#10003; URL format looks correct');
-  if(!u.endsWith('/exec')){ steps.push('&#10007; URL must end in /exec'); show(); return; }
-  steps.push('&#10003; URL ends in /exec');
-  steps.push('&#8987; Testing connection via JSONP...');
-  show();
-
-  var prev=sUrl; sUrl=u;
-  jsonpCall({action:'getAll'},function(data,err){
-    if(err){
-      steps.pop();
-      steps.push('&#10007; Connection failed: '+err);
-      steps.push('');
-      steps.push('<strong>Most likely cause:</strong> Code.gs was not updated or a new deployment was not created.');
-      steps.push('Fix: Go to Apps Script &rarr; paste latest Code.gs &rarr; Deploy &rarr; <strong>New deployment</strong> &rarr; copy URL.');
-      sUrl=prev; show(); return;
-    }
-    if(data&&data.error){
-      steps.pop();
-      steps.push('&#10007; Script error: '+data.error);
-      sUrl=prev; show(); return;
-    }
-    if(Array.isArray(data)){
-      steps.pop();
-      steps.push('&#10003; Connected! Found '+data.length+' patients in Google Sheet.');
-      steps.push('&#10003; JSONP working correctly.');
-      steps.push('You can now click <strong>Connect & Sync</strong>.');
-      show(); return;
-    }
-    steps.pop();
-    steps.push('&#10007; Unexpected response. Try creating a new deployment.');
-    sUrl=prev; show();
+function closeModal(){document.getElementById("modalOv").classList.remove("on");}
+function gv(id){var el=document.getElementById(id);return el?el.value.trim():"";}
+function savePt(origFn){
+  var fn=gv("ff")||origFn;if(!fn){alert("File number required.");return;}
+  if(!gv("fn2")){alert("Patient name required.");return;}
+  var existing=fp(fn)||{};
+  var p=Object.assign({},existing,{
+    fileNumber:fn,patientName:gv("fn2"),address:gv("fa"),
+    phone1:gv("fp1"),phone2:gv("fp2"),dose:gv("fd"),
+    totalDoses:gv("ftd"),repeatsLeft:gv("frl"),
+    assignType:gv("fat"),status:gv("fst"),
+    apptDT:gv("fat2"),dueDate:gv("fdu"),
+    special:gv("fsp"),adverse:gv("fad"),comments:gv("fco"),
+    lastUpdated:new Date().toISOString()
   });
-}
-
-function saveUrl(){
-  var u=document.getElementById('surl')?document.getElementById('surl').value.trim():'';
-  if(!u){alert('Enter the URL first');return;}
-  if(u.indexOf('script.google.com')<0){alert('Not a valid Apps Script URL');return;}
-  sUrl=u;localStorage.setItem('vm_surl',u);curTab='today';loadSheet();renderAll();
-}
-
-// IMPORT
-function openImp(){
-  var ak=localStorage.getItem(AKEY)||'';
-  var h='<div class="sheet-handle"></div><div class="sheet-inner">';
-  h+='<div class="sheet-hdr"><div class="sheet-title">Import Patients</div><button class="sheet-close" onclick="closeImp()">&#x2715;</button></div>';
-  h+='<div class="setup-card" style="margin-bottom:12px"><div class="setup-title">Anthropic API Key</div><div class="setup-desc">Required for PDF AI extraction only. Stored locally.</div><input class="inp" id="iak" type="password" value="'+esc(ak)+'" placeholder="sk-ant-api03-..." style="margin-bottom:8px"><button onclick="var k=document.getElementById(\'iak\');if(k&&k.value.trim()){localStorage.setItem(\''+AKEY+'\',k.value.trim());alert(\'Key saved\');}else{alert(\'Enter a key\');}" class="btn btn-outline btn-sm">Save Key</button></div>';
-  h+='<div class="setup-card" style="margin-bottom:12px"><div class="setup-title">Import CSV</div><div class="setup-desc">Upload any CSV with patient data. First row = headers.</div><div class="drop-zone" id="csvDZ" onclick="document.getElementById(\'csvF\').click()" ondragover="event.preventDefault();this.classList.add(\'drag\')" ondragleave="this.classList.remove(\'drag\')" ondrop="this.classList.remove(\'drag\');handleCsv(event.dataTransfer.files[0]);event.preventDefault()"><div style="font-size:32px;margin-bottom:8px">&#x1F4CA;</div><div style="font-size:15px;font-weight:600;color:var(--slate-700)">Drop CSV here or tap to browse</div><input type="file" id="csvF" accept=".csv" onchange="handleCsv(this.files[0])"></div><div id="csvLog" class="import-log"></div></div>';
-  h+='<div class="setup-card"><div class="setup-title">Import PDF (AI)</div><div class="setup-desc">AI reads your PDF and extracts patient data automatically. Needs API key above.</div><div class="drop-zone" id="pdfDZ" onclick="document.getElementById(\'pdfF\').click()" ondragover="event.preventDefault();this.classList.add(\'drag\')" ondragleave="this.classList.remove(\'drag\')" ondrop="this.classList.remove(\'drag\');handlePdf(event.dataTransfer.files[0]);event.preventDefault()"><div style="font-size:32px;margin-bottom:8px">&#x1F4C4;</div><div style="font-size:15px;font-weight:600;color:var(--slate-700)">Drop PDF here or tap to browse</div><input type="file" id="pdfF" accept=".pdf" onchange="handlePdf(this.files[0])"></div><div id="pdfLog" class="import-log"></div></div>';
-  h+='</div>';
-  document.getElementById('impSh').innerHTML=h;
-  document.getElementById('impOv').classList.add('on');
-}
-function closeImp(){document.getElementById('impOv').classList.remove('on');}
-
-function handleCsv(file){
-  if(!file)return;
-  var log=document.getElementById('csvLog');if(log){log.style.display='block';log.textContent='Reading...';}
-  var r=new FileReader();
-  r.onload=function(e){
-    try{
-      var rows=parseCSV(e.target.result);if(rows.length<2){if(log)log.textContent='No data rows found.';return;}
-      var headers=rows[0],imp=0,skip=0;
-      for(var i=1;i<rows.length;i++){
-        var row=rows[i];if(!row||row.length===0)continue;
-        var obj={};for(var j=0;j<headers.length;j++)obj[headers[j]]=row[j]||'';
-        var p=norm(obj);if(!p.fileNumber&&!p.patientName){skip++;continue;}
-        if(!p.fileNumber)p.fileNumber='CSV-'+Date.now()+'-'+i;
-        var found=false;for(var k=0;k<pts.length;k++){if(pts[k].fileNumber===p.fileNumber){pts[k]=p;found=true;break;}}
-        if(!found)pts.push(p);imp++;
-      }
-      save();renderAll();
-      if(log){log.textContent='Imported '+imp+' patients.'+(skip?' Skipped '+skip+'.':'');log.classList.add('import-ok');}
-    }catch(err){if(log)log.textContent='Error: '+err.message;}
-  };
-  r.readAsText(file);
-}
-
-function parseCSV(text){
-  var rows=[],cur=[],field='',inQ=false;
-  for(var i=0;i<text.length;i++){
-    var c=text[i];
-    if(inQ){if(c==='"'&&text[i+1]==='"'){field+='"';i++;}else if(c==='"'){inQ=false;}else{field+=c;}}
-    else if(c==='"'){inQ=true;}
-    else if(c===','){cur.push(field.trim());field='';}
-    else if(c==='\n'||c==='\r'){if(field||cur.length){cur.push(field.trim());if(cur.some(function(v){return v;}))rows.push(cur);}cur=[];field='';}
-    else{field+=c;}
-  }
-  if(field||cur.length){cur.push(field.trim());if(cur.some(function(v){return v;}))rows.push(cur);}
-  return rows;
-}
-
-function handlePdf(file){
-  if(!file)return;
-  var ak=localStorage.getItem(AKEY)||document.getElementById('iak')&&document.getElementById('iak').value.trim();
-  var log=document.getElementById('pdfLog');
-  if(!ak){if(log){log.style.display='block';log.textContent='Enter your Anthropic API key first.';}return;}
-  if(log){log.style.display='block';log.textContent='Reading PDF...';}
-  var r=new FileReader();
-  r.onload=function(e){
-    var b64=e.target.result.split(',')[1];
-    if(log)log.textContent='Sending to AI...';
-    var prompt='Extract all patient records from this medical document. Return ONLY a valid JSON array. Each object must have: fileNumber, patientName, address, phone1, phone2, dose, totalDoses, repeatsLeft, site (injection site), dueDate (YYYY-MM-DD), apptDT (YYYY-MM-DDThh:mm), assignType (Permanent or 1 Dose Only), special (special instructions), adverse (adverse effects), comments. Empty string if not found. Return JSON array only, no other text.';
-    var xhr=new XMLHttpRequest();
-    xhr.open('POST','https://api.anthropic.com/v1/messages',true);
-    xhr.setRequestHeader('Content-Type','application/json');
-    xhr.setRequestHeader('x-api-key',ak);
-    xhr.setRequestHeader('anthropic-version','2023-06-01');
-    xhr.setRequestHeader('anthropic-dangerous-direct-browser-access','true');
-    xhr.onload=function(){
-      try{
-        var data=JSON.parse(xhr.responseText);
-        if(data.error){if(log)log.textContent='AI error: '+data.error.message;return;}
-        var txt=data.content&&data.content[0]?data.content[0].text:'';
-        var m=txt.match(/\[[\s\S]*\]/);
-        if(!m){if(log)log.textContent='Could not parse AI response.';return;}
-        var extracted=JSON.parse(m[0]),imp=0;
-        for(var i=0;i<extracted.length;i++){
-          var p=norm(extracted[i]);if(!p.patientName&&!p.fileNumber)continue;
-          if(!p.fileNumber)p.fileNumber='PDF-'+Date.now()+'-'+i;
-          var found=false;for(var k=0;k<pts.length;k++){if(pts[k].fileNumber===p.fileNumber){pts[k]=p;found=true;break;}}
-          if(!found)pts.push(p);imp++;
-        }
-        save();renderAll();
-        if(log){log.textContent='AI extracted '+imp+' patients.';log.classList.add('import-ok');}
-      }catch(err){if(log)log.textContent='Error: '+err.message;}
-    };
-    xhr.onerror=function(){if(log)log.textContent='Network error.';};
-    xhr.send(JSON.stringify({model:'claude-opus-4-5',max_tokens:4000,messages:[{role:'user',content:[{type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},{type:'text',text:prompt}]}]}));
-  };
-  r.readAsDataURL(file);
+  sp(p);writePatient(p);closeModal();renderAll();toast(p.patientName+" saved");
 }
 
 // TABS
-function switchTab(id){curTab=id;renderAll();window.scrollTo({top:0,behavior:'smooth'});}
+function switchTab(id){curTab=id;renderAll();window.scrollTo({top:0,behavior:"smooth"});}
 
 // TOAST
 function toast(msg,withUndo){
   clearTimeout(toastTm);
-  document.getElementById('toastMsg').textContent=msg;
-  var u=document.getElementById('toastUndo');if(u)u.style.display=withUndo?'':'none';
-  document.getElementById('toast').classList.add('on');
+  document.getElementById("tMsg").textContent=msg;
+  var u=document.getElementById("tUndo");if(u)u.style.display=withUndo?"":"none";
+  document.getElementById("toast").classList.add("on");
   toastTm=setTimeout(hideToast,5000);
 }
-function hideToast(){document.getElementById('toast').classList.remove('on');}
+function hideToast(){document.getElementById("toast").classList.remove("on");}
 
 // INIT
-function init(){load();if(sUrl){curTab='today';loadSheet();}else{curTab='setup';}renderAll();}
+function init(){
+  syncNow();
+}
 init();
 </script>
 </body>

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Patient Dosing Tracker - Google Sheets Sync</title>
+    <title>Patient Dosing Tracker - Smart Sort</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f0f2f5; padding: 12px; padding-bottom: 80px; }
@@ -37,8 +37,11 @@
         .patient-file { font-size: 13px; color: #666; margin-left: 8px; }
         .patient-address { font-size: 13px; color: #666; margin-top: 4px; }
         .due-date { font-size: 12px; color: #007aff; font-weight: 500; margin-top: 4px; }
+        .appt-badge { font-size: 11px; background: #5856d6; color: white; padding: 2px 8px; border-radius: 20px; display: inline-block; margin-top: 4px; }
         .special-badge { display: inline-block; background: #ff3b30; color: white; font-size: 11px; padding: 2px 8px; border-radius: 20px; margin-left: 8px; }
         .dose-badge { display: inline-block; background: #5856d6; color: white; font-size: 11px; padding: 2px 8px; border-radius: 20px; margin-left: 8px; }
+        .confirm-needed { background: #ff9500; color: white; font-size: 10px; padding: 2px 6px; border-radius: 12px; margin-left: 8px; }
+        
         .action-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
         .action-icon { width: 40px; height: 40px; border-radius: 30px; border: none; font-size: 18px; cursor: pointer; }
         .call-icon { background: #34c759; color: white; }
@@ -180,7 +183,6 @@
 
     <script>
         // ========== CONFIGURATION ==========
-        // REPLACE THIS WITH YOUR GOOGLE SHEETS PUBLISHED CSV URL
         const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSYgD018ww2Mbkud6ZYmZHop7EXxcm_0Zl4V9bB2AaY4r4xXTWChAW6v-gUyjD4-2Qmg4H8O0kxryCf/pub?output=csv";
         
         // ========== DATA ==========
@@ -192,21 +194,56 @@
 
         const doseToWeeks = { '7.5': 4, '22.5': 12, '30': 16, '45': 24 };
 
-        // ========== LOAD FROM GOOGLE SHEETS (READ ONLY) ==========
-        async function loadFromGoogleSheets() {
-            if (!GOOGLE_SHEETS_CSV_URL || GOOGLE_SHEETS_CSV_URL.includes("YOUR_SHEET_ID")) {
-                document.getElementById('syncStatus').innerHTML = '⚠️ Configure Google Sheets URL first';
-                alert(`To connect to Google Sheets:\n\n1. File → Share → Publish to web\n2. Select "CSV"\n3. Copy the link\n4. Replace the URL in the code`);
-                return false;
-            }
+        // ========== PRIORITY SORT FUNCTION ==========
+        // Priority 1: Appointment confirmed with date/time
+        // Priority 2: Due date
+        function prioritySort(patientsList, tabName) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
             
+            return patientsList.sort((a, b) => {
+                // For Today and Scheduled tabs, sort by appointment date/time (confirmed first)
+                if (tabName === 'today' || tabName === 'scheduled') {
+                    const aHasConfirmedAppt = a['Appointment Date & Time'] && a['Appointment Confirmed'] === true;
+                    const bHasConfirmedAppt = b['Appointment Date & Time'] && b['Appointment Confirmed'] === true;
+                    
+                    if (aHasConfirmedAppt && !bHasConfirmedAppt) return -1;
+                    if (!aHasConfirmedAppt && bHasConfirmedAppt) return 1;
+                    
+                    const aTime = a['Appointment Date & Time'] ? new Date(a['Appointment Date & Time']) : new Date(8640000000000000);
+                    const bTime = b['Appointment Date & Time'] ? new Date(b['Appointment Date & Time']) : new Date(8640000000000000);
+                    return aTime - bTime;
+                }
+                
+                // For Queue tab: confirmed appointments first, then by due date
+                if (tabName === 'queue') {
+                    const aHasConfirmed = a['Appointment Date & Time'] && a['Appointment Confirmed'] === true;
+                    const bHasConfirmed = b['Appointment Date & Time'] && b['Appointment Confirmed'] === true;
+                    
+                    if (aHasConfirmed && !bHasConfirmed) return -1;
+                    if (!aHasConfirmed && bHasConfirmed) return 1;
+                    
+                    // Then sort by due date
+                    const aDue = a['Due Date'] ? new Date(a['Due Date']) : new Date(8640000000000000);
+                    const bDue = b['Due Date'] ? new Date(b['Due Date']) : new Date(8640000000000000);
+                    return aDue - bDue;
+                }
+                
+                // Default: sort by due date
+                const aDue = a['Due Date'] ? new Date(a['Due Date']) : new Date(8640000000000000);
+                const bDue = b['Due Date'] ? new Date(b['Due Date']) : new Date(8640000000000000);
+                return aDue - bDue;
+            });
+        }
+
+        // ========== LOAD FROM GOOGLE SHEETS ==========
+        async function loadFromGoogleSheets() {
             document.getElementById('syncStatus').innerHTML = '🔄 Loading from Google Sheets...';
             
             try {
                 const response = await fetch(GOOGLE_SHEETS_CSV_URL);
                 const csvText = await response.text();
                 
-                // Parse CSV
                 const rows = csvText.split('\n');
                 const headers = rows[0].split(',').map(h => h.trim().replace(/"/g, ''));
                 
@@ -214,7 +251,6 @@
                 for (let i = 1; i < rows.length; i++) {
                     if (!rows[i].trim()) continue;
                     
-                    // Handle quoted CSV values properly
                     let values = [];
                     let inQuote = false;
                     let currentValue = '';
@@ -239,7 +275,6 @@
                     });
                     
                     if (patient['Patient Name'] && patient['Patient Name'] !== 'Patient Name') {
-                        // Convert boolean fields
                         patient['Injection Administered'] = patient['Injection Administered'] === 'TRUE' || patient['Injection Administered'] === true;
                         patient['Appointment Confirmed'] = patient['Appointment Confirmed'] === 'TRUE' || patient['Appointment Confirmed'] === true;
                         patient['Pending'] = patient['Pending'] === 'TRUE' || patient['Pending'] === true;
@@ -260,8 +295,7 @@
                 return true;
             } catch (error) {
                 console.error('Load error:', error);
-                document.getElementById('syncStatus').innerHTML = '❌ Failed to load - check URL and publish settings';
-                alert(`Error loading from Google Sheets:\n\nMake sure your sheet is published:\n1. File → Share → Publish to web\n2. Select "CSV" format\n3. Click "Publish"\n\nThen copy that URL.`);
+                document.getElementById('syncStatus').innerHTML = '❌ Failed to load';
                 return false;
             }
         }
@@ -384,10 +418,11 @@
 
                 switch (currentTab) {
                     case 'today':
-                        return apptDate && apptDate.toISOString().split('T')[0] === todayStr && p['Appointment Confirmed'];
+                        return apptDate && apptDate.toISOString().split('T')[0] === todayStr;
                     case 'scheduled':
-                        return apptDate && apptDate > today && p['Appointment Confirmed'] && !p['Archived'];
+                        return apptDate && apptDate > today && !p['Archived'];
                     case 'overdue':
+                        // Appointment date has passed, injection not recorded
                         return dueDate && dueDate < today && !p['Injection Administered'] && !p['Archived'] && !p['Pending'];
                     case 'queue':
                         return !p['Archived'] && !p['Pending'];
@@ -408,11 +443,8 @@
                 );
             }
 
-            return filtered.sort((a, b) => {
-                const aDue = a['Due Date'] ? new Date(a['Due Date']) : new Date(8640000000000000);
-                const bDue = b['Due Date'] ? new Date(b['Due Date']) : new Date(8640000000000000);
-                return aDue - bDue;
-            });
+            // Apply priority sorting
+            return prioritySort(filtered, currentTab);
         }
 
         function escapeHtml(str) {
@@ -440,7 +472,10 @@
                 const hasSpecial = patient['Special Instructions'] && patient['Special Instructions'].trim() !== '';
                 const doseMg = patient['Dose Prescribed'] ? `${patient['Dose Prescribed']}mg` : '';
                 const dosesLeft = patient['Doses Repeats Left'] || 0;
-
+                const hasAppointment = patient['Appointment Date & Time'];
+                const isConfirmed = patient['Appointment Confirmed'] === true;
+                const apptDateStr = hasAppointment ? new Date(patient['Appointment Date & Time']).toLocaleString() : 'No appointment';
+                
                 return `
                     <div class="patient-card" data-filenumber="${escapeHtml(patient['File Number'])}">
                         <div class="collapsed-view">
@@ -450,9 +485,11 @@
                                     <span class="patient-file">#${escapeHtml(patient['File Number'])}</span>
                                     ${doseMg ? `<span class="dose-badge">${doseMg}</span>` : ''}
                                     ${hasSpecial ? '<span class="special-badge">⚠️</span>' : ''}
+                                    ${hasAppointment && !isConfirmed ? '<span class="confirm-needed">⚠️ Needs Confirmation</span>' : ''}
                                 </div>
                                 <div class="patient-address">${escapeHtml(patient['Address'] || 'No address')}</div>
                                 <div class="due-date">📅 Due: ${dueDateStr} | 💊 ${dosesLeft} left</div>
+                                ${hasAppointment ? `<div class="appt-badge">📆 Appt: ${apptDateStr} ${isConfirmed ? '✅' : '❌'}</div>` : ''}
                             </div>
                             <div class="action-buttons">
                                 ${patient['Phone 1'] ? `<button class="action-icon call-icon" data-phone="${escapeHtml(patient['Phone 1'])}">📞</button>` : ''}
@@ -467,14 +504,15 @@
                             <div class="detail-row"><div class="detail-label">Doses Remaining:</div><div class="detail-value">${dosesLeft}</div></div>
                             <div class="detail-row"><div class="detail-label">Previous Injection Site:</div><div class="detail-value">${escapeHtml(patient['Previous Injection Site'] || 'None')}</div></div>
                             <div class="detail-row"><div class="detail-label">Injection Site:</div><div class="detail-value">${escapeHtml(patient['Injection Site'] || 'Not set')}</div></div>
-                            <div class="detail-row"><div class="detail-label">Appointment:</div><div class="detail-value">${patient['Appointment Date & Time'] ? new Date(patient['Appointment Date & Time']).toLocaleString() : 'Not set'}</div></div>
-                            <div class="detail-row"><div class="detail-label">Appointment Confirmed:</div><div class="detail-value">${patient['Appointment Confirmed'] ? '✅ Yes' : '❌ No'}</div></div>
+                            <div class="detail-row"><div class="detail-label">Due Date:</div><div class="detail-value"><strong>${dueDateStr}</strong></div></div>
+                            <div class="detail-row"><div class="detail-label">Appointment:</div><div class="detail-value">${apptDateStr}</div></div>
+                            <div class="detail-row"><div class="detail-label">Appointment Confirmed:</div><div class="detail-value">${isConfirmed ? '✅ Yes' : '❌ No - Click Confirm button'}</div></div>
                             <div class="detail-row"><div class="detail-label">Assignment:</div><div class="detail-value">${escapeHtml(patient['Assignment Type'])}</div></div>
                             ${patient['Special Instructions'] ? `<div class="detail-row"><div class="detail-label ins-red">⚠️ Special Instructions:</div><div class="detail-value ins-red">${escapeHtml(patient['Special Instructions'])}</div></div>` : ''}
                             <div class="detail-row"><div class="detail-label">Adverse Effects:</div><div class="detail-value">${escapeHtml(patient['Adverse Effects Comments'] || 'None')}</div></div>
                             <div class="action-row">
                                 <button class="action-sm inject-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="inject">💉 Inject</button>
-                                ${!patient['Appointment Confirmed'] && patient['Appointment Date & Time'] ? `<button class="action-sm confirm-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="confirm">✅ Confirm</button>` : ''}
+                                ${hasAppointment && !isConfirmed ? `<button class="action-sm confirm-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="confirm">✅ Confirm Appointment</button>` : ''}
                                 ${!patient['Pending'] ? `<button class="action-sm pending-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="pending">⏳ Pending</button>` : ''}
                                 <button class="action-sm edit-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="edit">✏️ Edit</button>
                                 <button class="action-sm delete-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="delete">🗑️ Delete</button>

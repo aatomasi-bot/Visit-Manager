@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Patient Dosing Tracker - Complete System</title>
+    <title>Patient Dosing Tracker - Cross-Device Sync</title>
     <!-- PDF.js Library for PDF extraction -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script>
@@ -15,7 +15,7 @@
         
         body { 
             font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            background: #f1f5f9; 
+            background: #eef2f6; 
             padding: 12px; 
             padding-bottom: 80px; 
         }
@@ -26,7 +26,7 @@
             padding: 14px 16px; 
             border-radius: 16px; 
             margin-bottom: 16px; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
         }
         .header h1 { 
             font-size: 20px; 
@@ -46,15 +46,15 @@
             background: #ffffff;
         }
         .search-wrapper input:focus { outline: none; border-color: #3b82f6; }
-        .btn-sm { padding: 8px 14px; border: none; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
-        .btn-primary { background: #3b82f6; color: white; }
-        .btn-primary:hover { background: #2563eb; }
-        .btn-secondary { background: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1; }
-        .btn-secondary:hover { background: #e2e8f0; }
+        .btn-sm { padding: 8px 14px; border: none; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-primary { background: #2563eb; color: white; }
+        .btn-primary:hover { background: #1d4ed8; transform: scale(1.02); }
+        .btn-secondary { background: #e2e8f0; color: #1e293b; border: 1px solid #cbd5e1; }
+        .btn-secondary:hover { background: #cbd5e1; transform: scale(1.02); }
         .btn-outline { background: transparent; color: #475569; border: 1px solid #cbd5e1; }
-        .btn-outline:hover { background: #f8fafc; }
-        .btn-danger { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
-        .btn-danger:hover { background: #fecaca; }
+        .btn-outline:hover { background: #e2e8f0; }
+        .btn-danger { background: #dc2626; color: white; border: none; }
+        .btn-danger:hover { background: #b91c1c; transform: scale(1.02); }
         
         .add-btn { 
             width: 100%; 
@@ -62,13 +62,13 @@
             padding: 12px; 
             font-size: 15px; 
             border-radius: 40px; 
-            background: #3b82f6; 
+            background: #2563eb; 
             color: white; 
             border: none; 
-            font-weight: 500; 
+            font-weight: 600; 
             cursor: pointer;
         }
-        .add-btn:hover { background: #2563eb; }
+        .add-btn:hover { background: #1d4ed8; transform: translateY(-1px); }
         
         .tabs { display: flex; gap: 6px; margin-bottom: 20px; overflow-x: auto; white-space: nowrap; }
         .tab-btn { 
@@ -82,19 +82,19 @@
             flex-shrink: 0;
             color: #475569;
         }
-        .tab-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+        .tab-btn.active { background: #2563eb; color: white; border-color: #2563eb; }
         
         .patient-list { display: flex; flex-direction: column; gap: 12px; }
         .patient-card { 
             background: white; 
             border-radius: 16px; 
             padding: 14px; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06); 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.06); 
             cursor: pointer; 
             border: 1px solid #e2e8f0;
         }
-        .patient-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        .patient-card.expanded { background: #fafcff; border-left: 3px solid #3b82f6; }
+        .patient-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .patient-card.expanded { background: #fafcff; border-left: 3px solid #2563eb; }
         
         .date-separator { 
             background: #e2e8f0; 
@@ -117,28 +117,29 @@
         }
         .patient-file { font-size: 12px; color: #64748b; margin-left: 8px; }
         .patient-address { font-size: 12px; color: #475569; margin-top: 4px; }
-        .due-date { font-size: 11px; color: #3b82f6; font-weight: 500; margin-top: 4px; }
+        .due-date { font-size: 11px; color: #2563eb; font-weight: 500; margin-top: 4px; }
         .special-badge { display: inline-block; background: #fef2f2; color: #dc2626; font-size: 11px; padding: 2px 8px; border-radius: 20px; margin-top: 4px; }
         .dose-badge { display: inline-block; background: #e2e8f0; color: #475569; font-size: 10px; padding: 2px 6px; border-radius: 12px; margin-left: 6px; }
         
-        .action-buttons { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; justify-content: flex-end; }
+        .action-buttons { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: flex-end; }
         .action-icon { 
-            width: 34px; 
-            height: 34px; 
+            width: 36px; 
+            height: 36px; 
             border-radius: 30px; 
             border: none; 
-            font-size: 15px; 
+            font-size: 16px; 
             cursor: pointer; 
             display: inline-flex; 
             align-items: center; 
             justify-content: center;
             transition: all 0.2s;
+            font-weight: 600;
         }
         .action-icon:hover { transform: scale(1.05); }
-        .call-icon { background: #dcfce7; color: #16a34a; }
-        .call-icon:hover { background: #bbf7d0; }
-        .nav-icon { background: #dbeafe; color: #2563eb; }
-        .nav-icon:hover { background: #bfdbfe; }
+        .call-icon { background: #1d8f3e; color: white; }
+        .call-icon:hover { background: #147a34; }
+        .nav-icon { background: #2b6bcb; color: white; }
+        .nav-icon:hover { background: #1e5ab8; }
         
         .expanded-view { margin-top: 14px; padding-top: 14px; border-top: 1px solid #e2e8f0; display: none; }
         .detail-row { display: flex; padding: 6px 0; border-bottom: 1px solid #f1f5f9; flex-wrap: wrap; align-items: center; }
@@ -147,40 +148,41 @@
         .edit-icon { 
             cursor: pointer; 
             margin-left: 8px; 
-            color: #3b82f6; 
-            font-size: 14px; 
-            background: #dbeafe; 
-            padding: 4px 8px; 
+            color: white; 
+            font-size: 12px; 
+            background: #2b6bcb; 
+            padding: 4px 10px; 
             border-radius: 20px;
             display: inline-flex;
             align-items: center;
             gap: 4px;
             transition: all 0.2s;
+            font-weight: 500;
         }
-        .edit-icon:hover { background: #bfdbfe; transform: scale(1.02); }
+        .edit-icon:hover { background: #1e5ab8; transform: scale(1.02); }
         .ins-red { color: #dc2626; font-weight: 500; }
         
         .action-row { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; justify-content: center; }
         .action-sm { 
-            padding: 6px 12px; 
+            padding: 6px 14px; 
             font-size: 12px; 
             border-radius: 30px; 
             border: none; 
-            font-weight: 500; 
+            font-weight: 600; 
             cursor: pointer;
             transition: all 0.2s;
         }
         .action-sm:hover { transform: translateY(-1px); }
-        .inject-sm { background: #dcfce7; color: #16a34a; }
-        .inject-sm:hover { background: #bbf7d0; }
-        .pending-sm { background: #fef3c7; color: #b45309; }
-        .pending-sm:hover { background: #fde68a; }
-        .edit-sm { background: #dbeafe; color: #2563eb; }
-        .edit-sm:hover { background: #bfdbfe; }
-        .delete-sm { background: #fef2f2; color: #dc2626; }
-        .delete-sm:hover { background: #fecaca; }
-        .move-sm { background: #f1f5f9; color: #475569; }
-        .move-sm:hover { background: #e2e8f0; }
+        .inject-sm { background: #1d8f3e; color: white; }
+        .inject-sm:hover { background: #147a34; }
+        .pending-sm { background: #ea6f1a; color: white; }
+        .pending-sm:hover { background: #d45f12; }
+        .edit-sm { background: #2b6bcb; color: white; }
+        .edit-sm:hover { background: #1e5ab8; }
+        .delete-sm { background: #d63224; color: white; }
+        .delete-sm:hover { background: #c0261a; }
+        .move-sm { background: #5b6e8a; color: white; }
+        .move-sm:hover { background: #4a5a73; }
         
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; }
         .modal-content { background: white; max-width: 500px; margin: 50px auto; border-radius: 24px; padding: 24px; }
@@ -207,7 +209,6 @@
         .appt-edit-content { max-width: 380px; }
         .datetime-input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 14px; margin: 16px 0; }
         
-        /* Loading overlay */
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -235,7 +236,8 @@
             100% { transform: rotate(360deg); }
         }
         .loading-text { color: white; font-size: 16px; }
-        .cancel-extract { background: #dc2626; color: white; border: none; padding: 10px 20px; border-radius: 30px; cursor: pointer; margin-top: 10px; }
+        .cancel-extract { background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 30px; cursor: pointer; margin-top: 10px; font-weight: 600; }
+        .cancel-extract:hover { background: #dc2626; }
         
         @media (max-width: 600px) {
             .collapsed-view { flex-direction: column; align-items: stretch; }
@@ -253,8 +255,7 @@
                 <div class="search-wrapper">
                     <input type="text" id="searchInput" placeholder="Search name or file...">
                     <button id="clearSearchBtn" class="btn-sm btn-outline">Clear</button>
-                    <button id="refreshBtn" class="btn-sm btn-secondary">⟳ Load from Sheet</button>
-                    <button id="restoreBackupBtn" class="btn-sm btn-danger" style="display:none;">↺ Restore Backup</button>
+                    <button id="refreshBtn" class="btn-sm btn-secondary">⟳ Sync with Sheet</button>
                 </div>
             </div>
             <div class="sync-status">
@@ -286,7 +287,8 @@
                     <button id="importCSVBtn" class="btn-sm btn-secondary">📄 Import CSV</button>
                     <button id="importPDFBtn" class="btn-sm btn-secondary">📑 Import PDF</button>
                     <button id="exportBtn" class="btn-sm btn-secondary">📥 Backup</button>
-                    <button id="importBtn" class="btn-sm btn-secondary">📤 Restore</button>
+                    <button id="restoreBackupBtn" class="btn-sm btn-danger">↺ Restore Backup</button>
+                    <button id="importBtn" class="btn-sm btn-secondary">📤 Restore JSON</button>
                     <input type="file" id="importFile" accept=".json" style="display:none">
                     <input type="file" id="csvFileInput" accept=".csv" style="display:none">
                     <input type="file" id="pdfFileInput" accept=".pdf" style="display:none">
@@ -442,6 +444,12 @@
 
     <script>
         // ========== CONFIGURATION ==========
+        // IMPORTANT: Replace this with your Google Apps Script Web App URL
+        // To set up: Go to your Google Sheet > Extensions > Apps Script > Deploy > New deployment > Web app
+        // Copy the URL and paste it below
+        const APPS_SCRIPT_URL = "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
+        
+        // Fallback CSV URL (read-only, for backward compatibility)
         const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSYgD018ww2Mbkud6ZYmZHop7EXxcm_0Zl4V9bB2AaY4r4xXTWChAW6v-gUyjD4-2Qmg4H8O0kxryCf/pub?output=csv";
         
         // ========== DATA ==========
@@ -457,328 +465,68 @@
 
         const doseToWeeks = { '7.5': 4, '22.5': 12, '30': 16, '45': 24 };
 
-        // ========== HELPER FUNCTIONS ==========
-        function saveToLocalStorage() { 
-            localStorage.setItem('patientTrackerData', JSON.stringify(patients)); 
-            document.getElementById('recordCount').innerHTML = `📋 ${patients.length}`;
-        }
-        
-        function loadFromLocalStorage() { 
-            const saved = localStorage.getItem('patientTrackerData'); 
-            patients = (saved && saved !== '[]') ? JSON.parse(saved) : []; 
-            document.getElementById('recordCount').innerHTML = `📋 ${patients.length}`; 
-            renderCurrentTab(); 
-        }
-
-        function escapeHtml(str) { 
-            if (!str) return ''; 
-            return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); 
-        }
-
-        // ========== ENHANCED PDF EXTRACTION (Works with your PDF format) ==========
-        async function importPDF(file) {
-            const fileInput = document.getElementById('pdfFileInput');
-            const selectedFile = fileInput.files[0];
-            
-            if (!selectedFile) {
-                alert('Please select a PDF file');
-                return;
+        // ========== CLOUD SYNC WITH GOOGLE SHEETS (Apps Script) ==========
+        async function callAppsScript(action, data = {}) {
+            if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
+                console.warn('Apps Script URL not configured, using CSV fallback');
+                return null;
             }
             
-            if (selectedFile.type !== 'application/pdf') {
-                alert('Please select a valid PDF file');
-                return;
-            }
-            
-            // Show loading overlay with cancel option
-            pdfExtractionCancelled = false;
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            loadingOverlay.style.display = 'flex';
-            document.getElementById('syncStatus').innerHTML = '🔄 Reading PDF...';
+            const params = new URLSearchParams({ action, ...data });
+            const url = `${APPS_SCRIPT_URL}?${params.toString()}`;
             
             try {
-                const arrayBuffer = await selectedFile.arrayBuffer();
-                
-                if (pdfExtractionCancelled) {
-                    loadingOverlay.style.display = 'none';
-                    document.getElementById('syncStatus').innerHTML = '⚡ Extraction cancelled';
-                    return;
-                }
-                
-                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-                const pdf = await loadingTask.promise;
-                
-                let fullText = '';
-                
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    if (pdfExtractionCancelled) {
-                        loadingOverlay.style.display = 'none';
-                        document.getElementById('syncStatus').innerHTML = '⚡ Extraction cancelled';
-                        return;
-                    }
-                    const page = await pdf.getPage(i);
-                    const textContent = await page.getTextContent();
-                    const pageText = textContent.items.map(item => item.str).join(' ');
-                    fullText += pageText + '\n';
-                }
-                
-                loadingOverlay.style.display = 'none';
-                
-                if (!fullText.trim()) {
-                    alert('No readable text found in this PDF. It may be a scanned image.');
-                    return;
-                }
-                
-                // Enhanced extraction for your PDF format
-                const extractedData = extractPatientDataFromPDF(fullText);
-                lastExtractedData = extractedData;
-                
-                // Show preview modal with extracted data
-                showExtractionPreview(extractedData, fullText);
-                
-                document.getElementById('syncStatus').innerHTML = '✅ PDF processed';
-                
+                const response = await fetch(url);
+                const result = await response.json();
+                return result;
             } catch (error) {
-                loadingOverlay.style.display = 'none';
-                console.error('PDF extraction error:', error);
-                alert(`Error reading PDF: ${error.message}\n\nMake sure the PDF is not password-protected.`);
-                document.getElementById('syncStatus').innerHTML = '❌ PDF extraction failed';
+                console.error('Apps Script API Error:', error);
+                return null;
             }
-        }
-        
-        // Cancel extraction
-        document.getElementById('cancelExtractBtn').addEventListener('click', () => {
-            pdfExtractionCancelled = true;
-            document.getElementById('loadingOverlay').style.display = 'none';
-            document.getElementById('syncStatus').innerHTML = '⚡ Extraction cancelled';
-        });
-
-        function extractPatientDataFromPDF(text) {
-            const extracted = {
-                patientName: null,
-                fileNumber: null,
-                address: null,
-                city: null,
-                phone1: null,
-                phone2: null,
-                dosePrescribed: null,
-                totalDoses: null,
-                appointmentDate: null,
-                rawText: text.substring(0, 500)
-            };
-            
-            // Extract PATIENT NAME - from your PDF: "PATIENT NAME/NOM DU PATIENTMichel BOUCHER"
-            const nameMatch = text.match(/(?:PATIENT NAME\/NOM DU PATIENT|PATIENT NAME|NOM DU PATIENT)[\s]*([A-Z][A-Z\s]+[A-Z])/i);
-            if (nameMatch) {
-                extracted.patientName = nameMatch[1].trim().replace(/\s+/g, ' ');
-            }
-            
-            // Alternative name extraction
-            if (!extracted.patientName) {
-                const nameMatch2 = text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})/);
-                if (nameMatch2 && nameMatch2[1].length > 5 && !nameMatch2[1].match(/MEDICUM|TELEPHONE|ADDRESS/i)) {
-                    extracted.patientName = nameMatch2[1].trim();
-                }
-            }
-            
-            // Extract MEDICUM # (File Number) - from your PDF: "MEDICUM #: 33351"
-            const medicumMatch = text.match(/MEDICUM\s*#:\s*(\d+)/i);
-            if (medicumMatch) {
-                extracted.fileNumber = `M${medicumMatch[1]}`;
-            }
-            
-            // Alternative file number
-            if (!extracted.fileNumber) {
-                const fileMatch = text.match(/(?:FILE|ID|NUMBER)[:\s#]*(\d{4,8})/i);
-                if (fileMatch) extracted.fileNumber = fileMatch[1];
-            }
-            
-            // Extract Address - from your PDF: "Croissant de la Louisiane"
-            const addressMatch = text.match(/ADDRESS\/ADRESSE[\s]*([A-Za-z0-9\s,.-]+?)(?:CITY|VILLE|$)/i);
-            if (addressMatch) {
-                extracted.address = addressMatch[1].trim();
-            }
-            
-            // Extract City - from your PDF: "Montréal, QC, H8P 3V1"
-            const cityMatch = text.match(/CITY\/VILLE[\s]*([A-Za-zéèêëïîôûùç\s-]+,\s*[A-Z]{2},\s*[A-Z0-9]{3}\s*[A-Z0-9]{3})/i);
-            if (cityMatch) {
-                extracted.city = cityMatch[1].trim();
-            }
-            
-            // Extract Phone 1 - from your PDF: "514 368-2693"
-            const phonePattern = /(\d{3}[\s-]?\d{3}[\s-]?\d{4})/g;
-            const phones = [...text.matchAll(phonePattern)];
-            if (phones.length > 0) {
-                extracted.phone1 = phones[0][1];
-                if (phones.length > 1) extracted.phone2 = phones[1][1];
-            }
-            
-            // Extract Dose Prescribed - from your PDF: "1- m (7.5 mg) 3- m (22.5mg)"
-            const doseMatch = text.match(/(\d+\.?\d*)\s*mg/i);
-            if (doseMatch) {
-                const doseValue = parseFloat(doseMatch[1]);
-                if ([7.5, 22.5, 30, 45].includes(doseValue)) {
-                    extracted.dosePrescribed = doseValue.toString();
-                }
-            }
-            
-            // Extract number of injections
-            const injectionCountMatch = text.match(/Number of injections[:\s]*(\d+)/i);
-            if (injectionCountMatch) {
-                extracted.totalDoses = parseInt(injectionCountMatch[1]);
-            }
-            
-            // Extract appointment date - "injection seulement 26 Avril 2026"
-            const apptMatch = text.match(/injection seulement\s+(\d{1,2})\s+([A-Za-zéè]+)\s+(\d{4})/i);
-            if (apptMatch) {
-                const months = {
-                    'janvier': '01', 'février': '02', 'mars': '03', 'avril': '04',
-                    'mai': '05', 'juin': '06', 'juillet': '07', 'août': '08',
-                    'septembre': '09', 'octobre': '10', 'novembre': '11', 'décembre': '12'
-                };
-                const monthNum = months[apptMatch[2].toLowerCase()] || '01';
-                extracted.appointmentDate = `${apptMatch[3]}-${monthNum}-${apptMatch[1].padStart(2, '0')}`;
-            }
-            
-            return extracted;
         }
 
-        function showExtractionPreview(extractedData, fullText) {
-            const previewContent = document.getElementById('pdfPreviewContent');
-            
-            const existingPatient = extractedData.fileNumber ? patients.find(p => p['File Number'] === extractedData.fileNumber) : null;
-            
-            let warningHtml = '';
-            if (existingPatient) {
-                warningHtml = `<div style="background:#fef3c7; padding:12px; border-radius:12px; margin-bottom:16px; color:#b45309;">
-                    ⚠️ Patient with File # ${extractedData.fileNumber} already exists (${existingPatient['Patient Name']}). Adding will create a duplicate.
-                </div>`;
+        // PUSH local patient changes to Google Sheets (after add/update/delete/inject)
+        async function pushToCloud(action, patientData) {
+            if (action === 'addPatient') {
+                return await callAppsScript('addPatient', { data: JSON.stringify(patientData) });
+            } else if (action === 'updatePatient') {
+                return await callAppsScript('updatePatient', { 
+                    fileNumber: patientData['File Number'], 
+                    data: JSON.stringify(patientData) 
+                });
+            } else if (action === 'deletePatient') {
+                return await callAppsScript('deletePatient', { fileNumber: patientData });
+            } else if (action === 'administerInjection') {
+                return await callAppsScript('administerInjection', { fileNumber: patientData });
+            } else if (action === 'confirmAppointment') {
+                return await callAppsScript('confirmAppointment', { fileNumber: patientData });
             }
-            
-            previewContent.innerHTML = `
-                ${warningHtml}
-                <div style="background:#f8fafc; padding:12px; border-radius:12px; margin-bottom:16px;">
-                    <h3 style="margin-bottom:12px;">📋 Extracted Information</h3>
-                    <div style="display:grid; gap:8px;">
-                        <div><strong>Patient Name:</strong> ${extractedData.patientName || '❌ Not found'}</div>
-                        <div><strong>File Number:</strong> ${extractedData.fileNumber || '❌ Not found'}</div>
-                        <div><strong>Address:</strong> ${extractedData.address || '❌ Not found'}</div>
-                        <div><strong>City/Province/Postal:</strong> ${extractedData.city || '❌ Not found'}</div>
-                        <div><strong>Phone 1:</strong> ${extractedData.phone1 || '❌ Not found'}</div>
-                        <div><strong>Phone 2:</strong> ${extractedData.phone2 || '❌ Not found'}</div>
-                        <div><strong>Dose Prescribed:</strong> ${extractedData.dosePrescribed ? `${extractedData.dosePrescribed} mg` : '❌ Not found'}</div>
-                        <div><strong>Total Doses:</strong> ${extractedData.totalDoses || '❌ Not found (using default 4)'}</div>
-                        <div><strong>Appointment Date:</strong> ${extractedData.appointmentDate || '❌ Not found'}</div>
-                    </div>
-                </div>
-                <details style="margin-top:8px;">
-                    <summary style="cursor:pointer; color:#64748b;">🔍 View extracted raw text</summary>
-                    <textarea style="width:100%; height:150px; margin-top:10px; padding:8px; font-size:11px; border-radius:8px; border:1px solid #e2e8f0;" readonly>${escapeHtml(fullText)}</textarea>
-                </details>
-            `;
-            
-            document.getElementById('pdfPreviewModal').style.display = 'block';
+            return null;
         }
 
-        function addExtractedPatient() {
-            const data = lastExtractedData;
-            if (!data || (!data.patientName && !data.fileNumber)) {
-                alert('No valid patient data to add');
-                document.getElementById('pdfPreviewModal').style.display = 'none';
-                return;
-            }
-            
-            const defaultDueDate = new Date();
-            defaultDueDate.setDate(defaultDueDate.getDate() + 7);
-            
-            // Build full address
-            let fullAddress = data.address || '';
-            if (data.city) fullAddress += fullAddress ? ', ' + data.city : data.city;
-            
-            const newPatient = {
-                'Patient Name': data.patientName || 'Unknown Patient',
-                'File Number': data.fileNumber || `PDF_${Date.now()}`,
-                'Address': fullAddress || '',
-                'Phone 1': data.phone1 || '',
-                'Phone 2': data.phone2 || '',
-                'Dose Prescribed': data.dosePrescribed || '7.5',
-                'Total Doses': data.totalDoses || '4',
-                'Doses Remaining': data.totalDoses || '4',
-                'Previous Injection Site': '',
-                'Injection Site': '',
-                'Due Date': defaultDueDate.toISOString().split('T')[0],
-                'Appointment Date & Time': data.appointmentDate ? `${data.appointmentDate}T10:00:00` : '',
-                'Previous Injection Dates': '',
-                'Assignment Type': 'Permanent',
-                'Special Instructions': '',
-                'Adverse Effects Comments': '',
-                'File Status': 'Active',
-                'Injection Administered': false,
-                'Appointment Confirmed': !!data.appointmentDate,
-                'Pending': false,
-                'Archived': false
-            };
-            
-            patients.push(newPatient);
-            saveToLocalStorage();
-            renderCurrentTab();
-            
-            alert(`✅ Patient added from PDF:\n\nName: ${newPatient['Patient Name']}\nFile #: ${newPatient['File Number']}\nDose: ${newPatient['Dose Prescribed']}mg\nAppointment: ${newPatient['Appointment Date & Time'] || 'Not set'}`);
-            
-            document.getElementById('pdfPreviewModal').style.display = 'none';
-            lastExtractedData = null;
-        }
-
-        // ========== APPOINTMENT CONFIRMATION ==========
-        function openAppointmentEditor(fileNumber) {
-            pendingAppointmentFileNumber = fileNumber;
-            const patient = patients.find(p => p['File Number'] === fileNumber);
-            if (patient && patient['Appointment Date & Time']) {
-                const apptDate = new Date(patient['Appointment Date & Time']);
-                const formattedDate = apptDate.toISOString().slice(0, 16);
-                document.getElementById('appointmentDateInput').value = formattedDate;
-            } else {
-                const now = new Date();
-                const formattedDate = now.toISOString().slice(0, 16);
-                document.getElementById('appointmentDateInput').value = formattedDate;
-            }
-            document.getElementById('apptEditModal').style.display = 'block';
-        }
-        
-        function saveAppointmentDate() {
-            const fileNumber = pendingAppointmentFileNumber;
-            const newAppointmentDate = document.getElementById('appointmentDateInput').value;
-            
-            if (!newAppointmentDate) {
-                alert('Please select an appointment date and time');
-                return;
-            }
-            
-            const patient = patients.find(p => p['File Number'] === fileNumber);
-            if (patient) {
-                patient['Appointment Date & Time'] = newAppointmentDate;
-                patient['Appointment Confirmed'] = true;
-                
+        // PULL data from Google Sheets (full sync)
+        async function pullFromCloud() {
+            const result = await callAppsScript('getPatients');
+            if (result && result.success && result.patients) {
+                patients = result.patients;
                 saveToLocalStorage();
                 renderCurrentTab();
-                
-                const dateDisplay = new Date(newAppointmentDate).toLocaleString();
-                alert(`✅ Appointment confirmed for ${patient['Patient Name']} on ${dateDisplay}\nPatient moved to Scheduled tab.`);
+                document.getElementById('syncStatus').innerHTML = `✅ Synced from cloud: ${patients.length} patients`;
+                return true;
             }
-            
-            document.getElementById('apptEditModal').style.display = 'none';
-            pendingAppointmentFileNumber = null;
+            return false;
         }
 
-        // ========== LOAD FROM GOOGLE SHEETS (SAFE MERGE) ==========
-        async function loadFromGoogleSheets() {
+        // ========== FALLBACK: Load from Google Sheets CSV (read-only) ==========
+        async function loadFromGoogleSheetsCSV() {
             const userConfirmed = confirm(
-                `⚠️ Sync with Google Sheet\n\n` +
+                `⚠️ Sync with Google Sheet (CSV Mode)\n\n` +
                 `This will:\n` +
                 `✅ ADD new patients from the sheet\n` +
                 `✅ UPDATE existing patients (based on File Number)\n` +
                 `❌ NOT delete any manually added patients\n\n` +
                 `Current patients in system: ${patients.length}\n\n` +
+                `Note: For full two-way sync, set up Apps Script.\n\n` +
                 `Proceed with sync?`
             );
             
@@ -824,7 +572,6 @@
                 
                 const backupBeforeSync = JSON.parse(JSON.stringify(patients));
                 localStorage.setItem('patientTrackerBackup', JSON.stringify(backupBeforeSync));
-                document.getElementById('restoreBackupBtn').style.display = 'inline-block';
                 
                 let newCount = 0;
                 let updatedCount = 0;
@@ -871,10 +618,33 @@
                 alert(`✅ Sync Complete!\n\n📊 Total patients: ${patients.length}\n📥 New patients added: ${newCount}\n🔄 Existing patients updated: ${updatedCount}\n💾 Backup saved automatically`);
                 document.getElementById('syncStatus').innerHTML = `✅ Synced: +${newCount} new, ${updatedCount} updated | Total: ${patients.length}`;
                 
+                // Also try to push to cloud if Apps Script is configured
+                if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
+                    for (const patient of patients) {
+                        await pushToCloud('addPatient', patient);
+                    }
+                    document.getElementById('syncStatus').innerHTML = `✅ Synced to cloud: ${patients.length} patients`;
+                }
+                
             } catch(error) { 
                 document.getElementById('syncStatus').innerHTML = '❌ Failed to load'; 
                 console.error('Sync error:', error);
                 alert(`❌ Sync failed: ${error.message}\n\nYour existing data was NOT affected.`);
+            }
+        }
+        
+        // Main sync function - tries cloud first, falls back to CSV
+        async function syncWithSheet() {
+            document.getElementById('syncStatus').innerHTML = '🔄 Syncing...';
+            
+            // Try Apps Script first (full two-way sync)
+            const cloudResult = await pullFromCloud();
+            
+            if (!cloudResult) {
+                // Fall back to CSV read-only sync
+                await loadFromGoogleSheetsCSV();
+            } else {
+                document.getElementById('syncStatus').innerHTML = `✅ Synced from cloud: ${patients.length} patients`;
             }
         }
         
@@ -890,7 +660,336 @@
                 saveToLocalStorage();
                 renderCurrentTab();
                 alert(`✅ Restored ${patients.length} patients from backup.`);
+                
+                // Push restored data to cloud if configured
+                if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
+                    for (const patient of patients) {
+                        pushToCloud('addPatient', patient);
+                    }
+                }
             }
+        }
+
+        // ========== LOCAL STORAGE (CACHE) ==========
+        function saveToLocalStorage() { 
+            localStorage.setItem('patientTrackerData', JSON.stringify(patients)); 
+            document.getElementById('recordCount').innerHTML = `📋 ${patients.length}`;
+        }
+        
+        function loadFromLocalStorage() { 
+            const saved = localStorage.getItem('patientTrackerData'); 
+            patients = (saved && saved !== '[]') ? JSON.parse(saved) : []; 
+            document.getElementById('recordCount').innerHTML = `📋 ${patients.length}`; 
+            renderCurrentTab(); 
+        }
+
+        function escapeHtml(str) { 
+            if (!str) return ''; 
+            return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); 
+        }
+
+        // ========== ENHANCED PDF EXTRACTION ==========
+        async function importPDF(file) {
+            const fileInput = document.getElementById('pdfFileInput');
+            const selectedFile = fileInput.files[0];
+            
+            if (!selectedFile) {
+                alert('Please select a PDF file');
+                return;
+            }
+            
+            if (selectedFile.type !== 'application/pdf') {
+                alert('Please select a valid PDF file');
+                return;
+            }
+            
+            pdfExtractionCancelled = false;
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.style.display = 'flex';
+            document.getElementById('syncStatus').innerHTML = '🔄 Reading PDF...';
+            
+            try {
+                const arrayBuffer = await selectedFile.arrayBuffer();
+                
+                if (pdfExtractionCancelled) {
+                    loadingOverlay.style.display = 'none';
+                    document.getElementById('syncStatus').innerHTML = '⚡ Extraction cancelled';
+                    return;
+                }
+                
+                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+                const pdf = await loadingTask.promise;
+                
+                let fullText = '';
+                
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    if (pdfExtractionCancelled) {
+                        loadingOverlay.style.display = 'none';
+                        document.getElementById('syncStatus').innerHTML = '⚡ Extraction cancelled';
+                        return;
+                    }
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    fullText += pageText + '\n';
+                }
+                
+                loadingOverlay.style.display = 'none';
+                
+                if (!fullText.trim()) {
+                    alert('No readable text found in this PDF. It may be a scanned image.');
+                    return;
+                }
+                
+                const extractedData = extractPatientDataFromPDF(fullText);
+                lastExtractedData = extractedData;
+                
+                showExtractionPreview(extractedData, fullText);
+                document.getElementById('syncStatus').innerHTML = '✅ PDF processed';
+                
+            } catch (error) {
+                loadingOverlay.style.display = 'none';
+                console.error('PDF extraction error:', error);
+                alert(`Error reading PDF: ${error.message}\n\nMake sure the PDF is not password-protected.`);
+                document.getElementById('syncStatus').innerHTML = '❌ PDF extraction failed';
+            }
+        }
+        
+        document.getElementById('cancelExtractBtn').addEventListener('click', () => {
+            pdfExtractionCancelled = true;
+            document.getElementById('loadingOverlay').style.display = 'none';
+            document.getElementById('syncStatus').innerHTML = '⚡ Extraction cancelled';
+        });
+
+        function extractPatientDataFromPDF(text) {
+            const extracted = {
+                patientName: null,
+                fileNumber: null,
+                address: null,
+                city: null,
+                phone1: null,
+                phone2: null,
+                dosePrescribed: null,
+                totalDoses: null,
+                appointmentDate: null,
+                rawText: text.substring(0, 500)
+            };
+            
+            const nameMatch = text.match(/(?:PATIENT NAME\/NOM DU PATIENT|PATIENT NAME|NOM DU PATIENT)[\s]*([A-Z][A-Z\s]+[A-Z])/i);
+            if (nameMatch) {
+                extracted.patientName = nameMatch[1].trim().replace(/\s+/g, ' ');
+            }
+            
+            if (!extracted.patientName) {
+                const nameMatch2 = text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})/);
+                if (nameMatch2 && nameMatch2[1].length > 5 && !nameMatch2[1].match(/MEDICUM|TELEPHONE|ADDRESS/i)) {
+                    extracted.patientName = nameMatch2[1].trim();
+                }
+            }
+            
+            const medicumMatch = text.match(/MEDICUM\s*#:\s*(\d+)/i);
+            if (medicumMatch) {
+                extracted.fileNumber = medicumMatch[1];
+            }
+            
+            if (!extracted.fileNumber) {
+                const fileMatch = text.match(/(?:FILE|ID|NUMBER)[:\s#]*(\d{4,8})/i);
+                if (fileMatch) extracted.fileNumber = fileMatch[1];
+            }
+            
+            const addressMatch = text.match(/ADDRESS\/ADRESSE[\s]*([A-Za-z0-9\s,.-]+?)(?:CITY|VILLE|$)/i);
+            if (addressMatch) {
+                extracted.address = addressMatch[1].trim();
+            }
+            
+            const cityMatch = text.match(/CITY\/VILLE[\s]*([A-Za-zéèêëïîôûùç\s-]+,\s*[A-Z]{2},\s*[A-Z0-9]{3}\s*[A-Z0-9]{3})/i);
+            if (cityMatch) {
+                extracted.city = cityMatch[1].trim();
+            }
+            
+            const phonePattern = /(\d{3}[\s-]?\d{3}[\s-]?\d{4})/g;
+            const phones = [...text.matchAll(phonePattern)];
+            if (phones.length > 0) {
+                extracted.phone1 = phones[0][1];
+                if (phones.length > 1) extracted.phone2 = phones[1][1];
+            }
+            
+            const doseMatch = text.match(/(\d+\.?\d*)\s*mg/i);
+            if (doseMatch) {
+                const doseValue = parseFloat(doseMatch[1]);
+                if ([7.5, 22.5, 30, 45].includes(doseValue)) {
+                    extracted.dosePrescribed = doseValue.toString();
+                }
+            }
+            
+            const injectionCountMatch = text.match(/Number of injections[:\s]*(\d+)/i);
+            if (injectionCountMatch) {
+                extracted.totalDoses = parseInt(injectionCountMatch[1]);
+            }
+            
+            const apptMatch = text.match(/injection seulement\s+(\d{1,2})\s+([A-Za-zéè]+)\s+(\d{4})/i);
+            if (apptMatch) {
+                const months = {
+                    'janvier': '01', 'février': '02', 'mars': '03', 'avril': '04',
+                    'mai': '05', 'juin': '06', 'juillet': '07', 'août': '08',
+                    'septembre': '09', 'octobre': '10', 'novembre': '11', 'décembre': '12'
+                };
+                const monthNum = months[apptMatch[2].toLowerCase()] || '01';
+                extracted.appointmentDate = `${apptMatch[3]}-${monthNum}-${apptMatch[1].padStart(2, '0')}`;
+            }
+            
+            return extracted;
+        }
+
+        function showExtractionPreview(extractedData, fullText) {
+            const previewContent = document.getElementById('pdfPreviewContent');
+            
+            let existingPatient = null;
+            if (extractedData.fileNumber) {
+                existingPatient = patients.find(p => p['File Number'] === extractedData.fileNumber);
+            }
+            
+            let warningHtml = '';
+            if (existingPatient) {
+                warningHtml = `<div style="background:#fef3c7; padding:12px; border-radius:12px; margin-bottom:16px; color:#b45309;">
+                    ⚠️ WARNING: Patient with File # ${extractedData.fileNumber} already exists (${existingPatient['Patient Name']}). 
+                    Adding this will create a duplicate record.
+                </div>`;
+            }
+            
+            previewContent.innerHTML = `
+                ${warningHtml}
+                <div style="background:#f8fafc; padding:12px; border-radius:12px; margin-bottom:16px;">
+                    <h3 style="margin-bottom:12px;">📋 Extracted Information</h3>
+                    <div style="display:grid; gap:8px;">
+                        <div><strong>Patient Name:</strong> ${extractedData.patientName || '❌ Not found'}</div>
+                        <div><strong>File Number:</strong> ${extractedData.fileNumber || '❌ Not found'}</div>
+                        <div><strong>Address:</strong> ${extractedData.address || '❌ Not found'}</div>
+                        <div><strong>City/Province/Postal:</strong> ${extractedData.city || '❌ Not found'}</div>
+                        <div><strong>Phone 1:</strong> ${extractedData.phone1 || '❌ Not found'}</div>
+                        <div><strong>Phone 2:</strong> ${extractedData.phone2 || '❌ Not found'}</div>
+                        <div><strong>Dose Prescribed:</strong> ${extractedData.dosePrescribed ? `${extractedData.dosePrescribed} mg` : '❌ Not found'}</div>
+                        <div><strong>Total Doses:</strong> ${extractedData.totalDoses || '❌ Not found (using default 4)'}</div>
+                        <div><strong>Appointment Date:</strong> ${extractedData.appointmentDate || '❌ Not found'}</div>
+                    </div>
+                </div>
+                <details style="margin-top:8px;">
+                    <summary style="cursor:pointer; color:#64748b;">🔍 View extracted raw text</summary>
+                    <textarea style="width:100%; height:150px; margin-top:10px; padding:8px; font-size:11px; border-radius:8px; border:1px solid #e2e8f0;" readonly>${escapeHtml(fullText)}</textarea>
+                </details>
+            `;
+            
+            document.getElementById('pdfPreviewModal').style.display = 'block';
+        }
+
+        async function addExtractedPatient() {
+            const data = lastExtractedData;
+            if (!data || (!data.patientName && !data.fileNumber)) {
+                alert('No valid patient data to add');
+                document.getElementById('pdfPreviewModal').style.display = 'none';
+                return;
+            }
+            
+            if (data.fileNumber) {
+                const existingPatient = patients.find(p => p['File Number'] === data.fileNumber);
+                if (existingPatient) {
+                    const confirmDuplicate = confirm(`WARNING: Patient with File # ${data.fileNumber} already exists (${existingPatient['Patient Name']}).\n\nAre you sure you want to add a duplicate record?`);
+                    if (!confirmDuplicate) {
+                        document.getElementById('pdfPreviewModal').style.display = 'none';
+                        return;
+                    }
+                }
+            }
+            
+            const defaultDueDate = new Date();
+            defaultDueDate.setDate(defaultDueDate.getDate() + 7);
+            
+            let fullAddress = data.address || '';
+            if (data.city) fullAddress += fullAddress ? ', ' + data.city : data.city;
+            
+            const newPatient = {
+                'Patient Name': data.patientName || 'Unknown Patient',
+                'File Number': data.fileNumber || `PDF_${Date.now()}`,
+                'Address': fullAddress || '',
+                'Phone 1': data.phone1 || '',
+                'Phone 2': data.phone2 || '',
+                'Dose Prescribed': data.dosePrescribed || '7.5',
+                'Total Doses': data.totalDoses || '4',
+                'Doses Remaining': data.totalDoses || '4',
+                'Previous Injection Site': '',
+                'Injection Site': '',
+                'Due Date': defaultDueDate.toISOString().split('T')[0],
+                'Appointment Date & Time': data.appointmentDate ? `${data.appointmentDate}T10:00:00` : '',
+                'Previous Injection Dates': '',
+                'Assignment Type': 'Permanent',
+                'Special Instructions': '',
+                'Adverse Effects Comments': '',
+                'File Status': 'Active',
+                'Injection Administered': false,
+                'Appointment Confirmed': !!data.appointmentDate,
+                'Pending': false,
+                'Archived': false
+            };
+            
+            patients.push(newPatient);
+            saveToLocalStorage();
+            renderCurrentTab();
+            
+            // Push to cloud if configured
+            if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
+                await pushToCloud('addPatient', newPatient);
+            }
+            
+            alert(`✅ Patient added from PDF:\n\nName: ${newPatient['Patient Name']}\nFile #: ${newPatient['File Number']}\nDose: ${newPatient['Dose Prescribed']}mg\nAppointment: ${newPatient['Appointment Date & Time'] || 'Not set'}`);
+            
+            document.getElementById('pdfPreviewModal').style.display = 'none';
+            lastExtractedData = null;
+        }
+
+        // ========== APPOINTMENT CONFIRMATION ==========
+        function openAppointmentEditor(fileNumber) {
+            pendingAppointmentFileNumber = fileNumber;
+            const patient = patients.find(p => p['File Number'] === fileNumber);
+            if (patient && patient['Appointment Date & Time']) {
+                const apptDate = new Date(patient['Appointment Date & Time']);
+                const formattedDate = apptDate.toISOString().slice(0, 16);
+                document.getElementById('appointmentDateInput').value = formattedDate;
+            } else {
+                const now = new Date();
+                const formattedDate = now.toISOString().slice(0, 16);
+                document.getElementById('appointmentDateInput').value = formattedDate;
+            }
+            document.getElementById('apptEditModal').style.display = 'block';
+        }
+        
+        async function saveAppointmentDate() {
+            const fileNumber = pendingAppointmentFileNumber;
+            const newAppointmentDate = document.getElementById('appointmentDateInput').value;
+            
+            if (!newAppointmentDate) {
+                alert('Please select an appointment date and time');
+                return;
+            }
+            
+            const patient = patients.find(p => p['File Number'] === fileNumber);
+            if (patient) {
+                patient['Appointment Date & Time'] = newAppointmentDate;
+                patient['Appointment Confirmed'] = true;
+                
+                saveToLocalStorage();
+                renderCurrentTab();
+                
+                // Push to cloud if configured
+                if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
+                    await pushToCloud('confirmAppointment', fileNumber);
+                }
+                
+                const dateDisplay = new Date(newAppointmentDate).toLocaleString();
+                alert(`✅ Appointment confirmed for ${patient['Patient Name']} on ${dateDisplay}\nPatient moved to Scheduled tab.`);
+            }
+            
+            document.getElementById('apptEditModal').style.display = 'none';
+            pendingAppointmentFileNumber = null;
         }
 
         // ========== INJECTION CONFIRMATION ==========
@@ -914,7 +1013,7 @@
             });
         }
 
-        function performInjectionWithSite() {
+        async function performInjectionWithSite() {
             const selectedSite = document.querySelector('input[name="injectionSite"]:checked');
             if (!selectedSite) {
                 alert('Please select an injection site');
@@ -971,6 +1070,12 @@
             
             saveToLocalStorage();
             renderCurrentTab();
+            
+            // Push to cloud if configured
+            if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
+                await pushToCloud('administerInjection', fileNumber);
+            }
+            
             document.getElementById('injectionSiteModal').style.display = 'none';
             pendingInjectionFileNumber = null;
         }
@@ -1008,32 +1113,41 @@
         }
 
         // ========== PATIENT CRUD ==========
-        function moveToAllPatients(fileNumber) { 
+        async function moveToAllPatients(fileNumber) { 
             const p = patients.find(p => p['File Number'] === fileNumber); 
             if(p) { 
-                showConfirmDialog(`Move ${p['Patient Name']} to All Patients?`, () => { 
+                showConfirmDialog(`Move ${p['Patient Name']} to All Patients?`, async () => { 
                     p['Pending'] = false; 
                     p['Archived'] = false; 
                     saveToLocalStorage(); 
-                    renderCurrentTab(); 
+                    renderCurrentTab();
+                    if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
+                        await pushToCloud('updatePatient', p);
+                    }
                 }); 
             } 
         }
         
-        function markPending(fileNumber) { 
+        async function markPending(fileNumber) { 
             const p = patients.find(p => p['File Number'] === fileNumber); 
             if(p) { 
                 p['Pending'] = true; 
                 p['Archived'] = false; 
                 saveToLocalStorage(); 
-                renderCurrentTab(); 
+                renderCurrentTab();
+                if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
+                    await pushToCloud('updatePatient', p);
+                }
             } 
         }
         
-        function deletePatient(fileNumber) { 
+        async function deletePatient(fileNumber) { 
             patients = patients.filter(p => p['File Number'] !== fileNumber); 
             saveToLocalStorage(); 
-            renderCurrentTab(); 
+            renderCurrentTab();
+            if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
+                await pushToCloud('deletePatient', fileNumber);
+            }
         }
 
         // ========== FILTERING & SORTING ==========
@@ -1200,7 +1314,7 @@
             document.getElementById('patientModal').style.display = 'block'; 
         }
         
-        function savePatientFromModal() { 
+        async function savePatientFromModal() { 
             const fn = document.getElementById('fileNumber').value.trim(); 
             if(!fn) { alert('File Number required'); return; } 
             if(!currentEditFileNumber && patients.find(p => p['File Number'] === fn)) { alert('File Number exists'); return; } 
@@ -1240,6 +1354,16 @@
             saveToLocalStorage(); 
             closeModal(); 
             renderCurrentTab(); 
+            
+            // Push to cloud if configured
+            if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
+                if (currentEditFileNumber) {
+                    await pushToCloud('updatePatient', data);
+                } else {
+                    await pushToCloud('addPatient', data);
+                }
+            }
+            
             alert('Patient saved successfully!'); 
         }
         
@@ -1260,12 +1384,19 @@
             loadFromLocalStorage();
             setupInjectionOptions();
             
+            // Check if Apps Script URL is configured
+            if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
+                document.getElementById('syncStatus').innerHTML = '☁️ Cloud sync ready';
+            } else {
+                document.getElementById('syncStatus').innerHTML = '⚠️ CSV mode (cloud not configured)';
+            }
+            
             document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => { document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); currentTab = btn.getAttribute('data-tab'); searchQuery = ''; document.getElementById('searchInput').value = ''; renderCurrentTab(); }));
             document.getElementById('generateReportBtn').addEventListener('click', generateCustomReport);
             document.querySelectorAll('.quick-btn').forEach(btn => btn.addEventListener('click', () => quickReport(btn.getAttribute('data-quick'))));
             document.getElementById('searchInput').addEventListener('input', (e) => { if(currentTab !== 'report') { searchQuery = e.target.value; renderCurrentTab(); } });
             document.getElementById('clearSearchBtn').addEventListener('click', () => { document.getElementById('searchInput').value = ''; searchQuery = ''; renderCurrentTab(); });
-            document.getElementById('refreshBtn').addEventListener('click', loadFromGoogleSheets);
+            document.getElementById('refreshBtn').addEventListener('click', syncWithSheet);
             document.getElementById('restoreBackupBtn').addEventListener('click', restoreFromBackup);
             document.getElementById('addPatientBtn').addEventListener('click', openAddModal);
             document.getElementById('importCSVBtn').addEventListener('click', () => document.getElementById('csvFileInput').click());

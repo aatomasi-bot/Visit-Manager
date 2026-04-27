@@ -8,10 +8,10 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
-        /* Professional Color Scheme */
+        /* Professional Color Scheme - Improved Contrast */
         body { 
             font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            background: #f5f7fa; 
+            background: #f1f5f9; 
             padding: 12px; 
             padding-bottom: 80px; 
         }
@@ -23,35 +23,35 @@
             padding: 14px 16px; 
             border-radius: 16px; 
             margin-bottom: 16px; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
         }
         .header h1 { 
             font-size: 20px; 
-            color: #1e293b; 
+            color: #0f172a; 
             margin-bottom: 12px;
             font-weight: 600;
             letter-spacing: -0.3px;
         }
-        .sync-status { font-size: 12px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: #64748b; }
+        .sync-status { font-size: 12px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: #475569; }
         .top-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-        .search-wrapper { display: flex; gap: 6px; flex: 2; min-width: 180px; }
+        .search-wrapper { display: flex; gap: 6px; flex: 2; min-width: 200px; }
         .search-wrapper input { 
             flex: 1; 
             padding: 8px 12px; 
-            border: 1px solid #e2e8f0; 
+            border: 1px solid #cbd5e1; 
             border-radius: 20px; 
-            font-size: 14px; 
-            background: #f8fafc;
+            font-size: 13px; 
+            background: #ffffff;
             transition: all 0.2s;
         }
-        .search-wrapper input:focus { outline: none; border-color: #94a3b8; background: white; }
+        .search-wrapper input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.1); }
         .btn-sm { padding: 8px 14px; border: none; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
         .btn-primary { background: #3b82f6; color: white; }
         .btn-primary:hover { background: #2563eb; }
-        .btn-secondary { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+        .btn-secondary { background: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1; }
         .btn-secondary:hover { background: #e2e8f0; }
         .btn-outline { background: transparent; color: #475569; border: 1px solid #cbd5e1; }
-        .btn-outline:hover { background: #f1f5f9; }
+        .btn-outline:hover { background: #f8fafc; }
         
         .add-btn { 
             width: 100%; 
@@ -73,7 +73,7 @@
         .tab-btn { 
             padding: 8px 16px; 
             background: white; 
-            border: 1px solid #e2e8f0; 
+            border: 1px solid #cbd5e1; 
             border-radius: 40px; 
             cursor: pointer; 
             font-size: 13px; 
@@ -83,6 +83,7 @@
             transition: all 0.2s;
         }
         .tab-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+        .tab-btn:hover:not(.active) { background: #f8fafc; border-color: #94a3b8; }
         
         /* Patient Card */
         .patient-list { display: flex; flex-direction: column; gap: 12px; }
@@ -90,16 +91,16 @@
             background: white; 
             border-radius: 16px; 
             padding: 14px; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04); 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06); 
             cursor: pointer; 
             transition: all 0.2s;
-            border: 1px solid #f0f2f5;
+            border: 1px solid #e2e8f0;
         }
-        .patient-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.05); transform: translateY(-1px); }
-        .patient-card.expanded { background: #fafcff; border-left: 3px solid #3b82f6; }
+        .patient-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-1px); border-color: #cbd5e1; }
+        .patient-card.expanded { background: #fafcff; border-left: 3px solid #3b82f6; border-color: #3b82f6; }
         
         .date-separator { 
-            background: #f1f5f9; 
+            background: #e2e8f0; 
             padding: 6px 12px; 
             border-radius: 20px; 
             margin: 8px 0; 
@@ -118,12 +119,12 @@
             color: #0f172a; 
         }
         .patient-file { font-size: 12px; color: #64748b; margin-left: 8px; font-family: system-ui; }
-        .patient-address { font-size: 12px; color: #64748b; margin-top: 4px; }
+        .patient-address { font-size: 12px; color: #475569; margin-top: 4px; }
         .due-date { font-size: 11px; color: #3b82f6; font-weight: 500; margin-top: 4px; }
         .appt-badge { font-size: 10px; background: #e2e8f0; color: #475569; padding: 2px 6px; border-radius: 12px; display: inline-block; margin-top: 4px; }
-        .special-badge { display: inline-block; background: #fee2e2; color: #dc2626; font-size: 11px; padding: 2px 8px; border-radius: 20px; margin-top: 4px; font-weight: 500; }
+        .special-badge { display: inline-block; background: #fef2f2; color: #dc2626; font-size: 11px; padding: 2px 8px; border-radius: 20px; margin-top: 4px; font-weight: 500; }
         .dose-badge { display: inline-block; background: #e2e8f0; color: #475569; font-size: 10px; padding: 2px 6px; border-radius: 12px; margin-left: 6px; }
-        .warning-badge { background: #fef3c7; color: #d97706; font-size: 10px; padding: 2px 8px; border-radius: 20px; margin-left: 6px; animation: pulse 1s infinite; }
+        .warning-badge { background: #fef3c7; color: #b45309; font-size: 10px; padding: 2px 8px; border-radius: 20px; margin-left: 6px; animation: pulse 1s infinite; font-weight: 500; }
         
         @keyframes pulse {
             0%, 100% { opacity: 1; }
@@ -136,7 +137,7 @@
             height: 34px; 
             border-radius: 30px; 
             border: none; 
-            font-size: 16px; 
+            font-size: 15px; 
             cursor: pointer; 
             transition: all 0.2s; 
             display: inline-flex; 
@@ -145,12 +146,12 @@
         }
         .action-icon:hover { transform: scale(1.05); }
         .call-icon { background: #dcfce7; color: #16a34a; }
-        .nav-icon { background: #e0f2fe; color: #0284c7; font-size: 16px; }
+        .nav-icon { background: #dbeafe; color: #2563eb; font-size: 14px; }
         
-        .expanded-view { margin-top: 14px; padding-top: 14px; border-top: 1px solid #f0f2f5; display: none; }
-        .detail-row { display: flex; padding: 6px 0; border-bottom: 1px solid #f8fafc; flex-wrap: wrap; align-items: center; }
-        .detail-label { width: 130px; font-weight: 500; color: #64748b; font-size: 12px; }
-        .detail-value { flex: 1; color: #1e293b; font-size: 13px; }
+        .expanded-view { margin-top: 14px; padding-top: 14px; border-top: 1px solid #e2e8f0; display: none; }
+        .detail-row { display: flex; padding: 6px 0; border-bottom: 1px solid #f1f5f9; flex-wrap: wrap; align-items: center; }
+        .detail-label { width: 130px; font-weight: 500; color: #475569; font-size: 12px; }
+        .detail-value { flex: 1; color: #1e293b; font-size: 13px; font-weight: 500; }
         .edit-icon { cursor: pointer; margin-left: 8px; color: #3b82f6; font-size: 13px; }
         .ins-red { color: #dc2626; font-weight: 500; }
         
@@ -166,48 +167,57 @@
         }
         .action-sm:hover { transform: translateY(-1px); }
         .inject-sm { background: #dcfce7; color: #16a34a; }
-        .pending-sm { background: #fef3c7; color: #d97706; }
-        .edit-sm { background: #e0f2fe; color: #0284c7; }
-        .delete-sm { background: #fee2e2; color: #dc2626; }
+        .pending-sm { background: #fef3c7; color: #b45309; }
+        .edit-sm { background: #dbeafe; color: #2563eb; }
+        .delete-sm { background: #fef2f2; color: #dc2626; }
         .confirm-sm { background: #e0e7ff; color: #4f46e5; }
         .move-sm { background: #f1f5f9; color: #475569; }
         
         /* Modals */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1000; overflow-y: auto; backdrop-filter: blur(2px); }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; backdrop-filter: blur(2px); }
         .modal-content { background: white; max-width: 520px; margin: 50px auto; border-radius: 24px; padding: 24px; }
         .confirm-modal { max-width: 340px; text-align: center; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .close { font-size: 24px; cursor: pointer; color: #94a3b8; }
+        .close { font-size: 28px; cursor: pointer; color: #94a3b8; }
         .close:hover { color: #475569; }
         
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .form-group { display: flex; flex-direction: column; gap: 4px; }
         .form-group.full-width { grid-column: span 2; }
-        .form-group label { font-weight: 500; font-size: 12px; color: #64748b; }
-        .form-group input, .form-group select, .form-group textarea { padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 14px; font-family: inherit; background: white; }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #3b82f6; }
+        .form-group label { font-weight: 500; font-size: 12px; color: #475569; margin-bottom: 2px; }
+        .form-group input, .form-group select, .form-group textarea { padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 14px; font-family: inherit; background: white; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.1); }
         
         .modal-footer { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
-        .btn-danger { background: #fee2e2; color: #dc2626; border: none; padding: 8px 16px; border-radius: 30px; font-weight: 500; cursor: pointer; }
+        .btn-danger { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding: 8px 16px; border-radius: 30px; font-weight: 500; cursor: pointer; }
+        .btn-danger:hover { background: #fecaca; }
         
         .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
         .loading { text-align: center; padding: 40px; color: #3b82f6; }
         
         /* Report Tab Styles */
         .report-section { padding: 4px; }
-        .report-title { font-weight: 600; margin-bottom: 16px; color: #1e293b; font-size: 18px; }
+        .report-title { font-weight: 600; margin-bottom: 16px; color: #0f172a; font-size: 18px; }
         .report-input-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-        .report-input-row input, .report-input-row select { flex: 1; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 24px; font-size: 13px; min-width: 120px; background: white; }
-        .data-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #f0f2f5; }
-        .data-btn { background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 14px; border-radius: 30px; font-size: 12px; font-weight: 500; cursor: pointer; color: #475569; transition: all 0.2s; }
-        .data-btn:hover { background: #f1f5f9; border-color: #cbd5e1; }
-        .quick-reports { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0; padding: 16px 0; border-top: 1px solid #f0f2f5; border-bottom: 1px solid #f0f2f5; }
-        .quick-btn { background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px 12px; border-radius: 30px; font-size: 11px; font-weight: 500; cursor: pointer; color: #475569; transition: all 0.2s; }
-        .quick-btn:hover { background: #f1f5f9; }
-        .report-container { background: white; border-radius: 20px; padding: 16px; margin-top: 16px; max-height: 500px; overflow-y: auto; border: 1px solid #f0f2f5; }
-        .report-item { padding: 12px; border-bottom: 1px solid #f0f2f5; cursor: pointer; transition: background 0.2s; border-radius: 12px; }
-        .report-item:hover { background: #fafcff; }
+        .report-input-row input, .report-input-row select { flex: 1; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 24px; font-size: 13px; min-width: 120px; background: white; }
+        .data-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #e2e8f0; }
+        .data-btn { background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px 14px; border-radius: 30px; font-size: 12px; font-weight: 500; cursor: pointer; color: #475569; transition: all 0.2s; }
+        .data-btn:hover { background: #f1f5f9; border-color: #94a3b8; }
+        .quick-reports { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0; padding: 16px 0; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
+        .quick-btn { background: #f8fafc; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 30px; font-size: 11px; font-weight: 500; cursor: pointer; color: #475569; transition: all 0.2s; }
+        .quick-btn:hover { background: #e2e8f0; }
+        .report-container { background: white; border-radius: 20px; padding: 16px; margin-top: 16px; max-height: 500px; overflow-y: auto; border: 1px solid #e2e8f0; }
+        .report-item { padding: 12px; border-bottom: 1px solid #e2e8f0; cursor: pointer; transition: background 0.2s; border-radius: 12px; }
+        .report-item:hover { background: #f8fafc; }
         .report-date { font-weight: 600; color: #3b82f6; margin-bottom: 8px; font-size: 13px; }
+        
+        /* Injection Site Modal specific */
+        .injection-options { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
+        .injection-option { display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+        .injection-option:hover { background: #f8fafc; border-color: #3b82f6; }
+        .injection-option.selected { background: #dbeafe; border-color: #3b82f6; }
+        .injection-option input { margin: 0; width: 18px; height: 18px; accent-color: #3b82f6; }
+        .injection-option label { flex: 1; cursor: pointer; font-weight: 500; color: #1e293b; }
         
         @media (max-width: 600px) {
             .collapsed-view { flex-direction: column; align-items: stretch; }
@@ -227,7 +237,7 @@
                 <div class="search-wrapper">
                     <input type="text" id="searchInput" placeholder="Search name or file...">
                     <button id="clearSearchBtn" class="btn-sm btn-outline">Clear</button>
-                    <button id="refreshBtn" class="btn-sm btn-secondary">⟳ Load from Sheet</button>
+                    <button id="refreshBtn" class="btn-sm btn-secondary">⟳ Load</button>
                 </div>
             </div>
             <div class="sync-status">
@@ -254,14 +264,12 @@
             <div class="loading">Loading patients...</div>
         </div>
         
-        <!-- Report View (shown only when Report tab is active) -->
+        <!-- Report View -->
         <div id="reportView" style="display:none;">
             <div class="report-section">
                 <div class="report-title">📊 Generate Report</div>
-                
-                <!-- Data Management Buttons moved here -->
                 <div class="data-buttons">
-                    <span style="font-size:12px; color:#64748b; margin-right:8px;">Data:</span>
+                    <span style="font-size:12px; color:#475569; margin-right:8px;">Data:</span>
                     <button id="importCSVBtn" class="data-btn">📄 Import CSV</button>
                     <button id="importPDFBtn" class="data-btn">📑 Import PDF</button>
                     <button id="exportBtn" class="data-btn">📥 Backup</button>
@@ -270,8 +278,6 @@
                     <input type="file" id="csvFileInput" accept=".csv" style="display:none">
                     <input type="file" id="pdfFileInput" accept=".pdf" style="display:none">
                 </div>
-                
-                <!-- Custom Report Builder -->
                 <div class="report-input-row">
                     <select id="reportField">
                         <option value="Due Date">Due Date</option>
@@ -290,15 +296,14 @@
                         <option value="contains">Contains</option>
                         <option value="greater">Greater Than</option>
                         <option value="less">Less Than</option>
-                        <option value="between">Between (for dates)</option>
+                        <option value="between">Between</option>
                     </select>
                     <input type="text" id="reportValue" placeholder="Value">
                     <input type="text" id="reportValueEnd" placeholder="End value" style="display:none;">
                     <button id="generateReportBtn" class="btn-sm btn-primary">Generate</button>
                 </div>
-                
                 <div class="quick-reports">
-                    <span style="font-size:11px; color:#64748b;">Quick Reports:</span>
+                    <span style="font-size:11px; color:#475569;">Quick Reports:</span>
                     <button class="quick-btn" data-quick="dueToday">Due Today</button>
                     <button class="quick-btn" data-quick="dueMay2026">Due May 2026</button>
                     <button class="quick-btn" data-quick="noRepeatsLeft">No Repeats Left</button>
@@ -307,7 +312,6 @@
                     <button class="quick-btn" data-quick="overdueAppointments">Overdue Appointments</button>
                     <button class="quick-btn" data-quick="allPatients">All Active</button>
                 </div>
-                
                 <div id="reportOutput">
                     <div class="empty-state">✨ Select criteria and click Generate</div>
                 </div>
@@ -319,20 +323,29 @@
     <div id="injectionSiteModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Select Injection Site</h2>
+                <h2>💉 Select Injection Site</h2>
                 <span class="close-injection">&times;</span>
             </div>
-            <div class="form-group">
-                <label>Injection Site:</label>
-                <select id="injectionSiteSelect">
-                    <option value="Right Side">Right Side</option>
-                    <option value="Left Side">Left Side</option>
-                    <option value="Right Glute">Right Glute</option>
-                    <option value="Left Glute">Left Glute</option>
-                </select>
+            <div class="injection-options">
+                <div class="injection-option" data-site="Right Side">
+                    <input type="radio" name="injectionSite" value="Right Side" id="siteRight">
+                    <label for="siteRight">📍 Right Side</label>
+                </div>
+                <div class="injection-option" data-site="Left Side">
+                    <input type="radio" name="injectionSite" value="Left Side" id="siteLeft">
+                    <label for="siteLeft">📍 Left Side</label>
+                </div>
+                <div class="injection-option" data-site="Right Glute">
+                    <input type="radio" name="injectionSite" value="Right Glute" id="siteRightGlute">
+                    <label for="siteRightGlute">🔄 Right Glute</label>
+                </div>
+                <div class="injection-option" data-site="Left Glute">
+                    <input type="radio" name="injectionSite" value="Left Glute" id="siteLeftGlute">
+                    <label for="siteLeftGlute">🔄 Left Glute</label>
+                </div>
             </div>
             <div class="modal-footer">
-                <button id="confirmInjectionSite" class="btn-sm btn-primary">Confirm & Administer</button>
+                <button id="confirmInjectionSite" class="btn-sm btn-primary">Confirm Injection</button>
                 <button id="cancelInjectionSite" class="btn-sm btn-secondary">Cancel</button>
             </div>
         </div>
@@ -406,6 +419,106 @@
         let pendingInjectionFileNumber = null;
 
         const doseToWeeks = { '7.5': 4, '22.5': 12, '30': 16, '45': 24 };
+
+        // ========== INJECTION SITE SELECTOR ==========
+        function showInjectionSiteSelector(fileNumber) {
+            pendingInjectionFileNumber = fileNumber;
+            // Clear previous selection
+            document.querySelectorAll('input[name="injectionSite"]').forEach(radio => radio.checked = false);
+            document.querySelectorAll('.injection-option').forEach(opt => opt.classList.remove('selected'));
+            document.getElementById('injectionSiteModal').style.display = 'block';
+        }
+        
+        // Add click handlers for injection options
+        function setupInjectionOptions() {
+            document.querySelectorAll('.injection-option').forEach(opt => {
+                opt.addEventListener('click', () => {
+                    const radio = opt.querySelector('input[type="radio"]');
+                    if (radio) {
+                        radio.checked = true;
+                        document.querySelectorAll('.injection-option').forEach(o => o.classList.remove('selected'));
+                        opt.classList.add('selected');
+                    }
+                });
+                const radio = opt.querySelector('input[type="radio"]');
+                if (radio) {
+                    radio.addEventListener('change', () => {
+                        if (radio.checked) {
+                            document.querySelectorAll('.injection-option').forEach(o => o.classList.remove('selected'));
+                            opt.classList.add('selected');
+                        }
+                    });
+                }
+            });
+        }
+
+        function performInjectionWithSite() {
+            const selectedSite = document.querySelector('input[name="injectionSite"]:checked');
+            if (!selectedSite) {
+                alert('Please select an injection site');
+                return;
+            }
+            
+            const injectionSite = selectedSite.value;
+            const fileNumber = pendingInjectionFileNumber;
+            const patient = patients.find(p => p['File Number'] === fileNumber);
+            if (!patient) return;
+            
+            let dosesRemaining = parseInt(patient['Doses Remaining']) || 0;
+            const totalDoses = parseInt(patient['Total Doses']) || 4;
+            
+            if (dosesRemaining <= 0) {
+                alert('No doses remaining! This patient will be moved to Pending tab.');
+                patient['Pending'] = true;
+                saveToLocalStorage();
+                renderCurrentTab();
+                document.getElementById('injectionSiteModal').style.display = 'none';
+                pendingInjectionFileNumber = null;
+                return;
+            }
+            
+            // Record injection
+            const today = new Date().toISOString().split('T')[0];
+            const prevDates = patient['Previous Injection Dates'] ? patient['Previous Injection Dates'].split(',').map(d => d.trim()) : [];
+            prevDates.push(today);
+            patient['Previous Injection Dates'] = prevDates.join(', ');
+            
+            if (patient['Injection Site']) {
+                patient['Previous Injection Site'] = patient['Injection Site'];
+            }
+            patient['Injection Site'] = injectionSite;
+            
+            const newDosesRemaining = dosesRemaining - 1;
+            patient['Doses Remaining'] = newDosesRemaining.toString();
+            
+            if (newDosesRemaining > 0) {
+                const currentDueDate = patient['Due Date'] || today;
+                patient['Due Date'] = calculateNextDueDate(currentDueDate, patient['Dose Prescribed']);
+            }
+            
+            patient['Injection Administered'] = true;
+            patient['Pending'] = false;
+            patient['Archived'] = false;
+            
+            if (newDosesRemaining === 0) {
+                patient['Pending'] = true;
+                alert(`✅ Injection administered at ${injectionSite}.\n\n${patient['Patient Name']} has completed all ${totalDoses} doses and has been moved to Pending tab.`);
+            } else {
+                alert(`✅ Injection administered at ${injectionSite}.\n\nDoses given: ${totalDoses - newDosesRemaining} of ${totalDoses}\nDoses remaining: ${newDosesRemaining}\nNew due date: ${patient['Due Date'] || 'Not set'}`);
+            }
+            
+            saveToLocalStorage();
+            renderCurrentTab();
+            document.getElementById('injectionSiteModal').style.display = 'none';
+            pendingInjectionFileNumber = null;
+        }
+        
+        function calculateNextDueDate(currentDueDate, dosePrescribed) {
+            const weeks = doseToWeeks[dosePrescribed] || 4;
+            const newDate = new Date(currentDueDate);
+            newDate.setDate(newDate.getDate() + (weeks * 7));
+            return newDate.toISOString().split('T')[0];
+        }
 
         // ========== REPORT FUNCTIONS ==========
         function generateCustomReport() {
@@ -652,40 +765,6 @@
         function saveToLocalStorage() { localStorage.setItem('patientTrackerData', JSON.stringify(patients)); document.getElementById('recordCount').innerHTML = `📋 ${patients.length}`; }
         function loadFromLocalStorage() { const saved = localStorage.getItem('patientTrackerData'); patients = (saved && saved !== '[]') ? JSON.parse(saved) : []; document.getElementById('recordCount').innerHTML = `📋 ${patients.length}`; renderCurrentTab(); }
         
-        function calculateNextDueDate(currentDueDate, dosePrescribed) {
-            const weeks = doseToWeeks[dosePrescribed] || 4;
-            const newDate = new Date(currentDueDate);
-            newDate.setDate(newDate.getDate() + (weeks * 7));
-            return newDate.toISOString().split('T')[0];
-        }
-        
-        function performInjectionWithSite() {
-            const fileNumber = pendingInjectionFileNumber;
-            const injectionSite = document.getElementById('injectionSiteSelect').value;
-            if (!injectionSite) { alert('Please select an injection site'); return; }
-            const patient = patients.find(p => p['File Number'] === fileNumber);
-            if (!patient) return;
-            let dosesRemaining = parseInt(patient['Doses Remaining']) || 0;
-            const totalDoses = parseInt(patient['Total Doses']) || 4;
-            if (dosesRemaining <= 0) { patient['Pending'] = true; saveToLocalStorage(); renderCurrentTab(); document.getElementById('injectionSiteModal').style.display = 'none'; pendingInjectionFileNumber = null; return; }
-            const today = new Date().toISOString().split('T')[0];
-            const prevDates = patient['Previous Injection Dates'] ? patient['Previous Injection Dates'].split(',').map(d => d.trim()) : [];
-            prevDates.push(today);
-            patient['Previous Injection Dates'] = prevDates.join(', ');
-            if (patient['Injection Site']) patient['Previous Injection Site'] = patient['Injection Site'];
-            patient['Injection Site'] = injectionSite;
-            const newDosesRemaining = dosesRemaining - 1;
-            patient['Doses Remaining'] = newDosesRemaining.toString();
-            if (newDosesRemaining > 0) patient['Due Date'] = calculateNextDueDate(patient['Due Date'] || today, patient['Dose Prescribed']);
-            patient['Injection Administered'] = true;
-            patient['Pending'] = false;
-            patient['Archived'] = false;
-            if (newDosesRemaining === 0) { patient['Pending'] = true; alert(`${patient['Patient Name']} completed all ${totalDoses} doses.`); }
-            else alert(`✅ Injection at ${injectionSite}. ${newDosesRemaining} doses remaining.`);
-            saveToLocalStorage(); renderCurrentTab(); document.getElementById('injectionSiteModal').style.display = 'none'; pendingInjectionFileNumber = null;
-        }
-        
-        function showInjectionSiteSelector(fileNumber) { pendingInjectionFileNumber = fileNumber; document.getElementById('injectionSiteModal').style.display = 'block'; }
         function confirmAppointment(fileNumber) { const p = patients.find(p => p['File Number'] === fileNumber); if(p) { p['Appointment Confirmed'] = true; saveToLocalStorage(); renderCurrentTab(); alert(`✅ Appointment confirmed for ${p['Patient Name']}`); } }
         function moveToAllPatients(fileNumber) { const p = patients.find(p => p['File Number'] === fileNumber); if(p) { showConfirmDialog(`Move ${p['Patient Name']} to All Patients?`, () => { p['Pending'] = false; p['Archived'] = false; saveToLocalStorage(); renderCurrentTab(); }); } }
         function markPending(fileNumber) { const p = patients.find(p => p['File Number'] === fileNumber); if(p) { p['Pending'] = true; p['Archived'] = false; saveToLocalStorage(); renderCurrentTab(); } }
@@ -741,6 +820,7 @@
                         </div>
                         <div class="action-buttons">
                             ${patient['Phone 1'] ? `<button class="action-icon call-icon" data-phone="${escapeHtml(patient['Phone 1'])}">📞</button>` : ''}
+                            ${patient['Phone 2'] ? `<button class="action-icon call-icon" data-phone="${escapeHtml(patient['Phone 2'])}">📞2</button>` : ''}
                             ${patient['Address'] ? `<button class="action-icon nav-icon" data-address="${escapeHtml(patient['Address'])}">📍</button>` : ''}
                         </div>
                     </div>
@@ -786,7 +866,7 @@
             document.querySelectorAll('.patient-card').forEach(card => { const exp = card.querySelector('.expanded-view'); card.addEventListener('click', (e) => { if(e.target.tagName === 'BUTTON') return; const show = exp.style.display === 'block'; exp.style.display = show ? 'none' : 'block'; card.classList.toggle('expanded', !show); }); });
             document.querySelectorAll('.call-icon').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); window.location.href = `tel:${btn.getAttribute('data-phone')}`; }));
             document.querySelectorAll('.nav-icon').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); window.open(`https://maps.google.com/?q=${encodeURIComponent(btn.getAttribute('data-address'))}`, '_blank'); }));
-            document.querySelectorAll('[data-action="inject"]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); const fn = btn.getAttribute('data-filenumber'); const p = patients.find(p => p['File Number'] === fn); showConfirmDialog(`💉 Inject ${p['Patient Name']}? ${p['Dose Prescribed']}mg, ${p['Doses Remaining']} left`, () => showInjectionSiteSelector(fn)); }));
+            document.querySelectorAll('[data-action="inject"]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); const fn = btn.getAttribute('data-filenumber'); const p = patients.find(p => p['File Number'] === fn); showConfirmDialog(`💉 Prepare injection for ${p['Patient Name']}?\n\nDose: ${p['Dose Prescribed']}mg\nDoses remaining: ${p['Doses Remaining']}`, () => showInjectionSiteSelector(fn)); }));
             document.querySelectorAll('[data-action="confirm"]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); confirmAppointment(btn.getAttribute('data-filenumber')); }));
             document.querySelectorAll('[data-action="pending"]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); showConfirmDialog('Mark as pending?', () => markPending(btn.getAttribute('data-filenumber'))); }));
             document.querySelectorAll('[data-action="move"]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); moveToAllPatients(btn.getAttribute('data-filenumber')); }));
@@ -804,6 +884,8 @@
         
         document.addEventListener('DOMContentLoaded', () => {
             loadFromLocalStorage();
+            setupInjectionOptions();
+            
             document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => { document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); currentTab = btn.getAttribute('data-tab'); searchQuery = ''; document.getElementById('searchInput').value = ''; renderCurrentTab(); }));
             document.getElementById('generateReportBtn').addEventListener('click', generateCustomReport);
             document.querySelectorAll('.quick-btn').forEach(btn => btn.addEventListener('click', () => quickReport(btn.getAttribute('data-quick'))));

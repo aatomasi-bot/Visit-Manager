@@ -2,9 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, view-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Patient Dosing Tracker - Fixed Persistence</title>
+    <title>Patient Dosing Tracker - Complete System</title>
+    <!-- PDF.js Library for PDF extraction -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        // Configure PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
@@ -36,7 +42,7 @@
             flex: 1; 
             padding: 8px 12px; 
             border: 1px solid #cbd5e1; 
-            borderRadius: 20px; 
+            border-radius: 20px; 
             font-size: 13px; 
             background: #ffffff;
         }
@@ -449,7 +455,7 @@
             return today;
         }
 
-        // ========== LOAD FROM GOOGLE SHEETS (SAFE MERGE - NO DATA LOSS) ==========
+        // ========== LOAD FROM GOOGLE SHEETS (SAFE MERGE) ==========
         async function loadFromGoogleSheets() {
             const userConfirmed = confirm(
                 `⚠️ Sync with Google Sheet\n\n` +
@@ -501,7 +507,6 @@
                     }
                 }
                 
-                // Create backup before any changes
                 const backupBeforeSync = JSON.parse(JSON.stringify(patients));
                 localStorage.setItem('patientTrackerBackup', JSON.stringify(backupBeforeSync));
                 document.getElementById('restoreBackupBtn').style.display = 'inline-block';
@@ -531,7 +536,6 @@
                         updatedPatient['Special Instructions'] = sheetPatient['Special Instructions'] || existingPatient['Special Instructions'];
                         updatedPatient['Adverse Effects Comments'] = sheetPatient['Adverse Effects Comments'] || existingPatient['Adverse Effects Comments'];
                         
-                        // Preserve injection history (NEVER overwrite from sheet)
                         updatedPatient['Doses Remaining'] = existingPatient['Doses Remaining'];
                         updatedPatient['Injection Administered'] = existingPatient['Injection Administered'];
                         updatedPatient['Appointment Confirmed'] = existingPatient['Appointment Confirmed'];
@@ -549,12 +553,7 @@
                 saveToLocalStorage();
                 renderCurrentTab();
                 
-                alert(`✅ Sync Complete!\n\n` +
-                      `📊 Total patients: ${patients.length}\n` +
-                      `📥 New patients added: ${newCount}\n` +
-                      `🔄 Existing patients updated: ${updatedCount}\n` +
-                      `💾 Backup saved automatically\n\n` +
-                      `Manually added patients were preserved.`);
+                alert(`✅ Sync Complete!\n\n📊 Total patients: ${patients.length}\n📥 New patients added: ${newCount}\n🔄 Existing patients updated: ${updatedCount}\n💾 Backup saved automatically`);
                 document.getElementById('syncStatus').innerHTML = `✅ Synced: +${newCount} new, ${updatedCount} updated | Total: ${patients.length}`;
                 
             } catch(error) { 
@@ -618,6 +617,210 @@
             
             document.getElementById('apptEditModal').style.display = 'none';
             pendingAppointmentFileNumber = null;
+        }
+
+        // ========== PDF INTELLIGENT EXTRACTION ==========
+        async function importPDF(file) {
+            const fileInput = document.getElementById('pdfFileInput');
+            const selectedFile = fileInput.files[0];
+            
+            if (!selectedFile) {
+                alert('Please select a PDF file');
+                return;
+            }
+            
+            if (selectedFile.type !== 'application/pdf') {
+                alert('Please select a valid PDF file');
+                return;
+            }
+            
+            document.getElementById('syncStatus').innerHTML = '🔄 Reading PDF...';
+            
+            try {
+                const arrayBuffer = await selectedFile.arrayBuffer();
+                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+                const pdf = await loadingTask.promise;
+                
+                let fullText = '';
+                
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    fullText += pageText + '\n';
+                }
+                
+                if (!fullText.trim()) {
+                    alert('No readable text found in this PDF. It may be a scanned image.');
+                    return;
+                }
+                
+                const extractedData = extractPatientDataFromText(fullText);
+                
+                if (extractedData.patientName && extractedData.fileNumber) {
+                    const existingPatient = patients.find(p => p['File Number'] === extractedData.fileNumber);
+                    
+                    if (existingPatient) {
+                        if (confirm(`Patient ${extractedData.patientName} already exists.\n\nUpdate with extracted data?`)) {
+                            openEditModal(extractedData.fileNumber);
+                            fillFormWithExtractedData(extractedData);
+                        }
+                    } else {
+                        const confirmMsg = `Extracted Patient Data:\n\n📋 Name: ${extractedData.patientName}\n🔢 File #: ${extractedData.fileNumber}\n📞 Phone: ${extractedData.phone1 || 'Not found'}\n📍 Address: ${extractedData.address || 'Not found'}\n💊 Dose: ${extractedData.dosePrescribed || 'Not found'} mg\n\nAdd this patient?`;
+                        
+                        if (confirm(confirmMsg)) {
+                            addPatientFromExtractedData(extractedData);
+                        }
+                    }
+                } else {
+                    showExtractionPreview(fullText, extractedData);
+                }
+                
+                document.getElementById('syncStatus').innerHTML = '✅ PDF processed';
+                
+            } catch (error) {
+                console.error('PDF extraction error:', error);
+                alert(`Error reading PDF: ${error.message}\n\nMake sure the PDF is not password-protected.`);
+                document.getElementById('syncStatus').innerHTML = '❌ PDF extraction failed';
+            }
+        }
+
+        function extractPatientDataFromText(text) {
+            const extracted = {
+                patientName: null,
+                fileNumber: null,
+                address: null,
+                phone1: null,
+                phone2: null,
+                dosePrescribed: null,
+                totalDoses: null
+            };
+            
+            const namePatterns = [
+                /(?:Patient\s*Name|Name|Patient)[:\s]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i,
+                /(?:^|\n)([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})(?:\s|\n)/
+            ];
+            
+            for (const pattern of namePatterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    extracted.patientName = match[1].trim();
+                    break;
+                }
+            }
+            
+            const filePatterns = [
+                /(?:File\s*(?:#|Number|ID|No\.?)|MRN|Patient\s*ID)[:\s]+([A-Z0-9]{3,15})/i,
+                /(?:^|\n)([A-Z]{2,4}[0-9]{3,10})(?:\s|\n)/,
+                /\b([A-Z]{2}[0-9]{5,})\b/
+            ];
+            
+            for (const pattern of filePatterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    extracted.fileNumber = match[1].trim();
+                    break;
+                }
+            }
+            
+            const phonePattern = /(?:\+?1[-\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})/g;
+            const phones = [...text.matchAll(phonePattern)];
+            if (phones.length > 0) {
+                extracted.phone1 = phones[0][0];
+                if (phones.length > 1) extracted.phone2 = phones[1][0];
+            }
+            
+            const addressPattern = /(\d{1,5}\s+[A-Za-z0-9\s,]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Court|Ct|Place|Pl|Way|Circle|Cir)\.?(?:\s+[A-Za-z\s]+(?:,?\s*[A-Z]{2})?\s*\d{5}(?:-\d{4})?)?)/i;
+            const addressMatch = text.match(addressPattern);
+            if (addressMatch) {
+                extracted.address = addressMatch[0].trim();
+            }
+            
+            const dosePattern = /(\d{1,2}\.?\d*)\s*mg/i;
+            const doseMatch = text.match(dosePattern);
+            if (doseMatch) {
+                const doseValue = parseFloat(doseMatch[1]);
+                if ([7.5, 22.5, 30, 45].includes(doseValue)) {
+                    extracted.dosePrescribed = doseValue.toString();
+                }
+            }
+            
+            const doseCountMatch = text.match(/(?:Total\s*Doses?|Doses?)\D*(\d+)/i);
+            if (doseCountMatch) {
+                extracted.totalDoses = parseInt(doseCountMatch[1]);
+            }
+            
+            return extracted;
+        }
+
+        function addPatientFromExtractedData(data) {
+            const defaultDueDate = new Date();
+            defaultDueDate.setDate(defaultDueDate.getDate() + 7);
+            
+            const newPatient = {
+                'Patient Name': data.patientName,
+                'File Number': data.fileNumber,
+                'Address': data.address || '',
+                'Phone 1': data.phone1 || '',
+                'Phone 2': data.phone2 || '',
+                'Dose Prescribed': data.dosePrescribed || '7.5',
+                'Total Doses': data.totalDoses || '4',
+                'Doses Remaining': data.totalDoses || '4',
+                'Previous Injection Site': '',
+                'Injection Site': '',
+                'Due Date': defaultDueDate.toISOString().split('T')[0],
+                'Appointment Date & Time': '',
+                'Previous Injection Dates': '',
+                'Assignment Type': 'Permanent',
+                'Special Instructions': '',
+                'Adverse Effects Comments': '',
+                'File Status': 'Active',
+                'Injection Administered': false,
+                'Appointment Confirmed': false,
+                'Pending': false,
+                'Archived': false
+            };
+            
+            patients.push(newPatient);
+            saveToLocalStorage();
+            renderCurrentTab();
+            alert(`✅ Patient added from PDF: ${data.patientName} (${data.fileNumber})`);
+        }
+
+        function fillFormWithExtractedData(data) {
+            if (data.patientName) document.getElementById('patientName').value = data.patientName;
+            if (data.fileNumber) document.getElementById('fileNumber').value = data.fileNumber;
+            if (data.address) document.getElementById('address').value = data.address;
+            if (data.phone1) document.getElementById('phone1').value = data.phone1;
+            if (data.phone2) document.getElementById('phone2').value = data.phone2;
+            if (data.dosePrescribed) document.getElementById('dosePrescribed').value = data.dosePrescribed;
+            if (data.totalDoses) {
+                document.getElementById('totalDoses').value = data.totalDoses;
+                document.getElementById('dosesRemaining').value = data.totalDoses;
+            }
+            alert('Extracted data has been filled into the form. Review and click Save to confirm.');
+        }
+
+        function showExtractionPreview(fullText, extractedData) {
+            const previewHtml = `
+                <div style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; 
+                            max-width:90%; width:500px; border-radius:16px; padding:20px; z-index:10000; 
+                            box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+                    <h3>📄 PDF Extraction Results</h3>
+                    <p><strong>Found:</strong> ${extractedData.patientName ? '✓ Name' : '✗ Name'} | 
+                       ${extractedData.fileNumber ? '✓ File #' : '✗ File #'}</p>
+                    <p>Could not automatically extract complete patient data.</p>
+                    <details>
+                        <summary>View extracted text (${fullText.length} characters)</summary>
+                        <textarea style="width:100%; height:200px; margin-top:10px;" readonly>${fullText.substring(0, 2000)}${fullText.length > 2000 ? '...' : ''}</textarea>
+                    </details>
+                    <div style="margin-top:16px; display:flex; gap:8px; justify-content:flex-end;">
+                        <button onclick="this.closest('div').remove()" class="btn-sm btn-secondary">Close</button>
+                        <button onclick="openAddModal(); this.closest('div').remove()" class="btn-sm btn-primary">Add Manually</button>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', previewHtml);
         }
 
         // ========== INJECTION CONFIRMATION ==========
@@ -945,7 +1148,6 @@
         function exportData() { const blob = new Blob([JSON.stringify(patients, null, 2)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `backup_${new Date().toISOString().split('T')[0]}.json`; a.click(); URL.revokeObjectURL(a.href); }
         function importData(file) { const reader = new FileReader(); reader.onload = (e) => { try { const imported = JSON.parse(e.target.result); if(Array.isArray(imported)) { patients = imported; saveToLocalStorage(); renderCurrentTab(); alert(`✅ Imported ${imported.length} patients`); } } catch(err) { alert('Invalid file'); } }; reader.readAsText(file); }
         function importCSV(file) { const reader = new FileReader(); reader.onload = (e) => { try { const rows = e.target.result.split('\n'); const headers = rows[0].split(',').map(h => h.trim().replace(/"/g, '')); let importedCount = 0; for (let i = 1; i < rows.length; i++) { if (!rows[i].trim()) continue; const values = rows[i].split(',').map(v => v.trim().replace(/"/g, '')); const patient = {}; headers.forEach((header, idx) => { patient[header] = values[idx] || ''; }); if (patient['Patient Name'] && !patients.find(p => p['File Number'] === patient['File Number'])) { patient['Doses Remaining'] = patient['Doses Remaining'] || patient['Total Doses'] || 4; patient['Injection Administered'] = false; patient['Appointment Confirmed'] = false; patient['Pending'] = false; patient['Archived'] = false; patients.push(patient); importedCount++; } } saveToLocalStorage(); renderCurrentTab(); alert(`✅ Imported ${importedCount} patients`); } catch(err) { alert('Error parsing CSV'); } }; reader.readAsText(file); }
-        function importPDF(file) { const text = prompt("Paste extracted text from PDF:", ""); if (text) { const lines = text.split('\n'); const newPatient = {}; for (const line of lines) { if (line.match(/name[:| ]/i)) newPatient['Patient Name'] = line.replace(/.*name[:| ]/i, '').trim(); if (line.match(/file[:| ]/i) || line.match(/id[:| ]/i)) newPatient['File Number'] = line.replace(/.*(file|id)[:| ]/i, '').trim(); if (line.match(/phone[:| ]/i) && !newPatient['Phone 1']) newPatient['Phone 1'] = line.replace(/.*phone[:| ]/i, '').trim(); if (line.match(/address[:| ]/i)) newPatient['Address'] = line.replace(/.*address[:| ]/i, '').trim(); const doseMatch = line.match(/(\d+\.?\d*)/); if (line.match(/dose[:| ]/i) && doseMatch) newPatient['Dose Prescribed'] = doseMatch[1]; } if (newPatient['Patient Name'] && newPatient['File Number'] && !patients.find(p => p['File Number'] === newPatient['File Number'])) { newPatient['Total Doses'] = 4; newPatient['Doses Remaining'] = 4; newPatient['Injection Administered'] = false; newPatient['Appointment Confirmed'] = false; newPatient['Pending'] = false; newPatient['Archived'] = false; newPatient['Assignment Type'] = 'Permanent'; patients.push(newPatient); saveToLocalStorage(); renderCurrentTab(); alert(`✅ Added: ${newPatient['Patient Name']}`); } else alert('Could not extract patient data'); } }
         
         function generateCustomReport() { const field = document.getElementById('reportField').value; const condition = document.getElementById('reportCondition').value; const value = document.getElementById('reportValue').value.toLowerCase(); let filtered = patients.filter(p => { let fv = p[field]; if (field === 'Due Date') { if (!fv) return false; const due = new Date(fv); const val = new Date(value); if (condition === 'equals') return due.toDateString() === val.toDateString(); if (condition === 'greater') return due > val; if (condition === 'less') return due < val; if (condition === 'contains') return fv.includes(value); } else if (field === 'Dose Prescribed') { if (condition === 'equals') return fv === value; if (condition === 'contains') return fv.includes(value); if (condition === 'greater') return parseFloat(fv) > parseFloat(value); if (condition === 'less') return parseFloat(fv) < parseFloat(value); } else if (field === 'Doses Remaining') { const rem = parseInt(fv) || 0; const val = parseInt(value); if (condition === 'equals') return rem === val; if (condition === 'greater') return rem > val; if (condition === 'less') return rem < val; } else { fv = String(fv || '').toLowerCase(); if (condition === 'equals') return fv === value; if (condition === 'contains') return fv.includes(value); } return false; }); if (filtered.length === 0) { document.getElementById('reportOutput').innerHTML = '<div class="empty-state">📭 No patients match</div>'; return; } let html = `<div style="background:white; border-radius:16px; padding:16px;"><strong>${filtered.length} patients found</strong><button onclick="exportReportToCSV()" class="btn-sm btn-secondary" style="margin-left:8px;">📥 Export</button>`; const grouped = {}; filtered.forEach(p => { const d = p['Due Date'] ? new Date(p['Due Date']).toLocaleDateString() : 'No Date'; if(!grouped[d]) grouped[d] = []; grouped[d].push(p); }); Object.keys(grouped).sort().forEach(date => { html += `<div class="date-separator" style="margin-top:12px;">📅 ${date}</div>`; grouped[date].forEach(p => { html += `<div style="padding:12px; border-bottom:1px solid #e2e8f0; cursor:pointer;" onclick="openEditModal('${p['File Number']}')"><strong>${escapeHtml(p['Patient Name'])}</strong> #${escapeHtml(p['File Number'])}<div style="font-size:12px; color:#64748b;">💊 ${p['Dose Prescribed']}mg | 💉 Remaining: ${p['Doses Remaining']}</div></div>`; }); }); html += `</div>`; document.getElementById('reportOutput').innerHTML = html; window.lastReportData = filtered; }
         function exportReportToCSV() { if (!window.lastReportData) return; const headers = ['Patient Name','File Number','Phone 1','Address','Dose Prescribed','Doses Remaining','Due Date']; const rows = [headers.join(',')]; window.lastReportData.forEach(p => { rows.push(headers.map(h => { let v = p[h] || ''; if (v.includes(',')) v = `"${v}"`; return v; }).join(',')); }); const blob = new Blob([rows.join('\n')], {type:'text/csv'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `report.csv`; a.click(); URL.revokeObjectURL(a.href); }

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, view-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Patient Dosing Tracker - Enhanced Logic</title>
+    <title>Patient Dosing Tracker - Fixed Persistence</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
@@ -36,7 +36,7 @@
             flex: 1; 
             padding: 8px 12px; 
             border: 1px solid #cbd5e1; 
-            border-radius: 20px; 
+            borderRadius: 20px; 
             font-size: 13px; 
             background: #ffffff;
         }
@@ -48,6 +48,8 @@
         .btn-secondary:hover { background: #e2e8f0; }
         .btn-outline { background: transparent; color: #475569; border: 1px solid #cbd5e1; }
         .btn-outline:hover { background: #f8fafc; }
+        .btn-danger { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+        .btn-danger:hover { background: #fecaca; }
         
         .add-btn { 
             width: 100%; 
@@ -197,7 +199,6 @@
         .injection-option input { width: 18px; height: 18px; accent-color: #3b82f6; }
         .injection-option label { flex: 1; cursor: pointer; font-weight: 500; }
         
-        /* Appointment date edit modal */
         .appt-edit-content { max-width: 380px; }
         .datetime-input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 14px; margin: 16px 0; }
         
@@ -218,6 +219,7 @@
                     <input type="text" id="searchInput" placeholder="Search name or file...">
                     <button id="clearSearchBtn" class="btn-sm btn-outline">Clear</button>
                     <button id="refreshBtn" class="btn-sm btn-secondary">⟳ Load from Sheet</button>
+                    <button id="restoreBackupBtn" class="btn-sm btn-danger" style="display:none;">↺ Restore Backup</button>
                 </div>
             </div>
             <div class="sync-status">
@@ -400,14 +402,12 @@
         function saveToLocalStorage() { 
             localStorage.setItem('patientTrackerData', JSON.stringify(patients)); 
             document.getElementById('recordCount').innerHTML = `📋 ${patients.length}`;
-            updateOverdueStatuses();
         }
         
         function loadFromLocalStorage() { 
             const saved = localStorage.getItem('patientTrackerData'); 
             patients = (saved && saved !== '[]') ? JSON.parse(saved) : []; 
             document.getElementById('recordCount').innerHTML = `📋 ${patients.length}`; 
-            updateOverdueStatuses();
             renderCurrentTab(); 
         }
 
@@ -416,10 +416,7 @@
             return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); 
         }
 
-        // ========== DUE DATE CALCULATION LOGIC (UPDATED) ==========
-        // Rule 1: If appointment confirmed AND injection confirmed on same day → use injection date (today)
-        // Rule 2: If appointment date passed and no injection → use appointment confirmation date
-        
+        // ========== DUE DATE CALCULATION LOGIC ==========
         function calculateNextDueDate(currentDueDate, dosePrescribed, referenceDate) {
             const weeks = doseToWeeks[dosePrescribed] || 4;
             const newDate = new Date(referenceDate);
@@ -437,17 +434,14 @@
             const apptDateObj = patient['Appointment Date & Time'] ? new Date(patient['Appointment Date & Time']) : null;
             const hasAppointmentPassed = apptDateObj && apptDateObj < todayDate;
             
-            // Case 1: Same day confirmation (appointment and injection on same day)
             if (isAppointmentConfirmed && isInjectionConfirmed && injectionDate === apptDate) {
-                return injectionDate; // Use injection date
+                return injectionDate;
             }
             
-            // Case 2: Appointment passed but no injection confirmed
             if (hasAppointmentPassed && !isInjectionConfirmed && isAppointmentConfirmed) {
-                return apptDate; // Use appointment confirmation date
+                return apptDate;
             }
             
-            // Case 3: Normal case - use today's date (injection confirmation date)
             if (injectionGivenToday) {
                 return today;
             }
@@ -455,27 +449,145 @@
             return today;
         }
 
-        // ========== UPDATE OVERDUE STATUS ==========
-        function updateOverdueStatuses() {
-            const today = new Date();
-            patients.forEach(patient => {
-                const apptDate = patient['Appointment Date & Time'] ? new Date(patient['Appointment Date & Time']) : null;
-                const isOverdue = apptDate && apptDate < today && !patient['Injection Administered'] && patient['Appointment Confirmed'];
-                // We don't store overdue as a field, just use for filtering
-            });
+        // ========== LOAD FROM GOOGLE SHEETS (SAFE MERGE - NO DATA LOSS) ==========
+        async function loadFromGoogleSheets() {
+            const userConfirmed = confirm(
+                `⚠️ Sync with Google Sheet\n\n` +
+                `This will:\n` +
+                `✅ ADD new patients from the sheet\n` +
+                `✅ UPDATE existing patients (based on File Number)\n` +
+                `❌ NOT delete any manually added patients\n\n` +
+                `Current patients in system: ${patients.length}\n\n` +
+                `Proceed with sync?`
+            );
+            
+            if (!userConfirmed) return;
+            
+            document.getElementById('syncStatus').innerHTML = '🔄 Loading from Google Sheets...';
+            
+            try {
+                const response = await fetch(GOOGLE_SHEETS_CSV_URL);
+                const csvText = await response.text();
+                const rows = csvText.split('\n');
+                const headers = rows[0].split(',').map(h => h.trim().replace(/"/g, ''));
+                
+                const sheetPatients = [];
+                for (let i = 1; i < rows.length; i++) {
+                    if (!rows[i].trim()) continue;
+                    let values = [], inQuote = false, currentValue = '';
+                    for (let j = 0; j < rows[i].length; j++) {
+                        const char = rows[i][j];
+                        if (char === '"') inQuote = !inQuote;
+                        else if (char === ',' && !inQuote) { 
+                            values.push(currentValue.trim().replace(/^"|"$/g, '')); 
+                            currentValue = ''; 
+                        }
+                        else currentValue += char;
+                    }
+                    values.push(currentValue.trim().replace(/^"|"$/g, ''));
+                    const patient = {};
+                    headers.forEach((header, idx) => { 
+                        patient[header] = values[idx] || ''; 
+                    });
+                    if (patient['Patient Name'] && patient['Patient Name'] !== 'Patient Name') {
+                        patient['Injection Administered'] = patient['Injection Administered'] === 'TRUE';
+                        patient['Appointment Confirmed'] = patient['Appointment Confirmed'] === 'TRUE';
+                        patient['Pending'] = patient['Pending'] === 'TRUE';
+                        patient['Archived'] = patient['Archived'] === 'TRUE';
+                        if (!patient['Doses Remaining'] || patient['Doses Remaining'] === '') {
+                            patient['Doses Remaining'] = patient['Total Doses'] || '4';
+                        }
+                        sheetPatients.push(patient);
+                    }
+                }
+                
+                // Create backup before any changes
+                const backupBeforeSync = JSON.parse(JSON.stringify(patients));
+                localStorage.setItem('patientTrackerBackup', JSON.stringify(backupBeforeSync));
+                document.getElementById('restoreBackupBtn').style.display = 'inline-block';
+                
+                let newCount = 0;
+                let updatedCount = 0;
+                
+                for (const sheetPatient of sheetPatients) {
+                    const existingIndex = patients.findIndex(p => p['File Number'] === sheetPatient['File Number']);
+                    
+                    if (existingIndex === -1) {
+                        patients.push(sheetPatient);
+                        newCount++;
+                    } else {
+                        const existingPatient = patients[existingIndex];
+                        const updatedPatient = { ...existingPatient };
+                        
+                        updatedPatient['Patient Name'] = sheetPatient['Patient Name'] || existingPatient['Patient Name'];
+                        updatedPatient['Address'] = sheetPatient['Address'] || existingPatient['Address'];
+                        updatedPatient['Phone 1'] = sheetPatient['Phone 1'] || existingPatient['Phone 1'];
+                        updatedPatient['Phone 2'] = sheetPatient['Phone 2'] || existingPatient['Phone 2'];
+                        updatedPatient['Dose Prescribed'] = sheetPatient['Dose Prescribed'] || existingPatient['Dose Prescribed'];
+                        updatedPatient['Total Doses'] = sheetPatient['Total Doses'] || existingPatient['Total Doses'];
+                        updatedPatient['Due Date'] = sheetPatient['Due Date'] || existingPatient['Due Date'];
+                        updatedPatient['Appointment Date & Time'] = sheetPatient['Appointment Date & Time'] || existingPatient['Appointment Date & Time'];
+                        updatedPatient['Assignment Type'] = sheetPatient['Assignment Type'] || existingPatient['Assignment Type'];
+                        updatedPatient['Special Instructions'] = sheetPatient['Special Instructions'] || existingPatient['Special Instructions'];
+                        updatedPatient['Adverse Effects Comments'] = sheetPatient['Adverse Effects Comments'] || existingPatient['Adverse Effects Comments'];
+                        
+                        // Preserve injection history (NEVER overwrite from sheet)
+                        updatedPatient['Doses Remaining'] = existingPatient['Doses Remaining'];
+                        updatedPatient['Injection Administered'] = existingPatient['Injection Administered'];
+                        updatedPatient['Appointment Confirmed'] = existingPatient['Appointment Confirmed'];
+                        updatedPatient['Pending'] = existingPatient['Pending'];
+                        updatedPatient['Archived'] = existingPatient['Archived'];
+                        updatedPatient['Previous Injection Site'] = existingPatient['Previous Injection Site'];
+                        updatedPatient['Injection Site'] = existingPatient['Injection Site'];
+                        updatedPatient['Previous Injection Dates'] = existingPatient['Previous Injection Dates'];
+                        
+                        patients[existingIndex] = updatedPatient;
+                        updatedCount++;
+                    }
+                }
+                
+                saveToLocalStorage();
+                renderCurrentTab();
+                
+                alert(`✅ Sync Complete!\n\n` +
+                      `📊 Total patients: ${patients.length}\n` +
+                      `📥 New patients added: ${newCount}\n` +
+                      `🔄 Existing patients updated: ${updatedCount}\n` +
+                      `💾 Backup saved automatically\n\n` +
+                      `Manually added patients were preserved.`);
+                document.getElementById('syncStatus').innerHTML = `✅ Synced: +${newCount} new, ${updatedCount} updated | Total: ${patients.length}`;
+                
+            } catch(error) { 
+                document.getElementById('syncStatus').innerHTML = '❌ Failed to load'; 
+                console.error('Sync error:', error);
+                alert(`❌ Sync failed: ${error.message}\n\nYour existing data was NOT affected.`);
+            }
+        }
+        
+        function restoreFromBackup() {
+            const backup = localStorage.getItem('patientTrackerBackup');
+            if (!backup) {
+                alert('No backup found. Run a sync first to create a backup.');
+                return;
+            }
+            
+            if (confirm('⚠️ Restore from last sync backup?\n\nThis will REPLACE all current data with the backup from your last sync.\n\nAre you sure?')) {
+                patients = JSON.parse(backup);
+                saveToLocalStorage();
+                renderCurrentTab();
+                alert(`✅ Restored ${patients.length} patients from backup.`);
+            }
         }
 
-        // ========== APPOINTMENT CONFIRMATION (PENCIL ICON - NEW FLOW) ==========
+        // ========== APPOINTMENT CONFIRMATION ==========
         function openAppointmentEditor(fileNumber) {
             pendingAppointmentFileNumber = fileNumber;
             const patient = patients.find(p => p['File Number'] === fileNumber);
             if (patient && patient['Appointment Date & Time']) {
-                // Format datetime-local value
                 const apptDate = new Date(patient['Appointment Date & Time']);
                 const formattedDate = apptDate.toISOString().slice(0, 16);
                 document.getElementById('appointmentDateInput').value = formattedDate;
             } else {
-                // Default to current date/time
                 const now = new Date();
                 const formattedDate = now.toISOString().slice(0, 16);
                 document.getElementById('appointmentDateInput').value = formattedDate;
@@ -494,9 +606,8 @@
             
             const patient = patients.find(p => p['File Number'] === fileNumber);
             if (patient) {
-                const oldAppointmentDate = patient['Appointment Date & Time'];
                 patient['Appointment Date & Time'] = newAppointmentDate;
-                patient['Appointment Confirmed'] = true; // Auto-confirm when date is set
+                patient['Appointment Confirmed'] = true;
                 
                 saveToLocalStorage();
                 renderCurrentTab();
@@ -509,7 +620,7 @@
             pendingAppointmentFileNumber = null;
         }
 
-        // ========== INJECTION CONFIRMATION FLOW (WITH UPDATED DUE DATE LOGIC) ==========
+        // ========== INJECTION CONFIRMATION ==========
         function showInjectionSiteSelector(fileNumber) {
             pendingInjectionFileNumber = fileNumber;
             document.querySelectorAll('input[name="injectionSite"]').forEach(radio => radio.checked = false);
@@ -555,7 +666,6 @@
                 return;
             }
             
-            // Record injection
             const today = new Date().toISOString().split('T')[0];
             const prevDates = patient['Previous Injection Dates'] ? patient['Previous Injection Dates'].split(',').map(d => d.trim()) : [];
             prevDates.push(today);
@@ -569,7 +679,6 @@
             const newDosesRemaining = dosesRemaining - 1;
             patient['Doses Remaining'] = newDosesRemaining.toString();
             
-            // Calculate new due date using the enhanced logic
             if (newDosesRemaining > 0) {
                 const referenceDate = getReferenceDateForDueDate(patient, true);
                 const currentDueDate = patient['Due Date'] || today;
@@ -591,62 +700,6 @@
             renderCurrentTab();
             document.getElementById('injectionSiteModal').style.display = 'none';
             pendingInjectionFileNumber = null;
-        }
-
-        // ========== LOAD FROM GOOGLE SHEETS (MERGE DATA) ==========
-        async function loadFromGoogleSheets() {
-            document.getElementById('syncStatus').innerHTML = '🔄 Loading from Google Sheets...';
-            try {
-                const response = await fetch(GOOGLE_SHEETS_CSV_URL);
-                const csvText = await response.text();
-                const rows = csvText.split('\n');
-                const headers = rows[0].split(',').map(h => h.trim().replace(/"/g, ''));
-                
-                const sheetPatients = [];
-                for (let i = 1; i < rows.length; i++) {
-                    if (!rows[i].trim()) continue;
-                    let values = [], inQuote = false, currentValue = '';
-                    for (let j = 0; j < rows[i].length; j++) {
-                        const char = rows[i][j];
-                        if (char === '"') inQuote = !inQuote;
-                        else if (char === ',' && !inQuote) { values.push(currentValue.trim().replace(/^"|"$/g, '')); currentValue = ''; }
-                        else currentValue += char;
-                    }
-                    values.push(currentValue.trim().replace(/^"|"$/g, ''));
-                    const patient = {};
-                    headers.forEach((header, idx) => { patient[header] = values[idx] || ''; });
-                    if (patient['Patient Name'] && patient['Patient Name'] !== 'Patient Name') {
-                        patient['Injection Administered'] = patient['Injection Administered'] === 'TRUE';
-                        patient['Appointment Confirmed'] = patient['Appointment Confirmed'] === 'TRUE';
-                        patient['Pending'] = patient['Pending'] === 'TRUE';
-                        patient['Archived'] = patient['Archived'] === 'TRUE';
-                        if (!patient['Doses Remaining'] || patient['Doses Remaining'] === '') {
-                            patient['Doses Remaining'] = patient['Total Doses'] || '4';
-                        }
-                        sheetPatients.push(patient);
-                    }
-                }
-                
-                let mergedCount = 0;
-                for (const sheetPatient of sheetPatients) {
-                    const existingIndex = patients.findIndex(p => p['File Number'] === sheetPatient['File Number']);
-                    if (existingIndex === -1) {
-                        patients.push(sheetPatient);
-                        mergedCount++;
-                    } else {
-                        patients[existingIndex] = { ...patients[existingIndex], ...sheetPatient };
-                    }
-                }
-                
-                saveToLocalStorage();
-                renderCurrentTab();
-                document.getElementById('syncStatus').innerHTML = `✅ Synced: ${mergedCount} new patients added`;
-                if (mergedCount > 0) alert(`✅ Added ${mergedCount} new patients from Google Sheet. Total patients: ${patients.length}`);
-                else alert(`✅ Sync complete. No new patients found. Total patients: ${patients.length}`);
-            } catch(error) { 
-                document.getElementById('syncStatus').innerHTML = '❌ Failed to load'; 
-                console.error('Sync error:', error);
-            }
         }
 
         // ========== PATIENT CRUD ==========
@@ -909,6 +962,7 @@
             document.getElementById('searchInput').addEventListener('input', (e) => { if(currentTab !== 'report') { searchQuery = e.target.value; renderCurrentTab(); } });
             document.getElementById('clearSearchBtn').addEventListener('click', () => { document.getElementById('searchInput').value = ''; searchQuery = ''; renderCurrentTab(); });
             document.getElementById('refreshBtn').addEventListener('click', loadFromGoogleSheets);
+            document.getElementById('restoreBackupBtn').addEventListener('click', restoreFromBackup);
             document.getElementById('addPatientBtn').addEventListener('click', openAddModal);
             document.getElementById('importCSVBtn').addEventListener('click', () => document.getElementById('csvFileInput').click());
             document.getElementById('csvFileInput').addEventListener('change', (e) => { if(e.target.files[0]) importCSV(e.target.files[0]); e.target.value = ''; });

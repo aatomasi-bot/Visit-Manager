@@ -8,7 +8,6 @@
     <!-- PDF.js Library for PDF extraction -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script>
-        // Configure PDF.js worker
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
     </script>
     <style>
@@ -184,7 +183,7 @@
         .move-sm:hover { background: #e2e8f0; }
         
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; }
-        .modal-content { background: white; max-width: 450px; margin: 50px auto; border-radius: 24px; padding: 24px; }
+        .modal-content { background: white; max-width: 500px; margin: 50px auto; border-radius: 24px; padding: 24px; }
         .confirm-modal { max-width: 340px; text-align: center; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .close { font-size: 28px; cursor: pointer; color: #94a3b8; }
@@ -207,6 +206,36 @@
         
         .appt-edit-content { max-width: 380px; }
         .datetime-input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 14px; margin: 16px 0; }
+        
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading-text { color: white; font-size: 16px; }
+        .cancel-extract { background: #dc2626; color: white; border: none; padding: 10px 20px; border-radius: 30px; cursor: pointer; margin-top: 10px; }
         
         @media (max-width: 600px) {
             .collapsed-view { flex-direction: column; align-items: stretch; }
@@ -281,6 +310,28 @@
                 <div id="reportOutput"><div class="empty-state">Select criteria and click Generate</div></div>
             </div>
         </div>
+    </div>
+
+    <!-- PDF Extraction Preview Modal -->
+    <div id="pdfPreviewModal" class="modal">
+        <div class="modal-content" style="max-width: 550px;">
+            <div class="modal-header">
+                <h2>📄 PDF Extraction Results</h2>
+                <span class="close-pdf-preview">&times;</span>
+            </div>
+            <div id="pdfPreviewContent"></div>
+            <div class="modal-footer">
+                <button id="cancelPdfPreview" class="btn-sm btn-secondary">Cancel</button>
+                <button id="confirmAddPatient" class="btn-sm btn-primary">Add Patient</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display:none;">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Processing PDF...</div>
+        <button id="cancelExtractBtn" class="cancel-extract">Cancel</button>
     </div>
 
     <!-- Appointment Date Edit Modal -->
@@ -401,6 +452,8 @@
         let searchQuery = '';
         let pendingInjectionFileNumber = null;
         let pendingAppointmentFileNumber = null;
+        let lastExtractedData = null;
+        let pdfExtractionCancelled = false;
 
         const doseToWeeks = { '7.5': 4, '22.5': 12, '30': 16, '45': 24 };
 
@@ -422,37 +475,299 @@
             return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); 
         }
 
-        // ========== DUE DATE CALCULATION LOGIC ==========
-        function calculateNextDueDate(currentDueDate, dosePrescribed, referenceDate) {
-            const weeks = doseToWeeks[dosePrescribed] || 4;
-            const newDate = new Date(referenceDate);
-            newDate.setDate(newDate.getDate() + (weeks * 7));
-            return newDate.toISOString().split('T')[0];
+        // ========== ENHANCED PDF EXTRACTION (Works with your PDF format) ==========
+        async function importPDF(file) {
+            const fileInput = document.getElementById('pdfFileInput');
+            const selectedFile = fileInput.files[0];
+            
+            if (!selectedFile) {
+                alert('Please select a PDF file');
+                return;
+            }
+            
+            if (selectedFile.type !== 'application/pdf') {
+                alert('Please select a valid PDF file');
+                return;
+            }
+            
+            // Show loading overlay with cancel option
+            pdfExtractionCancelled = false;
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.style.display = 'flex';
+            document.getElementById('syncStatus').innerHTML = '🔄 Reading PDF...';
+            
+            try {
+                const arrayBuffer = await selectedFile.arrayBuffer();
+                
+                if (pdfExtractionCancelled) {
+                    loadingOverlay.style.display = 'none';
+                    document.getElementById('syncStatus').innerHTML = '⚡ Extraction cancelled';
+                    return;
+                }
+                
+                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+                const pdf = await loadingTask.promise;
+                
+                let fullText = '';
+                
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    if (pdfExtractionCancelled) {
+                        loadingOverlay.style.display = 'none';
+                        document.getElementById('syncStatus').innerHTML = '⚡ Extraction cancelled';
+                        return;
+                    }
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    fullText += pageText + '\n';
+                }
+                
+                loadingOverlay.style.display = 'none';
+                
+                if (!fullText.trim()) {
+                    alert('No readable text found in this PDF. It may be a scanned image.');
+                    return;
+                }
+                
+                // Enhanced extraction for your PDF format
+                const extractedData = extractPatientDataFromPDF(fullText);
+                lastExtractedData = extractedData;
+                
+                // Show preview modal with extracted data
+                showExtractionPreview(extractedData, fullText);
+                
+                document.getElementById('syncStatus').innerHTML = '✅ PDF processed';
+                
+            } catch (error) {
+                loadingOverlay.style.display = 'none';
+                console.error('PDF extraction error:', error);
+                alert(`Error reading PDF: ${error.message}\n\nMake sure the PDF is not password-protected.`);
+                document.getElementById('syncStatus').innerHTML = '❌ PDF extraction failed';
+            }
         }
         
-        function getReferenceDateForDueDate(patient, injectionGivenToday = true) {
-            const today = new Date().toISOString().split('T')[0];
-            const apptDate = patient['Appointment Date & Time'] ? new Date(patient['Appointment Date & Time']).toISOString().split('T')[0] : null;
-            const injectionDate = patient['Previous Injection Dates'] ? patient['Previous Injection Dates'].split(',').pop()?.trim() : null;
-            const isInjectionConfirmed = patient['Injection Administered'] === true;
-            const isAppointmentConfirmed = patient['Appointment Confirmed'] === true;
-            const todayDate = new Date();
-            const apptDateObj = patient['Appointment Date & Time'] ? new Date(patient['Appointment Date & Time']) : null;
-            const hasAppointmentPassed = apptDateObj && apptDateObj < todayDate;
+        // Cancel extraction
+        document.getElementById('cancelExtractBtn').addEventListener('click', () => {
+            pdfExtractionCancelled = true;
+            document.getElementById('loadingOverlay').style.display = 'none';
+            document.getElementById('syncStatus').innerHTML = '⚡ Extraction cancelled';
+        });
+
+        function extractPatientDataFromPDF(text) {
+            const extracted = {
+                patientName: null,
+                fileNumber: null,
+                address: null,
+                city: null,
+                phone1: null,
+                phone2: null,
+                dosePrescribed: null,
+                totalDoses: null,
+                appointmentDate: null,
+                rawText: text.substring(0, 500)
+            };
             
-            if (isAppointmentConfirmed && isInjectionConfirmed && injectionDate === apptDate) {
-                return injectionDate;
+            // Extract PATIENT NAME - from your PDF: "PATIENT NAME/NOM DU PATIENTMichel BOUCHER"
+            const nameMatch = text.match(/(?:PATIENT NAME\/NOM DU PATIENT|PATIENT NAME|NOM DU PATIENT)[\s]*([A-Z][A-Z\s]+[A-Z])/i);
+            if (nameMatch) {
+                extracted.patientName = nameMatch[1].trim().replace(/\s+/g, ' ');
             }
             
-            if (hasAppointmentPassed && !isInjectionConfirmed && isAppointmentConfirmed) {
-                return apptDate;
+            // Alternative name extraction
+            if (!extracted.patientName) {
+                const nameMatch2 = text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})/);
+                if (nameMatch2 && nameMatch2[1].length > 5 && !nameMatch2[1].match(/MEDICUM|TELEPHONE|ADDRESS/i)) {
+                    extracted.patientName = nameMatch2[1].trim();
+                }
             }
             
-            if (injectionGivenToday) {
-                return today;
+            // Extract MEDICUM # (File Number) - from your PDF: "MEDICUM #: 33351"
+            const medicumMatch = text.match(/MEDICUM\s*#:\s*(\d+)/i);
+            if (medicumMatch) {
+                extracted.fileNumber = `M${medicumMatch[1]}`;
             }
             
-            return today;
+            // Alternative file number
+            if (!extracted.fileNumber) {
+                const fileMatch = text.match(/(?:FILE|ID|NUMBER)[:\s#]*(\d{4,8})/i);
+                if (fileMatch) extracted.fileNumber = fileMatch[1];
+            }
+            
+            // Extract Address - from your PDF: "Croissant de la Louisiane"
+            const addressMatch = text.match(/ADDRESS\/ADRESSE[\s]*([A-Za-z0-9\s,.-]+?)(?:CITY|VILLE|$)/i);
+            if (addressMatch) {
+                extracted.address = addressMatch[1].trim();
+            }
+            
+            // Extract City - from your PDF: "Montréal, QC, H8P 3V1"
+            const cityMatch = text.match(/CITY\/VILLE[\s]*([A-Za-zéèêëïîôûùç\s-]+,\s*[A-Z]{2},\s*[A-Z0-9]{3}\s*[A-Z0-9]{3})/i);
+            if (cityMatch) {
+                extracted.city = cityMatch[1].trim();
+            }
+            
+            // Extract Phone 1 - from your PDF: "514 368-2693"
+            const phonePattern = /(\d{3}[\s-]?\d{3}[\s-]?\d{4})/g;
+            const phones = [...text.matchAll(phonePattern)];
+            if (phones.length > 0) {
+                extracted.phone1 = phones[0][1];
+                if (phones.length > 1) extracted.phone2 = phones[1][1];
+            }
+            
+            // Extract Dose Prescribed - from your PDF: "1- m (7.5 mg) 3- m (22.5mg)"
+            const doseMatch = text.match(/(\d+\.?\d*)\s*mg/i);
+            if (doseMatch) {
+                const doseValue = parseFloat(doseMatch[1]);
+                if ([7.5, 22.5, 30, 45].includes(doseValue)) {
+                    extracted.dosePrescribed = doseValue.toString();
+                }
+            }
+            
+            // Extract number of injections
+            const injectionCountMatch = text.match(/Number of injections[:\s]*(\d+)/i);
+            if (injectionCountMatch) {
+                extracted.totalDoses = parseInt(injectionCountMatch[1]);
+            }
+            
+            // Extract appointment date - "injection seulement 26 Avril 2026"
+            const apptMatch = text.match(/injection seulement\s+(\d{1,2})\s+([A-Za-zéè]+)\s+(\d{4})/i);
+            if (apptMatch) {
+                const months = {
+                    'janvier': '01', 'février': '02', 'mars': '03', 'avril': '04',
+                    'mai': '05', 'juin': '06', 'juillet': '07', 'août': '08',
+                    'septembre': '09', 'octobre': '10', 'novembre': '11', 'décembre': '12'
+                };
+                const monthNum = months[apptMatch[2].toLowerCase()] || '01';
+                extracted.appointmentDate = `${apptMatch[3]}-${monthNum}-${apptMatch[1].padStart(2, '0')}`;
+            }
+            
+            return extracted;
+        }
+
+        function showExtractionPreview(extractedData, fullText) {
+            const previewContent = document.getElementById('pdfPreviewContent');
+            
+            const existingPatient = extractedData.fileNumber ? patients.find(p => p['File Number'] === extractedData.fileNumber) : null;
+            
+            let warningHtml = '';
+            if (existingPatient) {
+                warningHtml = `<div style="background:#fef3c7; padding:12px; border-radius:12px; margin-bottom:16px; color:#b45309;">
+                    ⚠️ Patient with File # ${extractedData.fileNumber} already exists (${existingPatient['Patient Name']}). Adding will create a duplicate.
+                </div>`;
+            }
+            
+            previewContent.innerHTML = `
+                ${warningHtml}
+                <div style="background:#f8fafc; padding:12px; border-radius:12px; margin-bottom:16px;">
+                    <h3 style="margin-bottom:12px;">📋 Extracted Information</h3>
+                    <div style="display:grid; gap:8px;">
+                        <div><strong>Patient Name:</strong> ${extractedData.patientName || '❌ Not found'}</div>
+                        <div><strong>File Number:</strong> ${extractedData.fileNumber || '❌ Not found'}</div>
+                        <div><strong>Address:</strong> ${extractedData.address || '❌ Not found'}</div>
+                        <div><strong>City/Province/Postal:</strong> ${extractedData.city || '❌ Not found'}</div>
+                        <div><strong>Phone 1:</strong> ${extractedData.phone1 || '❌ Not found'}</div>
+                        <div><strong>Phone 2:</strong> ${extractedData.phone2 || '❌ Not found'}</div>
+                        <div><strong>Dose Prescribed:</strong> ${extractedData.dosePrescribed ? `${extractedData.dosePrescribed} mg` : '❌ Not found'}</div>
+                        <div><strong>Total Doses:</strong> ${extractedData.totalDoses || '❌ Not found (using default 4)'}</div>
+                        <div><strong>Appointment Date:</strong> ${extractedData.appointmentDate || '❌ Not found'}</div>
+                    </div>
+                </div>
+                <details style="margin-top:8px;">
+                    <summary style="cursor:pointer; color:#64748b;">🔍 View extracted raw text</summary>
+                    <textarea style="width:100%; height:150px; margin-top:10px; padding:8px; font-size:11px; border-radius:8px; border:1px solid #e2e8f0;" readonly>${escapeHtml(fullText)}</textarea>
+                </details>
+            `;
+            
+            document.getElementById('pdfPreviewModal').style.display = 'block';
+        }
+
+        function addExtractedPatient() {
+            const data = lastExtractedData;
+            if (!data || (!data.patientName && !data.fileNumber)) {
+                alert('No valid patient data to add');
+                document.getElementById('pdfPreviewModal').style.display = 'none';
+                return;
+            }
+            
+            const defaultDueDate = new Date();
+            defaultDueDate.setDate(defaultDueDate.getDate() + 7);
+            
+            // Build full address
+            let fullAddress = data.address || '';
+            if (data.city) fullAddress += fullAddress ? ', ' + data.city : data.city;
+            
+            const newPatient = {
+                'Patient Name': data.patientName || 'Unknown Patient',
+                'File Number': data.fileNumber || `PDF_${Date.now()}`,
+                'Address': fullAddress || '',
+                'Phone 1': data.phone1 || '',
+                'Phone 2': data.phone2 || '',
+                'Dose Prescribed': data.dosePrescribed || '7.5',
+                'Total Doses': data.totalDoses || '4',
+                'Doses Remaining': data.totalDoses || '4',
+                'Previous Injection Site': '',
+                'Injection Site': '',
+                'Due Date': defaultDueDate.toISOString().split('T')[0],
+                'Appointment Date & Time': data.appointmentDate ? `${data.appointmentDate}T10:00:00` : '',
+                'Previous Injection Dates': '',
+                'Assignment Type': 'Permanent',
+                'Special Instructions': '',
+                'Adverse Effects Comments': '',
+                'File Status': 'Active',
+                'Injection Administered': false,
+                'Appointment Confirmed': !!data.appointmentDate,
+                'Pending': false,
+                'Archived': false
+            };
+            
+            patients.push(newPatient);
+            saveToLocalStorage();
+            renderCurrentTab();
+            
+            alert(`✅ Patient added from PDF:\n\nName: ${newPatient['Patient Name']}\nFile #: ${newPatient['File Number']}\nDose: ${newPatient['Dose Prescribed']}mg\nAppointment: ${newPatient['Appointment Date & Time'] || 'Not set'}`);
+            
+            document.getElementById('pdfPreviewModal').style.display = 'none';
+            lastExtractedData = null;
+        }
+
+        // ========== APPOINTMENT CONFIRMATION ==========
+        function openAppointmentEditor(fileNumber) {
+            pendingAppointmentFileNumber = fileNumber;
+            const patient = patients.find(p => p['File Number'] === fileNumber);
+            if (patient && patient['Appointment Date & Time']) {
+                const apptDate = new Date(patient['Appointment Date & Time']);
+                const formattedDate = apptDate.toISOString().slice(0, 16);
+                document.getElementById('appointmentDateInput').value = formattedDate;
+            } else {
+                const now = new Date();
+                const formattedDate = now.toISOString().slice(0, 16);
+                document.getElementById('appointmentDateInput').value = formattedDate;
+            }
+            document.getElementById('apptEditModal').style.display = 'block';
+        }
+        
+        function saveAppointmentDate() {
+            const fileNumber = pendingAppointmentFileNumber;
+            const newAppointmentDate = document.getElementById('appointmentDateInput').value;
+            
+            if (!newAppointmentDate) {
+                alert('Please select an appointment date and time');
+                return;
+            }
+            
+            const patient = patients.find(p => p['File Number'] === fileNumber);
+            if (patient) {
+                patient['Appointment Date & Time'] = newAppointmentDate;
+                patient['Appointment Confirmed'] = true;
+                
+                saveToLocalStorage();
+                renderCurrentTab();
+                
+                const dateDisplay = new Date(newAppointmentDate).toLocaleString();
+                alert(`✅ Appointment confirmed for ${patient['Patient Name']} on ${dateDisplay}\nPatient moved to Scheduled tab.`);
+            }
+            
+            document.getElementById('apptEditModal').style.display = 'none';
+            pendingAppointmentFileNumber = null;
         }
 
         // ========== LOAD FROM GOOGLE SHEETS (SAFE MERGE) ==========
@@ -578,251 +893,6 @@
             }
         }
 
-        // ========== APPOINTMENT CONFIRMATION ==========
-        function openAppointmentEditor(fileNumber) {
-            pendingAppointmentFileNumber = fileNumber;
-            const patient = patients.find(p => p['File Number'] === fileNumber);
-            if (patient && patient['Appointment Date & Time']) {
-                const apptDate = new Date(patient['Appointment Date & Time']);
-                const formattedDate = apptDate.toISOString().slice(0, 16);
-                document.getElementById('appointmentDateInput').value = formattedDate;
-            } else {
-                const now = new Date();
-                const formattedDate = now.toISOString().slice(0, 16);
-                document.getElementById('appointmentDateInput').value = formattedDate;
-            }
-            document.getElementById('apptEditModal').style.display = 'block';
-        }
-        
-        function saveAppointmentDate() {
-            const fileNumber = pendingAppointmentFileNumber;
-            const newAppointmentDate = document.getElementById('appointmentDateInput').value;
-            
-            if (!newAppointmentDate) {
-                alert('Please select an appointment date and time');
-                return;
-            }
-            
-            const patient = patients.find(p => p['File Number'] === fileNumber);
-            if (patient) {
-                patient['Appointment Date & Time'] = newAppointmentDate;
-                patient['Appointment Confirmed'] = true;
-                
-                saveToLocalStorage();
-                renderCurrentTab();
-                
-                const dateDisplay = new Date(newAppointmentDate).toLocaleString();
-                alert(`✅ Appointment confirmed for ${patient['Patient Name']} on ${dateDisplay}\nPatient moved to Scheduled tab.`);
-            }
-            
-            document.getElementById('apptEditModal').style.display = 'none';
-            pendingAppointmentFileNumber = null;
-        }
-
-        // ========== PDF INTELLIGENT EXTRACTION ==========
-        async function importPDF(file) {
-            const fileInput = document.getElementById('pdfFileInput');
-            const selectedFile = fileInput.files[0];
-            
-            if (!selectedFile) {
-                alert('Please select a PDF file');
-                return;
-            }
-            
-            if (selectedFile.type !== 'application/pdf') {
-                alert('Please select a valid PDF file');
-                return;
-            }
-            
-            document.getElementById('syncStatus').innerHTML = '🔄 Reading PDF...';
-            
-            try {
-                const arrayBuffer = await selectedFile.arrayBuffer();
-                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-                const pdf = await loadingTask.promise;
-                
-                let fullText = '';
-                
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    const page = await pdf.getPage(i);
-                    const textContent = await page.getTextContent();
-                    const pageText = textContent.items.map(item => item.str).join(' ');
-                    fullText += pageText + '\n';
-                }
-                
-                if (!fullText.trim()) {
-                    alert('No readable text found in this PDF. It may be a scanned image.');
-                    return;
-                }
-                
-                const extractedData = extractPatientDataFromText(fullText);
-                
-                if (extractedData.patientName && extractedData.fileNumber) {
-                    const existingPatient = patients.find(p => p['File Number'] === extractedData.fileNumber);
-                    
-                    if (existingPatient) {
-                        if (confirm(`Patient ${extractedData.patientName} already exists.\n\nUpdate with extracted data?`)) {
-                            openEditModal(extractedData.fileNumber);
-                            fillFormWithExtractedData(extractedData);
-                        }
-                    } else {
-                        const confirmMsg = `Extracted Patient Data:\n\n📋 Name: ${extractedData.patientName}\n🔢 File #: ${extractedData.fileNumber}\n📞 Phone: ${extractedData.phone1 || 'Not found'}\n📍 Address: ${extractedData.address || 'Not found'}\n💊 Dose: ${extractedData.dosePrescribed || 'Not found'} mg\n\nAdd this patient?`;
-                        
-                        if (confirm(confirmMsg)) {
-                            addPatientFromExtractedData(extractedData);
-                        }
-                    }
-                } else {
-                    showExtractionPreview(fullText, extractedData);
-                }
-                
-                document.getElementById('syncStatus').innerHTML = '✅ PDF processed';
-                
-            } catch (error) {
-                console.error('PDF extraction error:', error);
-                alert(`Error reading PDF: ${error.message}\n\nMake sure the PDF is not password-protected.`);
-                document.getElementById('syncStatus').innerHTML = '❌ PDF extraction failed';
-            }
-        }
-
-        function extractPatientDataFromText(text) {
-            const extracted = {
-                patientName: null,
-                fileNumber: null,
-                address: null,
-                phone1: null,
-                phone2: null,
-                dosePrescribed: null,
-                totalDoses: null
-            };
-            
-            const namePatterns = [
-                /(?:Patient\s*Name|Name|Patient)[:\s]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i,
-                /(?:^|\n)([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})(?:\s|\n)/
-            ];
-            
-            for (const pattern of namePatterns) {
-                const match = text.match(pattern);
-                if (match) {
-                    extracted.patientName = match[1].trim();
-                    break;
-                }
-            }
-            
-            const filePatterns = [
-                /(?:File\s*(?:#|Number|ID|No\.?)|MRN|Patient\s*ID)[:\s]+([A-Z0-9]{3,15})/i,
-                /(?:^|\n)([A-Z]{2,4}[0-9]{3,10})(?:\s|\n)/,
-                /\b([A-Z]{2}[0-9]{5,})\b/
-            ];
-            
-            for (const pattern of filePatterns) {
-                const match = text.match(pattern);
-                if (match) {
-                    extracted.fileNumber = match[1].trim();
-                    break;
-                }
-            }
-            
-            const phonePattern = /(?:\+?1[-\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})/g;
-            const phones = [...text.matchAll(phonePattern)];
-            if (phones.length > 0) {
-                extracted.phone1 = phones[0][0];
-                if (phones.length > 1) extracted.phone2 = phones[1][0];
-            }
-            
-            const addressPattern = /(\d{1,5}\s+[A-Za-z0-9\s,]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Court|Ct|Place|Pl|Way|Circle|Cir)\.?(?:\s+[A-Za-z\s]+(?:,?\s*[A-Z]{2})?\s*\d{5}(?:-\d{4})?)?)/i;
-            const addressMatch = text.match(addressPattern);
-            if (addressMatch) {
-                extracted.address = addressMatch[0].trim();
-            }
-            
-            const dosePattern = /(\d{1,2}\.?\d*)\s*mg/i;
-            const doseMatch = text.match(dosePattern);
-            if (doseMatch) {
-                const doseValue = parseFloat(doseMatch[1]);
-                if ([7.5, 22.5, 30, 45].includes(doseValue)) {
-                    extracted.dosePrescribed = doseValue.toString();
-                }
-            }
-            
-            const doseCountMatch = text.match(/(?:Total\s*Doses?|Doses?)\D*(\d+)/i);
-            if (doseCountMatch) {
-                extracted.totalDoses = parseInt(doseCountMatch[1]);
-            }
-            
-            return extracted;
-        }
-
-        function addPatientFromExtractedData(data) {
-            const defaultDueDate = new Date();
-            defaultDueDate.setDate(defaultDueDate.getDate() + 7);
-            
-            const newPatient = {
-                'Patient Name': data.patientName,
-                'File Number': data.fileNumber,
-                'Address': data.address || '',
-                'Phone 1': data.phone1 || '',
-                'Phone 2': data.phone2 || '',
-                'Dose Prescribed': data.dosePrescribed || '7.5',
-                'Total Doses': data.totalDoses || '4',
-                'Doses Remaining': data.totalDoses || '4',
-                'Previous Injection Site': '',
-                'Injection Site': '',
-                'Due Date': defaultDueDate.toISOString().split('T')[0],
-                'Appointment Date & Time': '',
-                'Previous Injection Dates': '',
-                'Assignment Type': 'Permanent',
-                'Special Instructions': '',
-                'Adverse Effects Comments': '',
-                'File Status': 'Active',
-                'Injection Administered': false,
-                'Appointment Confirmed': false,
-                'Pending': false,
-                'Archived': false
-            };
-            
-            patients.push(newPatient);
-            saveToLocalStorage();
-            renderCurrentTab();
-            alert(`✅ Patient added from PDF: ${data.patientName} (${data.fileNumber})`);
-        }
-
-        function fillFormWithExtractedData(data) {
-            if (data.patientName) document.getElementById('patientName').value = data.patientName;
-            if (data.fileNumber) document.getElementById('fileNumber').value = data.fileNumber;
-            if (data.address) document.getElementById('address').value = data.address;
-            if (data.phone1) document.getElementById('phone1').value = data.phone1;
-            if (data.phone2) document.getElementById('phone2').value = data.phone2;
-            if (data.dosePrescribed) document.getElementById('dosePrescribed').value = data.dosePrescribed;
-            if (data.totalDoses) {
-                document.getElementById('totalDoses').value = data.totalDoses;
-                document.getElementById('dosesRemaining').value = data.totalDoses;
-            }
-            alert('Extracted data has been filled into the form. Review and click Save to confirm.');
-        }
-
-        function showExtractionPreview(fullText, extractedData) {
-            const previewHtml = `
-                <div style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; 
-                            max-width:90%; width:500px; border-radius:16px; padding:20px; z-index:10000; 
-                            box-shadow:0 10px 40px rgba(0,0,0,0.2);">
-                    <h3>📄 PDF Extraction Results</h3>
-                    <p><strong>Found:</strong> ${extractedData.patientName ? '✓ Name' : '✗ Name'} | 
-                       ${extractedData.fileNumber ? '✓ File #' : '✗ File #'}</p>
-                    <p>Could not automatically extract complete patient data.</p>
-                    <details>
-                        <summary>View extracted text (${fullText.length} characters)</summary>
-                        <textarea style="width:100%; height:200px; margin-top:10px;" readonly>${fullText.substring(0, 2000)}${fullText.length > 2000 ? '...' : ''}</textarea>
-                    </details>
-                    <div style="margin-top:16px; display:flex; gap:8px; justify-content:flex-end;">
-                        <button onclick="this.closest('div').remove()" class="btn-sm btn-secondary">Close</button>
-                        <button onclick="openAddModal(); this.closest('div').remove()" class="btn-sm btn-primary">Add Manually</button>
-                    </div>
-                </div>
-            `;
-            document.body.insertAdjacentHTML('beforeend', previewHtml);
-        }
-
         // ========== INJECTION CONFIRMATION ==========
         function showInjectionSiteSelector(fileNumber) {
             pendingInjectionFileNumber = fileNumber;
@@ -903,6 +973,38 @@
             renderCurrentTab();
             document.getElementById('injectionSiteModal').style.display = 'none';
             pendingInjectionFileNumber = null;
+        }
+
+        function calculateNextDueDate(currentDueDate, dosePrescribed, referenceDate) {
+            const weeks = doseToWeeks[dosePrescribed] || 4;
+            const newDate = new Date(referenceDate);
+            newDate.setDate(newDate.getDate() + (weeks * 7));
+            return newDate.toISOString().split('T')[0];
+        }
+        
+        function getReferenceDateForDueDate(patient, injectionGivenToday = true) {
+            const today = new Date().toISOString().split('T')[0];
+            const apptDate = patient['Appointment Date & Time'] ? new Date(patient['Appointment Date & Time']).toISOString().split('T')[0] : null;
+            const injectionDate = patient['Previous Injection Dates'] ? patient['Previous Injection Dates'].split(',').pop()?.trim() : null;
+            const isInjectionConfirmed = patient['Injection Administered'] === true;
+            const isAppointmentConfirmed = patient['Appointment Confirmed'] === true;
+            const todayDate = new Date();
+            const apptDateObj = patient['Appointment Date & Time'] ? new Date(patient['Appointment Date & Time']) : null;
+            const hasAppointmentPassed = apptDateObj && apptDateObj < todayDate;
+            
+            if (isAppointmentConfirmed && isInjectionConfirmed && injectionDate === apptDate) {
+                return injectionDate;
+            }
+            
+            if (hasAppointmentPassed && !isInjectionConfirmed && isAppointmentConfirmed) {
+                return apptDate;
+            }
+            
+            if (injectionGivenToday) {
+                return today;
+            }
+            
+            return today;
         }
 
         // ========== PATIENT CRUD ==========
@@ -1176,7 +1278,8 @@
             document.querySelectorAll('.close').forEach(c => c.addEventListener('click', closeModal));
             document.querySelectorAll('.close-injection').forEach(c => c.addEventListener('click', () => document.getElementById('injectionSiteModal').style.display = 'none'));
             document.querySelectorAll('.close-appt').forEach(c => c.addEventListener('click', () => document.getElementById('apptEditModal').style.display = 'none'));
-            window.addEventListener('click', (e) => { if(e.target === document.getElementById('patientModal')) closeModal(); if(e.target === document.getElementById('confirmModal')) document.getElementById('confirmModal').style.display = 'none'; if(e.target === document.getElementById('injectionSiteModal')) document.getElementById('injectionSiteModal').style.display = 'none'; if(e.target === document.getElementById('apptEditModal')) document.getElementById('apptEditModal').style.display = 'none'; });
+            document.querySelectorAll('.close-pdf-preview').forEach(c => c.addEventListener('click', () => document.getElementById('pdfPreviewModal').style.display = 'none'));
+            window.addEventListener('click', (e) => { if(e.target === document.getElementById('patientModal')) closeModal(); if(e.target === document.getElementById('confirmModal')) document.getElementById('confirmModal').style.display = 'none'; if(e.target === document.getElementById('injectionSiteModal')) document.getElementById('injectionSiteModal').style.display = 'none'; if(e.target === document.getElementById('apptEditModal')) document.getElementById('apptEditModal').style.display = 'none'; if(e.target === document.getElementById('pdfPreviewModal')) document.getElementById('pdfPreviewModal').style.display = 'none'; });
             document.getElementById('patientForm').addEventListener('submit', (e) => { e.preventDefault(); savePatientFromModal(); });
             document.getElementById('deletePatientBtn').addEventListener('click', () => { if(currentEditFileNumber) showConfirmDialog('Delete?', () => { deletePatient(currentEditFileNumber); closeModal(); }); });
             document.getElementById('confirmYes').addEventListener('click', () => { if(pendingConfirmCallback) pendingConfirmCallback(); document.getElementById('confirmModal').style.display = 'none'; pendingConfirmCallback = null; });
@@ -1185,6 +1288,8 @@
             document.getElementById('cancelInjectionSite').addEventListener('click', () => { document.getElementById('injectionSiteModal').style.display = 'none'; pendingInjectionFileNumber = null; });
             document.getElementById('saveAppointmentBtn').addEventListener('click', saveAppointmentDate);
             document.getElementById('cancelAppointmentBtn').addEventListener('click', () => { document.getElementById('apptEditModal').style.display = 'none'; pendingAppointmentFileNumber = null; });
+            document.getElementById('confirmAddPatient').addEventListener('click', addExtractedPatient);
+            document.getElementById('cancelPdfPreview').addEventListener('click', () => { document.getElementById('pdfPreviewModal').style.display = 'none'; lastExtractedData = null; });
             window.openEditModal = openEditModal;
             window.openAppointmentEditor = openAppointmentEditor;
             window.exportReportToCSV = exportReportToCSV;

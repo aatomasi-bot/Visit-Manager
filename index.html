@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, view-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Patient Dosing Tracker - Fixed Version</title>
+    <title>Patient Dosing Tracker - Enhanced Logic</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
@@ -125,14 +125,33 @@
             display: inline-flex; 
             align-items: center; 
             justify-content: center;
+            transition: all 0.2s;
         }
+        .action-icon:hover { transform: scale(1.05); }
         .call-icon { background: #dcfce7; color: #16a34a; }
+        .call-icon:hover { background: #bbf7d0; }
         .nav-icon { background: #dbeafe; color: #2563eb; }
+        .nav-icon:hover { background: #bfdbfe; }
         
         .expanded-view { margin-top: 14px; padding-top: 14px; border-top: 1px solid #e2e8f0; display: none; }
-        .detail-row { display: flex; padding: 6px 0; border-bottom: 1px solid #f1f5f9; flex-wrap: wrap; }
+        .detail-row { display: flex; padding: 6px 0; border-bottom: 1px solid #f1f5f9; flex-wrap: wrap; align-items: center; }
         .detail-label { width: 130px; font-weight: 500; color: #475569; font-size: 12px; }
         .detail-value { flex: 1; color: #1e293b; font-size: 13px; font-weight: 500; }
+        .edit-icon { 
+            cursor: pointer; 
+            margin-left: 8px; 
+            color: #3b82f6; 
+            font-size: 14px; 
+            background: #dbeafe; 
+            padding: 4px 8px; 
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+        }
+        .edit-icon:hover { background: #bfdbfe; transform: scale(1.02); }
+        .ins-red { color: #dc2626; font-weight: 500; }
         
         .action-row { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; justify-content: center; }
         .action-sm { 
@@ -142,13 +161,19 @@
             border: none; 
             font-weight: 500; 
             cursor: pointer;
+            transition: all 0.2s;
         }
+        .action-sm:hover { transform: translateY(-1px); }
         .inject-sm { background: #dcfce7; color: #16a34a; }
+        .inject-sm:hover { background: #bbf7d0; }
         .pending-sm { background: #fef3c7; color: #b45309; }
+        .pending-sm:hover { background: #fde68a; }
         .edit-sm { background: #dbeafe; color: #2563eb; }
+        .edit-sm:hover { background: #bfdbfe; }
         .delete-sm { background: #fef2f2; color: #dc2626; }
-        .confirm-sm { background: #e0e7ff; color: #4f46e5; }
+        .delete-sm:hover { background: #fecaca; }
         .move-sm { background: #f1f5f9; color: #475569; }
+        .move-sm:hover { background: #e2e8f0; }
         
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; }
         .modal-content { background: white; max-width: 450px; margin: 50px auto; border-radius: 24px; padding: 24px; }
@@ -166,11 +191,15 @@
         .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
         
         .injection-options { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
-        .injection-option { display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 12px; cursor: pointer; }
+        .injection-option { display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
         .injection-option:hover { background: #f8fafc; border-color: #3b82f6; }
         .injection-option.selected { background: #dbeafe; border-color: #3b82f6; }
         .injection-option input { width: 18px; height: 18px; accent-color: #3b82f6; }
         .injection-option label { flex: 1; cursor: pointer; font-weight: 500; }
+        
+        /* Appointment date edit modal */
+        .appt-edit-content { max-width: 380px; }
+        .datetime-input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 14px; margin: 16px 0; }
         
         @media (max-width: 600px) {
             .collapsed-view { flex-direction: column; align-items: stretch; }
@@ -242,6 +271,25 @@
                     <button id="generateReportBtn" class="btn-sm btn-primary">Generate</button>
                 </div>
                 <div id="reportOutput"><div class="empty-state">Select criteria and click Generate</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointment Date Edit Modal -->
+    <div id="apptEditModal" class="modal">
+        <div class="modal-content appt-edit-content">
+            <div class="modal-header">
+                <h2>📅 Edit Appointment Date & Time</h2>
+                <span class="close-appt">&times;</span>
+            </div>
+            <div class="form-group">
+                <label>Appointment Date & Time:</label>
+                <input type="datetime-local" id="appointmentDateInput" class="datetime-input">
+                <small style="color:#64748b; font-size:11px;">Setting this date will automatically confirm the appointment</small>
+            </div>
+            <div class="modal-footer">
+                <button id="saveAppointmentBtn" class="btn-sm btn-primary">Save & Confirm</button>
+                <button id="cancelAppointmentBtn" class="btn-sm btn-secondary">Cancel</button>
             </div>
         </div>
     </div>
@@ -344,6 +392,7 @@
         let currentTab = 'all';
         let searchQuery = '';
         let pendingInjectionFileNumber = null;
+        let pendingAppointmentFileNumber = null;
 
         const doseToWeeks = { '7.5': 4, '22.5': 12, '30': 16, '45': 24 };
 
@@ -351,12 +400,14 @@
         function saveToLocalStorage() { 
             localStorage.setItem('patientTrackerData', JSON.stringify(patients)); 
             document.getElementById('recordCount').innerHTML = `📋 ${patients.length}`;
+            updateOverdueStatuses();
         }
         
         function loadFromLocalStorage() { 
             const saved = localStorage.getItem('patientTrackerData'); 
             patients = (saved && saved !== '[]') ? JSON.parse(saved) : []; 
             document.getElementById('recordCount').innerHTML = `📋 ${patients.length}`; 
+            updateOverdueStatuses();
             renderCurrentTab(); 
         }
 
@@ -365,15 +416,100 @@
             return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); 
         }
 
-        // ========== DOSE CALCULATION (UNCHANGED) ==========
-        function calculateNextDueDate(currentDueDate, dosePrescribed) {
+        // ========== DUE DATE CALCULATION LOGIC (UPDATED) ==========
+        // Rule 1: If appointment confirmed AND injection confirmed on same day → use injection date (today)
+        // Rule 2: If appointment date passed and no injection → use appointment confirmation date
+        
+        function calculateNextDueDate(currentDueDate, dosePrescribed, referenceDate) {
             const weeks = doseToWeeks[dosePrescribed] || 4;
-            const newDate = new Date(currentDueDate);
+            const newDate = new Date(referenceDate);
             newDate.setDate(newDate.getDate() + (weeks * 7));
             return newDate.toISOString().split('T')[0];
         }
+        
+        function getReferenceDateForDueDate(patient, injectionGivenToday = true) {
+            const today = new Date().toISOString().split('T')[0];
+            const apptDate = patient['Appointment Date & Time'] ? new Date(patient['Appointment Date & Time']).toISOString().split('T')[0] : null;
+            const injectionDate = patient['Previous Injection Dates'] ? patient['Previous Injection Dates'].split(',').pop()?.trim() : null;
+            const isInjectionConfirmed = patient['Injection Administered'] === true;
+            const isAppointmentConfirmed = patient['Appointment Confirmed'] === true;
+            const todayDate = new Date();
+            const apptDateObj = patient['Appointment Date & Time'] ? new Date(patient['Appointment Date & Time']) : null;
+            const hasAppointmentPassed = apptDateObj && apptDateObj < todayDate;
+            
+            // Case 1: Same day confirmation (appointment and injection on same day)
+            if (isAppointmentConfirmed && isInjectionConfirmed && injectionDate === apptDate) {
+                return injectionDate; // Use injection date
+            }
+            
+            // Case 2: Appointment passed but no injection confirmed
+            if (hasAppointmentPassed && !isInjectionConfirmed && isAppointmentConfirmed) {
+                return apptDate; // Use appointment confirmation date
+            }
+            
+            // Case 3: Normal case - use today's date (injection confirmation date)
+            if (injectionGivenToday) {
+                return today;
+            }
+            
+            return today;
+        }
 
-        // ========== INJECTION CONFIRMATION FLOW (FIXED) ==========
+        // ========== UPDATE OVERDUE STATUS ==========
+        function updateOverdueStatuses() {
+            const today = new Date();
+            patients.forEach(patient => {
+                const apptDate = patient['Appointment Date & Time'] ? new Date(patient['Appointment Date & Time']) : null;
+                const isOverdue = apptDate && apptDate < today && !patient['Injection Administered'] && patient['Appointment Confirmed'];
+                // We don't store overdue as a field, just use for filtering
+            });
+        }
+
+        // ========== APPOINTMENT CONFIRMATION (PENCIL ICON - NEW FLOW) ==========
+        function openAppointmentEditor(fileNumber) {
+            pendingAppointmentFileNumber = fileNumber;
+            const patient = patients.find(p => p['File Number'] === fileNumber);
+            if (patient && patient['Appointment Date & Time']) {
+                // Format datetime-local value
+                const apptDate = new Date(patient['Appointment Date & Time']);
+                const formattedDate = apptDate.toISOString().slice(0, 16);
+                document.getElementById('appointmentDateInput').value = formattedDate;
+            } else {
+                // Default to current date/time
+                const now = new Date();
+                const formattedDate = now.toISOString().slice(0, 16);
+                document.getElementById('appointmentDateInput').value = formattedDate;
+            }
+            document.getElementById('apptEditModal').style.display = 'block';
+        }
+        
+        function saveAppointmentDate() {
+            const fileNumber = pendingAppointmentFileNumber;
+            const newAppointmentDate = document.getElementById('appointmentDateInput').value;
+            
+            if (!newAppointmentDate) {
+                alert('Please select an appointment date and time');
+                return;
+            }
+            
+            const patient = patients.find(p => p['File Number'] === fileNumber);
+            if (patient) {
+                const oldAppointmentDate = patient['Appointment Date & Time'];
+                patient['Appointment Date & Time'] = newAppointmentDate;
+                patient['Appointment Confirmed'] = true; // Auto-confirm when date is set
+                
+                saveToLocalStorage();
+                renderCurrentTab();
+                
+                const dateDisplay = new Date(newAppointmentDate).toLocaleString();
+                alert(`✅ Appointment confirmed for ${patient['Patient Name']} on ${dateDisplay}\nPatient moved to Scheduled tab.`);
+            }
+            
+            document.getElementById('apptEditModal').style.display = 'none';
+            pendingAppointmentFileNumber = null;
+        }
+
+        // ========== INJECTION CONFIRMATION FLOW (WITH UPDATED DUE DATE LOGIC) ==========
         function showInjectionSiteSelector(fileNumber) {
             pendingInjectionFileNumber = fileNumber;
             document.querySelectorAll('input[name="injectionSite"]').forEach(radio => radio.checked = false);
@@ -433,9 +569,11 @@
             const newDosesRemaining = dosesRemaining - 1;
             patient['Doses Remaining'] = newDosesRemaining.toString();
             
+            // Calculate new due date using the enhanced logic
             if (newDosesRemaining > 0) {
+                const referenceDate = getReferenceDateForDueDate(patient, true);
                 const currentDueDate = patient['Due Date'] || today;
-                patient['Due Date'] = calculateNextDueDate(currentDueDate, patient['Dose Prescribed']);
+                patient['Due Date'] = calculateNextDueDate(currentDueDate, patient['Dose Prescribed'], referenceDate);
             }
             
             patient['Injection Administered'] = true;
@@ -455,18 +593,7 @@
             pendingInjectionFileNumber = null;
         }
 
-        // ========== APPOINTMENT CONFIRMATION (FIXED - MOVES TO SCHEDULED) ==========
-        function confirmAppointment(fileNumber) { 
-            const patient = patients.find(p => p['File Number'] === fileNumber); 
-            if (patient) { 
-                patient['Appointment Confirmed'] = true; 
-                saveToLocalStorage(); 
-                renderCurrentTab(); 
-                alert(`✅ Appointment confirmed for ${patient['Patient Name']}. Patient moved to Scheduled tab.`); 
-            } 
-        }
-
-        // ========== LOAD FROM GOOGLE SHEETS (FIXED - MERGES DATA) ==========
+        // ========== LOAD FROM GOOGLE SHEETS (MERGE DATA) ==========
         async function loadFromGoogleSheets() {
             document.getElementById('syncStatus').innerHTML = '🔄 Loading from Google Sheets...';
             try {
@@ -493,7 +620,6 @@
                         patient['Appointment Confirmed'] = patient['Appointment Confirmed'] === 'TRUE';
                         patient['Pending'] = patient['Pending'] === 'TRUE';
                         patient['Archived'] = patient['Archived'] === 'TRUE';
-                        // Ensure doses remaining has a value
                         if (!patient['Doses Remaining'] || patient['Doses Remaining'] === '') {
                             patient['Doses Remaining'] = patient['Total Doses'] || '4';
                         }
@@ -501,24 +627,20 @@
                     }
                 }
                 
-                // MERGE: Keep existing patients, add new ones from sheet without duplicates
                 let mergedCount = 0;
                 for (const sheetPatient of sheetPatients) {
                     const existingIndex = patients.findIndex(p => p['File Number'] === sheetPatient['File Number']);
                     if (existingIndex === -1) {
-                        // New patient - add to list
                         patients.push(sheetPatient);
                         mergedCount++;
                     } else {
-                        // Update existing patient with sheet data (preserve injection history if needed)
-                        // Only update non-injection fields to avoid overwriting manual entries
                         patients[existingIndex] = { ...patients[existingIndex], ...sheetPatient };
                     }
                 }
                 
                 saveToLocalStorage();
                 renderCurrentTab();
-                document.getElementById('syncStatus').innerHTML = `✅ Synced: ${mergedCount} new patients added, ${sheetPatients.length} total from sheet`;
+                document.getElementById('syncStatus').innerHTML = `✅ Synced: ${mergedCount} new patients added`;
                 if (mergedCount > 0) alert(`✅ Added ${mergedCount} new patients from Google Sheet. Total patients: ${patients.length}`);
                 else alert(`✅ Sync complete. No new patients found. Total patients: ${patients.length}`);
             } catch(error) { 
@@ -528,15 +650,6 @@
         }
 
         // ========== PATIENT CRUD ==========
-        function addManualPatient(patientData) {
-            if (!patients.find(p => p['File Number'] === patientData['File Number'])) {
-                patients.push(patientData);
-                saveToLocalStorage();
-                return true;
-            }
-            return false;
-        }
-
         function moveToAllPatients(fileNumber) { 
             const p = patients.find(p => p['File Number'] === fileNumber); 
             if(p) { 
@@ -578,7 +691,7 @@
                 
                 const dueDate = p['Due Date'] ? new Date(p['Due Date']) : null;
                 const apptDate = p['Appointment Date & Time'] ? new Date(p['Appointment Date & Time']) : null;
-                const isOverdue = apptDate && apptDate < today && !p['Injection Administered'];
+                const isOverdue = apptDate && apptDate < today && !p['Injection Administered'] && p['Appointment Confirmed'];
                 
                 switch(currentTab) {
                     case 'today': return apptDate && apptDate.toISOString().split('T')[0] === todayStr && p['Appointment Confirmed'];
@@ -607,7 +720,7 @@
             const given = total - remain;
             const hasAppt = patient['Appointment Date & Time'];
             const isConfirmed = patient['Appointment Confirmed'] === true;
-            const apptStr = hasAppt ? new Date(patient['Appointment Date & Time']).toLocaleString() : 'No appointment';
+            const apptStr = hasAppt ? new Date(patient['Appointment Date & Time']).toLocaleString() : 'Not set';
             
             return `
                 <div class="patient-card" data-filenumber="${escapeHtml(patient['File Number'])}">
@@ -629,12 +742,19 @@
                         <div class="detail-row"><div class="detail-label">Dose:</div><div class="detail-value"><strong>${doseMg} (${doseToWeeks[patient['Dose Prescribed']] || 4} weeks)</strong></div></div>
                         <div class="detail-row"><div class="detail-label">Doses:</div><div class="detail-value">${given}/${total} given, ${remain} left</div></div>
                         <div class="detail-row"><div class="detail-label">Injection Site:</div><div class="detail-value">${escapeHtml(patient['Injection Site'] || 'Not set')}</div></div>
-                        <div class="detail-row"><div class="detail-label">Appointment:</div><div class="detail-value">${apptStr} ${!isConfirmed ? `<span class="edit-icon" style="cursor:pointer; color:#3b82f6; margin-left:8px;" onclick="openEditModal('${patient['File Number']}')">✏️</span>` : ' ✅ Confirmed'}</div></div>
+                        <div class="detail-row">
+                            <div class="detail-label">Appointment:</div>
+                            <div class="detail-value">
+                                ${apptStr}
+                                <span class="edit-icon" onclick="openAppointmentEditor('${patient['File Number']}')">
+                                    ✏️ ${isConfirmed ? 'Edit/Confirm' : 'Set & Confirm'}
+                                </span>
+                            </div>
+                        </div>
                         <div class="detail-row"><div class="detail-label">Assignment:</div><div class="detail-value">${escapeHtml(patient['Assignment Type'])}</div></div>
-                        ${special ? `<div class="detail-row"><div class="detail-label ins-red" style="color:#dc2626;">⚠️ Instructions:</div><div class="detail-value" style="color:#dc2626;">${escapeHtml(special)}</div></div>` : ''}
+                        ${special ? `<div class="detail-row"><div class="detail-label ins-red">⚠️ Instructions:</div><div class="detail-value ins-red">${escapeHtml(special)}</div></div>` : ''}
                         <div class="action-row">
                             <button class="action-sm inject-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="inject">💉 Inject (${remain})</button>
-                            ${hasAppt && !isConfirmed ? `<button class="action-sm confirm-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="confirm">✓ Confirm</button>` : ''}
                             ${currentTab === 'pending' || currentTab === 'archived' ? `<button class="action-sm move-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="move">⟳ Move</button>` : `<button class="action-sm pending-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="pending">⏳ Pending</button>`}
                             <button class="action-sm edit-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="edit">✎ Edit</button>
                             <button class="action-sm delete-sm" data-filenumber="${escapeHtml(patient['File Number'])}" data-action="delete">🗑 Delete</button>
@@ -671,7 +791,7 @@
             document.querySelectorAll('.patient-card').forEach(card => { 
                 const exp = card.querySelector('.expanded-view'); 
                 card.addEventListener('click', (e) => { 
-                    if(e.target.tagName === 'BUTTON') return; 
+                    if(e.target.tagName === 'BUTTON' || e.target.classList.contains('edit-icon')) return; 
                     const show = exp.style.display === 'block'; 
                     exp.style.display = show ? 'none' : 'block'; 
                     card.classList.toggle('expanded', !show); 
@@ -680,7 +800,6 @@
             document.querySelectorAll('.call-icon').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); window.location.href = `tel:${btn.getAttribute('data-phone')}`; }));
             document.querySelectorAll('.nav-icon').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); window.open(`https://maps.google.com/?q=${encodeURIComponent(btn.getAttribute('data-address'))}`, '_blank'); }));
             document.querySelectorAll('[data-action="inject"]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); const fn = btn.getAttribute('data-filenumber'); const p = patients.find(p => p['File Number'] === fn); showConfirmDialog(`💉 Prepare injection for ${p['Patient Name']}?\n\nDose: ${p['Dose Prescribed']}mg\nDoses remaining: ${p['Doses Remaining']}`, () => showInjectionSiteSelector(fn)); }));
-            document.querySelectorAll('[data-action="confirm"]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); confirmAppointment(btn.getAttribute('data-filenumber')); }));
             document.querySelectorAll('[data-action="pending"]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); showConfirmDialog('Mark as pending?', () => markPending(btn.getAttribute('data-filenumber'))); }));
             document.querySelectorAll('[data-action="move"]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); moveToAllPatients(btn.getAttribute('data-filenumber')); }));
             document.querySelectorAll('[data-action="edit"]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); openEditModal(btn.getAttribute('data-filenumber')); }));
@@ -800,14 +919,18 @@
             document.getElementById('importFile').addEventListener('change', (e) => { if(e.target.files[0]) importData(e.target.files[0]); e.target.value = ''; });
             document.querySelectorAll('.close').forEach(c => c.addEventListener('click', closeModal));
             document.querySelectorAll('.close-injection').forEach(c => c.addEventListener('click', () => document.getElementById('injectionSiteModal').style.display = 'none'));
-            window.addEventListener('click', (e) => { if(e.target === document.getElementById('patientModal')) closeModal(); if(e.target === document.getElementById('confirmModal')) document.getElementById('confirmModal').style.display = 'none'; if(e.target === document.getElementById('injectionSiteModal')) document.getElementById('injectionSiteModal').style.display = 'none'; });
+            document.querySelectorAll('.close-appt').forEach(c => c.addEventListener('click', () => document.getElementById('apptEditModal').style.display = 'none'));
+            window.addEventListener('click', (e) => { if(e.target === document.getElementById('patientModal')) closeModal(); if(e.target === document.getElementById('confirmModal')) document.getElementById('confirmModal').style.display = 'none'; if(e.target === document.getElementById('injectionSiteModal')) document.getElementById('injectionSiteModal').style.display = 'none'; if(e.target === document.getElementById('apptEditModal')) document.getElementById('apptEditModal').style.display = 'none'; });
             document.getElementById('patientForm').addEventListener('submit', (e) => { e.preventDefault(); savePatientFromModal(); });
             document.getElementById('deletePatientBtn').addEventListener('click', () => { if(currentEditFileNumber) showConfirmDialog('Delete?', () => { deletePatient(currentEditFileNumber); closeModal(); }); });
             document.getElementById('confirmYes').addEventListener('click', () => { if(pendingConfirmCallback) pendingConfirmCallback(); document.getElementById('confirmModal').style.display = 'none'; pendingConfirmCallback = null; });
             document.getElementById('confirmNo').addEventListener('click', () => { document.getElementById('confirmModal').style.display = 'none'; pendingConfirmCallback = null; });
             document.getElementById('confirmInjectionSite').addEventListener('click', performInjectionWithSite);
             document.getElementById('cancelInjectionSite').addEventListener('click', () => { document.getElementById('injectionSiteModal').style.display = 'none'; pendingInjectionFileNumber = null; });
+            document.getElementById('saveAppointmentBtn').addEventListener('click', saveAppointmentDate);
+            document.getElementById('cancelAppointmentBtn').addEventListener('click', () => { document.getElementById('apptEditModal').style.display = 'none'; pendingAppointmentFileNumber = null; });
             window.openEditModal = openEditModal;
+            window.openAppointmentEditor = openAppointmentEditor;
             window.exportReportToCSV = exportReportToCSV;
         });
     </script>

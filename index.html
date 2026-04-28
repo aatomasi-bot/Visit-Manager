@@ -999,31 +999,38 @@
             renderCurrentTab();
         }
 
-        // ========== FILTERING & SORTING ==========
+        // ========== FILTERING & SORTING (UPDATED) ==========
         function getFilteredPatients() {
             const today = new Date(); today.setHours(0,0,0,0);
             const todayStr = today.toISOString().split('T')[0];
             let filtered = patients.filter(p => {
+                // Handle archived and pending first
                 if (p['Archived'] && currentTab !== 'archived') return false;
                 if (!p['Archived'] && currentTab === 'archived') return false;
                 if (p['Pending'] && currentTab !== 'pending') return false;
                 if (!p['Pending'] && currentTab === 'pending') return false;
-                if (currentTab === 'all' && (p['Archived'] || p['Pending'])) return false;
                 
                 const dueDate = p['Due Date'] ? new Date(p['Due Date']) : null;
                 const apptDate = p['Appointment Date & Time'] ? new Date(p['Appointment Date & Time']) : null;
                 const hasConfirmedAppointment = p['Appointment Confirmed'] === true;
+                const isAppointmentToday = apptDate && apptDate.toISOString().split('T')[0] === todayStr;
+                const isFutureAppointment = apptDate && apptDate > today;
                 const isOverdue = apptDate && apptDate < today && !p['Injection Administered'] && hasConfirmedAppointment;
                 
                 switch(currentTab) {
-                    case 'today': 
-                        return apptDate && apptDate.toISOString().split('T')[0] === todayStr && hasConfirmedAppointment && !isOverdue;
-                    case 'scheduled': 
-                        return apptDate && apptDate > today && hasConfirmedAppointment === true && !p['Archived'] && !p['Pending'] && !isOverdue;
-                    case 'overdue': 
-                        return isOverdue && !p['Archived'] && !p['Pending'];
                     case 'all': 
-                        return !p['Archived'] && !p['Pending'];
+                        // All Patients tab: ONLY patients with NO confirmed appointment
+                        // Or patients with appointment date that has passed and no injection (overdue logic)
+                        return !p['Archived'] && !p['Pending'] && !hasConfirmedAppointment;
+                    case 'today': 
+                        // Today tab: confirmed appointments for today that are not overdue
+                        return isAppointmentToday && hasConfirmedAppointment && !isOverdue;
+                    case 'scheduled': 
+                        // Scheduled tab: future confirmed appointments
+                        return isFutureAppointment && hasConfirmedAppointment === true && !p['Archived'] && !p['Pending'];
+                    case 'overdue': 
+                        // Overdue tab: appointment date passed, confirmed, but no injection given
+                        return isOverdue && !p['Archived'] && !p['Pending'];
                     case 'pending': 
                         return p['Pending'] && !p['Archived'];
                     case 'archived': 
@@ -1032,6 +1039,7 @@
                         return !p['Archived'];
                 }
             });
+            
             if (searchQuery) { 
                 const q = searchQuery.toLowerCase(); 
                 filtered = filtered.filter(p => (p['Patient Name'] || '').toLowerCase().includes(q) || (p['File Number'] || '').toLowerCase().includes(q)); 

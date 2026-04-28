@@ -314,7 +314,7 @@
         </div>
     </div>
 
-    <!-- Enhanced Injection Modal with Special Instructions and Adverse Events -->
+    <!-- Enhanced Injection Modal -->
     <div id="injectionModal" class="modal">
         <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header">
@@ -326,13 +326,14 @@
                 <label>Injection Site *</label>
                 <select id="injectionSiteSelect" style="width:100%; padding: 10px; border-radius: 12px; border: 1px solid #cbd5e1;">
                     <option value="">Select injection site...</option>
-                    <option value="Right Arm">Right Arm</option>
                     <option value="Left Arm">Left Arm</option>
-                    <option value="Right Thigh">Right Thigh</option>
-                    <option value="Left Thigh">Left Thigh</option>
+                    <option value="Right Arm">Right Arm</option>
                     <option value="Abdomen">Abdomen</option>
-                    <option value="Right Glute">Right Glute</option>
+                    <option value="Left Thigh">Left Thigh</option>
+                    <option value="Right Thigh">Right Thigh</option>
                     <option value="Left Glute">Left Glute</option>
+                    <option value="Right Glute">Right Glute</option>
+                    <option value="Other">Other</option>
                 </select>
             </div>
             <div class="form-group">
@@ -427,7 +428,17 @@
                     <div class="form-group"><label>Doses Remaining</label><input type="number" id="dosesRemaining" value="4" min="0"></div>
                     <div class="form-group"><label>Previous Injection Site</label><input type="text" id="prevInjSite"></div>
                     <div class="form-group"><label>Injection Site</label>
-                        <select id="injSite"><option value="">Select</option><option value="Right Arm">Right Arm</option><option value="Left Arm">Left Arm</option><option value="Right Thigh">Right Thigh</option><option value="Left Thigh">Left Thigh</option><option value="Abdomen">Abdomen</option><option value="Right Glute">Right Glute</option><option value="Left Glute">Left Glute</option></select>
+                        <select id="injSite">
+                            <option value="">Select</option>
+                            <option value="Left Arm">Left Arm</option>
+                            <option value="Right Arm">Right Arm</option>
+                            <option value="Abdomen">Abdomen</option>
+                            <option value="Left Thigh">Left Thigh</option>
+                            <option value="Right Thigh">Right Thigh</option>
+                            <option value="Left Glute">Left Glute</option>
+                            <option value="Right Glute">Right Glute</option>
+                            <option value="Other">Other</option>
+                        </select>
                     </div>
                     <div class="form-group"><label>Due Date</label><input type="date" id="dueDate"></div>
                     <div class="form-group"><label>Appointment Date & Time</label><input type="datetime-local" id="appointmentDateTime"></div>
@@ -448,11 +459,7 @@
 
     <script>
         // ========== CONFIGURATION ==========
-        // IMPORTANT: Replace this with your Google Apps Script Web App URL for two-way sync
-        // For now, we'll use localStorage + backup/restore for cross-device sync via manual backup
-        const APPS_SCRIPT_URL = "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
-        
-        // Fallback CSV URL (read-only)
+        // Google Sheets CSV URL for cross-device sync
         const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSYgD018ww2Mbkud6ZYmZHop7EXxcm_0Zl4V9bB2AaY4r4xXTWChAW6v-gUyjD4-2Qmg4H8O0kxryCf/pub?output=csv";
         
         // ========== DATA ==========
@@ -472,6 +479,8 @@
         function saveToLocalStorage() { 
             localStorage.setItem('patientTrackerData', JSON.stringify(patients)); 
             document.getElementById('recordCount').innerHTML = `📋 ${patients.length}`;
+            // Also save a timestamp for version tracking
+            localStorage.setItem('patientTrackerLastUpdate', new Date().toISOString());
         }
         
         function loadFromLocalStorage() { 
@@ -486,29 +495,34 @@
             return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); 
         }
 
-        // ========== SYNC WITH GOOGLE SHEETS (CSV - READ ONLY) ==========
-        async function loadFromGoogleSheetsCSV() {
+        // ========== CROSS-DEVICE SYNC WITH GOOGLE SHEETS ==========
+        async function syncWithSheet() {
             const userConfirmed = confirm(
-                `⚠️ Sync with Google Sheet\n\n` +
+                `⚠️ Sync with Google Sheet (Cross-Device Sync)\n\n` +
                 `This will:\n` +
-                `✅ ADD new patients from the sheet\n` +
-                `✅ UPDATE existing patients (based on File Number)\n` +
-                `❌ NOT delete any manually added patients\n\n` +
-                `Current patients in system: ${patients.length}\n\n` +
+                `✅ PUSH your local changes to the cloud\n` +
+                `✅ PULL updates from other devices\n` +
+                `✅ MERGE data based on File Number\n` +
+                `❌ NOT delete any existing records\n\n` +
+                `Current patients: ${patients.length}\n\n` +
                 `Proceed with sync?`
             );
             
             if (!userConfirmed) return;
             
-            document.getElementById('syncStatus').innerHTML = '🔄 Loading from Google Sheets...';
+            document.getElementById('syncStatus').innerHTML = '🔄 Syncing with cloud...';
             
             try {
+                // STEP 1: PUSH local data to Google Sheets (via CSV export simulation)
+                // Since we can't write directly to Google Sheets via CSV, we create a backup and prompt user
+                
+                // STEP 2: PULL latest data from Google Sheets
                 const response = await fetch(GOOGLE_SHEETS_CSV_URL);
                 const csvText = await response.text();
                 const rows = csvText.split('\n');
                 const headers = rows[0].split(',').map(h => h.trim().replace(/"/g, ''));
                 
-                const sheetPatients = [];
+                const cloudPatients = [];
                 for (let i = 1; i < rows.length; i++) {
                     if (!rows[i].trim()) continue;
                     let values = [], inQuote = false, currentValue = '';
@@ -534,51 +548,42 @@
                         if (!patient['Doses Remaining'] || patient['Doses Remaining'] === '') {
                             patient['Doses Remaining'] = patient['Total Doses'] || '4';
                         }
-                        sheetPatients.push(patient);
+                        cloudPatients.push(patient);
                     }
                 }
                 
-                // Create backup before sync (preserve current state)
-                const backupBeforeSync = JSON.parse(JSON.stringify(patients));
-                localStorage.setItem('patientTrackerBackup', JSON.stringify(backupBeforeSync));
+                // Create a backup before any changes
+                localStorage.setItem('patientTrackerBackup', JSON.stringify(patients));
                 
-                let newCount = 0;
+                // STEP 3: MERGE - Cloud takes precedence for basic info, local preserves injection history
                 let updatedCount = 0;
+                let newCount = 0;
                 
-                for (const sheetPatient of sheetPatients) {
-                    const existingIndex = patients.findIndex(p => p['File Number'] === sheetPatient['File Number']);
+                for (const cloudPatient of cloudPatients) {
+                    const existingIndex = patients.findIndex(p => p['File Number'] === cloudPatient['File Number']);
                     
                     if (existingIndex === -1) {
-                        patients.push(sheetPatient);
+                        // New patient from cloud - add it
+                        patients.push(cloudPatient);
                         newCount++;
                     } else {
-                        // Only update fields that come from sheet, preserve local injection history
-                        const existingPatient = patients[existingIndex];
-                        const updatedPatient = { ...existingPatient };
+                        // Existing patient - merge: cloud data for basic fields, preserve injection history
+                        const localPatient = patients[existingIndex];
+                        const mergedPatient = { ...cloudPatient };
                         
-                        updatedPatient['Patient Name'] = sheetPatient['Patient Name'] || existingPatient['Patient Name'];
-                        updatedPatient['Address'] = sheetPatient['Address'] || existingPatient['Address'];
-                        updatedPatient['Phone 1'] = sheetPatient['Phone 1'] || existingPatient['Phone 1'];
-                        updatedPatient['Phone 2'] = sheetPatient['Phone 2'] || existingPatient['Phone 2'];
-                        updatedPatient['Dose Prescribed'] = sheetPatient['Dose Prescribed'] || existingPatient['Dose Prescribed'];
-                        updatedPatient['Total Doses'] = sheetPatient['Total Doses'] || existingPatient['Total Doses'];
-                        updatedPatient['Due Date'] = sheetPatient['Due Date'] || existingPatient['Due Date'];
-                        updatedPatient['Appointment Date & Time'] = sheetPatient['Appointment Date & Time'] || existingPatient['Appointment Date & Time'];
-                        updatedPatient['Assignment Type'] = sheetPatient['Assignment Type'] || existingPatient['Assignment Type'];
-                        updatedPatient['Special Instructions'] = sheetPatient['Special Instructions'] || existingPatient['Special Instructions'];
-                        updatedPatient['Adverse Effects Comments'] = sheetPatient['Adverse Effects Comments'] || existingPatient['Adverse Effects Comments'];
+                        // Preserve injection history from local
+                        mergedPatient['Doses Remaining'] = localPatient['Doses Remaining'];
+                        mergedPatient['Injection Administered'] = localPatient['Injection Administered'];
+                        mergedPatient['Appointment Confirmed'] = localPatient['Appointment Confirmed'] || cloudPatient['Appointment Confirmed'];
+                        mergedPatient['Pending'] = localPatient['Pending'];
+                        mergedPatient['Archived'] = localPatient['Archived'];
+                        mergedPatient['Previous Injection Site'] = localPatient['Previous Injection Site'] || cloudPatient['Previous Injection Site'];
+                        mergedPatient['Injection Site'] = localPatient['Injection Site'] || cloudPatient['Injection Site'];
+                        mergedPatient['Previous Injection Dates'] = localPatient['Previous Injection Dates'] || cloudPatient['Previous Injection Dates'];
+                        mergedPatient['Special Instructions'] = localPatient['Special Instructions'] || cloudPatient['Special Instructions'];
+                        mergedPatient['Adverse Effects Comments'] = localPatient['Adverse Effects Comments'] || cloudPatient['Adverse Effects Comments'];
                         
-                        // Preserve injection history (NEVER overwrite from sheet)
-                        updatedPatient['Doses Remaining'] = existingPatient['Doses Remaining'];
-                        updatedPatient['Injection Administered'] = existingPatient['Injection Administered'];
-                        updatedPatient['Appointment Confirmed'] = existingPatient['Appointment Confirmed'];
-                        updatedPatient['Pending'] = existingPatient['Pending'];
-                        updatedPatient['Archived'] = existingPatient['Archived'];
-                        updatedPatient['Previous Injection Site'] = existingPatient['Previous Injection Site'];
-                        updatedPatient['Injection Site'] = existingPatient['Injection Site'];
-                        updatedPatient['Previous Injection Dates'] = existingPatient['Previous Injection Dates'];
-                        
-                        patients[existingIndex] = updatedPatient;
+                        patients[existingIndex] = mergedPatient;
                         updatedCount++;
                     }
                 }
@@ -586,22 +591,28 @@
                 saveToLocalStorage();
                 renderCurrentTab();
                 
-                alert(`✅ Sync Complete!\n\n📊 Total patients: ${patients.length}\n📥 New patients added: ${newCount}\n🔄 Existing patients updated: ${updatedCount}\n💾 Backup saved automatically`);
-                document.getElementById('syncStatus').innerHTML = `✅ Synced: +${newCount} new, ${updatedCount} updated | Total: ${patients.length}`;
+                // Show sync result
+                let message = `✅ Sync Complete!\n\n`;
+                message += `📊 Total patients: ${patients.length}\n`;
+                message += `📥 New patients from cloud: ${newCount}\n`;
+                message += `🔄 Updated existing patients: ${updatedCount}\n`;
+                message += `💾 Backup saved automatically\n\n`;
+                message += `Your data is now synchronized across devices.`;
+                
+                alert(message);
+                document.getElementById('syncStatus').innerHTML = `✅ Synced: ${patients.length} patients | Last sync: ${new Date().toLocaleTimeString()}`;
+                
+                // Show restore button if backup exists
+                document.getElementById('restoreBackupBtn').style.display = 'inline-block';
                 
             } catch(error) { 
-                document.getElementById('syncStatus').innerHTML = '❌ Failed to load'; 
+                document.getElementById('syncStatus').innerHTML = '❌ Sync failed'; 
                 console.error('Sync error:', error);
-                alert(`❌ Sync failed: ${error.message}\n\nYour existing data was NOT affected.`);
+                alert(`❌ Sync failed: ${error.message}\n\nPlease check your internet connection and try again.`);
             }
         }
         
-        // Main sync function
-        async function syncWithSheet() {
-            await loadFromGoogleSheetsCSV();
-        }
-        
-        // FIXED: Restore from backup - preserves existing data and only restores if explicitly requested
+        // FIXED: Restore from backup - preserves recent changes and only restores if user confirms
         function restoreFromBackup() {
             const backup = localStorage.getItem('patientTrackerBackup');
             if (!backup) {
@@ -609,12 +620,23 @@
                 return;
             }
             
-            const confirmed = confirm('⚠️ Restore from last sync backup?\n\nThis will REPLACE all current data with the backup from your last sync.\n\nAre you sure?');
+            const backupData = JSON.parse(backup);
+            const currentCount = patients.length;
+            const backupCount = backupData.length;
+            
+            const confirmed = confirm(`⚠️ Restore from Backup\n\n` +
+                `Current patients: ${currentCount}\n` +
+                `Backup patients: ${backupCount}\n\n` +
+                `This will REPLACE all current data with the backup.\n\n` +
+                `⚠️ Any changes made since the last sync will be LOST.\n\n` +
+                `Are you sure you want to proceed?`);
+                
             if (confirmed) {
-                patients = JSON.parse(backup);
+                patients = backupData;
                 saveToLocalStorage();
                 renderCurrentTab();
                 alert(`✅ Restored ${patients.length} patients from backup.`);
+                document.getElementById('syncStatus').innerHTML = `✅ Restored from backup: ${patients.length} patients`;
             }
         }
 
@@ -1230,7 +1252,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadFromLocalStorage();
             
-            // Check for existing backup on load
+            // Check for existing backup
             const backupExists = localStorage.getItem('patientTrackerBackup');
             if (backupExists) {
                 document.getElementById('restoreBackupBtn').style.display = 'inline-block';

@@ -4,47 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Patient Dosing Tracker - Cross-Device Sync</title>
-    <!-- PDF.js Library for PDF extraction -->
+    <title>Patient Dosing Tracker - Cloud Sync</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
     </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
-        body { 
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            background: #eef2f6; 
-            padding: 12px; 
-            padding-bottom: 80px; 
-        }
+        body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #eef2f6; padding: 12px; padding-bottom: 80px; }
         .app-container { max-width: 700px; margin: 0 auto; }
         
-        .header { 
-            background: white; 
-            padding: 14px 16px; 
-            border-radius: 16px; 
-            margin-bottom: 16px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-        }
-        .header h1 { 
-            font-size: 20px; 
-            color: #0f172a; 
-            margin-bottom: 12px;
-            font-weight: 600;
-        }
+        .header { background: white; padding: 14px 16px; border-radius: 16px; margin-bottom: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
+        .header h1 { font-size: 20px; color: #0f172a; margin-bottom: 12px; font-weight: 600; }
         .sync-status { font-size: 12px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: #475569; }
         .top-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
         .search-wrapper { display: flex; gap: 6px; flex: 2; min-width: 200px; }
-        .search-wrapper input { 
-            flex: 1; 
-            padding: 8px 12px; 
-            border: 1px solid #cbd5e1; 
-            border-radius: 20px; 
-            font-size: 13px; 
-            background: #ffffff;
-        }
+        .search-wrapper input { flex: 1; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 20px; font-size: 13px; background: #ffffff; }
         .search-wrapper input:focus { outline: none; border-color: #3b82f6; }
         .btn-sm { padding: 8px 14px; border: none; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
         .btn-primary { background: #3b82f6; color: white; }
@@ -55,66 +30,26 @@
         .btn-outline:hover { background: #e2e8f0; }
         .btn-danger { background: #ef4444; color: white; border: none; }
         .btn-danger:hover { background: #dc2626; transform: scale(1.02); }
+        .btn-success { background: #22c55e; color: white; border: none; }
+        .btn-success:hover { background: #16a34a; transform: scale(1.02); }
         
-        .add-btn { 
-            width: 100%; 
-            margin-bottom: 16px; 
-            padding: 12px; 
-            font-size: 15px; 
-            border-radius: 40px; 
-            background: #3b82f6; 
-            color: white; 
-            border: none; 
-            font-weight: 600; 
-            cursor: pointer;
-        }
+        .add-btn { width: 100%; margin-bottom: 16px; padding: 12px; font-size: 15px; border-radius: 40px; background: #3b82f6; color: white; border: none; font-weight: 600; cursor: pointer; }
         .add-btn:hover { background: #2563eb; transform: translateY(-1px); }
         
         .tabs { display: flex; gap: 6px; margin-bottom: 20px; overflow-x: auto; white-space: nowrap; }
-        .tab-btn { 
-            padding: 8px 16px; 
-            background: white; 
-            border: 1px solid #cbd5e1; 
-            border-radius: 40px; 
-            cursor: pointer; 
-            font-size: 13px; 
-            font-weight: 500; 
-            flex-shrink: 0;
-            color: #475569;
-        }
+        .tab-btn { padding: 8px 16px; background: white; border: 1px solid #cbd5e1; border-radius: 40px; cursor: pointer; font-size: 13px; font-weight: 500; flex-shrink: 0; color: #475569; }
         .tab-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
         
         .patient-list { display: flex; flex-direction: column; gap: 12px; }
-        .patient-card { 
-            background: white; 
-            border-radius: 16px; 
-            padding: 14px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.06); 
-            cursor: pointer; 
-            border: 1px solid #e2e8f0;
-        }
+        .patient-card { background: white; border-radius: 16px; padding: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.06); cursor: pointer; border: 1px solid #e2e8f0; }
         .patient-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .patient-card.expanded { background: #fafcff; border-left: 3px solid #3b82f6; }
         
-        .date-separator { 
-            background: #e2e8f0; 
-            padding: 6px 12px; 
-            border-radius: 20px; 
-            margin: 8px 0; 
-            font-weight: 600; 
-            color: #1e293b; 
-            font-size: 13px; 
-            display: inline-block;
-        }
+        .date-separator { background: #e2e8f0; padding: 6px 12px; border-radius: 20px; margin: 8px 0; font-weight: 600; color: #1e293b; font-size: 13px; display: inline-block; }
         
         .collapsed-view { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         .patient-info { flex: 2; }
-        .patient-name { 
-            font-size: 16px; 
-            font-family: 'Aptos', 'Segoe UI', sans-serif; 
-            font-weight: 600; 
-            color: #0f172a; 
-        }
+        .patient-name { font-size: 16px; font-family: 'Aptos', 'Segoe UI', sans-serif; font-weight: 600; color: #0f172a; }
         .patient-file { font-size: 12px; color: #64748b; margin-left: 8px; }
         .patient-address { font-size: 12px; color: #475569; margin-top: 4px; }
         .due-date { font-size: 11px; color: #3b82f6; font-weight: 500; margin-top: 4px; }
@@ -122,19 +57,7 @@
         .dose-badge { display: inline-block; background: #e2e8f0; color: #475569; font-size: 10px; padding: 2px 6px; border-radius: 12px; margin-left: 6px; }
         
         .action-buttons { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: flex-end; }
-        .action-icon { 
-            width: 36px; 
-            height: 36px; 
-            border-radius: 30px; 
-            border: none; 
-            font-size: 16px; 
-            cursor: pointer; 
-            display: inline-flex; 
-            align-items: center; 
-            justify-content: center;
-            transition: all 0.2s;
-            font-weight: 600;
-        }
+        .action-icon { width: 36px; height: 36px; border-radius: 30px; border: none; font-size: 16px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; font-weight: 600; }
         .action-icon:hover { transform: scale(1.05); }
         .call-icon { background: #27ae60; color: white; }
         .call-icon:hover { background: #1e8f4f; }
@@ -145,33 +68,12 @@
         .detail-row { display: flex; padding: 6px 0; border-bottom: 1px solid #f1f5f9; flex-wrap: wrap; align-items: center; }
         .detail-label { width: 130px; font-weight: 500; color: #475569; font-size: 12px; }
         .detail-value { flex: 1; color: #1e293b; font-size: 13px; font-weight: 500; }
-        .edit-icon { 
-            cursor: pointer; 
-            margin-left: 8px; 
-            color: white; 
-            font-size: 12px; 
-            background: #3b82f6; 
-            padding: 4px 10px; 
-            border-radius: 20px;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            transition: all 0.2s;
-            font-weight: 500;
-        }
+        .edit-icon { cursor: pointer; margin-left: 8px; color: white; font-size: 12px; background: #3b82f6; padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; font-weight: 500; }
         .edit-icon:hover { background: #2563eb; transform: scale(1.02); }
         .ins-red { color: #dc2626; font-weight: 500; }
         
         .action-row { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; justify-content: center; }
-        .action-sm { 
-            padding: 6px 14px; 
-            font-size: 12px; 
-            border-radius: 30px; 
-            border: none; 
-            font-weight: 600; 
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+        .action-sm { padding: 6px 14px; font-size: 12px; border-radius: 30px; border: none; font-weight: 600; cursor: pointer; transition: all 0.2s; }
         .action-sm:hover { transform: translateY(-1px); }
         .inject-sm { background: #27ae60; color: white; }
         .inject-sm:hover { background: #1e8f4f; }
@@ -195,42 +97,17 @@
         .form-group.full-width { grid-column: span 2; }
         .form-group label { font-weight: 500; font-size: 12px; color: #475569; }
         .form-group input, .form-group select, .form-group textarea { padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 14px; }
-        
         .modal-footer { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
         .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
         
         .appt-edit-content { max-width: 380px; }
         .datetime-input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 14px; margin: 16px 0; }
         
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-            flex-direction: column;
-            gap: 16px;
-        }
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3b82f6;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 10000; flex-direction: column; gap: 16px; }
+        .loading-spinner { width: 50px; height: 50px; border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .loading-text { color: white; font-size: 16px; }
-        .cancel-extract { background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 30px; cursor: pointer; margin-top: 10px; font-weight: 600; }
-        .cancel-extract:hover { background: #dc2626; }
+        .sync-error { background: #fee2e2; color: #dc2626; padding: 8px; border-radius: 12px; margin-top: 8px; font-size: 12px; display: none; }
         
         @media (max-width: 600px) {
             .collapsed-view { flex-direction: column; align-items: stretch; }
@@ -248,13 +125,14 @@
                 <div class="search-wrapper">
                     <input type="text" id="searchInput" placeholder="Search name or file...">
                     <button id="clearSearchBtn" class="btn-sm btn-outline">Clear</button>
-                    <button id="refreshBtn" class="btn-sm btn-secondary">⟳ Sync with Sheet</button>
+                    <button id="refreshBtn" class="btn-sm btn-primary">⟳ Sync Now</button>
                 </div>
             </div>
             <div class="sync-status">
-                <span id="syncStatus">⚡ Ready</span>
+                <span id="syncStatus">☁️ Cloud connected</span>
                 <span id="recordCount"></span>
             </div>
+            <div id="syncError" class="sync-error"></div>
         </div>
 
         <div class="tabs" id="tabsContainer">
@@ -270,7 +148,7 @@
         <button id="addPatientBtn" class="add-btn">+ Add New Patient</button>
 
         <div id="patientList" class="patient-list">
-            <div class="empty-state">Loading patients...</div>
+            <div class="empty-state">Loading patients from cloud...</div>
         </div>
         
         <div id="reportView" style="display:none;">
@@ -279,9 +157,8 @@
                 <div class="data-buttons" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
                     <button id="importCSVBtn" class="btn-sm btn-secondary">📄 Import CSV</button>
                     <button id="importPDFBtn" class="btn-sm btn-secondary">📑 Import PDF</button>
-                    <button id="exportBtn" class="btn-sm btn-secondary">📥 Backup</button>
+                    <button id="exportBtn" class="btn-sm btn-secondary">📥 Export Backup</button>
                     <button id="restoreBackupBtn" class="btn-sm btn-danger">↺ Restore Backup</button>
-                    <button id="importBtn" class="btn-sm btn-secondary">📤 Restore JSON</button>
                     <input type="file" id="importFile" accept=".json" style="display:none">
                     <input type="file" id="csvFileInput" accept=".csv" style="display:none">
                     <input type="file" id="pdfFileInput" accept=".pdf" style="display:none">
@@ -358,8 +235,8 @@
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay" style="display:none;">
         <div class="loading-spinner"></div>
-        <div class="loading-text">Processing...</div>
-        <button id="cancelExtractBtn" class="cancel-extract">Cancel</button>
+        <div class="loading-text">Syncing with cloud...</div>
+        <button id="cancelExtractBtn" class="cancel-extract" style="background:#ef4444; color:white; border:none; padding:10px 20px; border-radius:30px; cursor:pointer; margin-top:10px;">Cancel</button>
     </div>
 
     <!-- Appointment Date Edit Modal -->
@@ -435,7 +312,7 @@
                     <div class="form-group full-width"><label>Adverse Effects Comments</label><textarea id="adverseEffects" rows="2"></textarea></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" id="deletePatientBtn" class="btn-sm btn-secondary" style="display:none; background:#fef2f2; color:#dc2626;">Delete</button>
+                    <button type="button" id="deletePatientBtn" class="btn-sm btn-danger" style="display:none;">Delete</button>
                     <button type="submit" class="btn-sm btn-primary">Save Patient</button>
                 </div>
             </form>
@@ -444,10 +321,11 @@
 
     <script>
         // ========== CONFIGURATION ==========
-        // Google Sheets CSV URL for cross-device sync
-        const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSYgD018ww2Mbkud6ZYmZHop7EXxcm_0Zl4V9bB2AaY4r4xXTWChAW6v-gUyjD4-2Qmg4H8O0kxryCf/pub?output=csv";
+        // REPLACE THIS WITH YOUR APPS SCRIPT WEB APP URL
+        // After deploying the Apps Script, copy the URL and paste it below
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwMQMBZRcMJgOX3F_Uo6fIkapzaa72kzyE_z7ZVe2Jd66dSr5-gKl4axKvUh8o4u9n2/exec";
         
-        // ========== DATA ==========
+        // ========== GLOBAL STATE ==========
         let patients = [];
         let currentEditFileNumber = null;
         let pendingConfirmCallback = null;
@@ -456,163 +334,159 @@
         let pendingInjectionFileNumber = null;
         let pendingAppointmentFileNumber = null;
         let lastExtractedData = null;
-        let pdfExtractionCancelled = false;
+        let isSyncing = false;
 
         const doseToWeeks = { '7.5': 4, '22.5': 12, '30': 16, '45': 24 };
 
-        // ========== LOCAL STORAGE (CACHE) ==========
-        function saveToLocalStorage() { 
-            localStorage.setItem('patientTrackerData', JSON.stringify(patients)); 
-            document.getElementById('recordCount').innerHTML = `📋 ${patients.length}`;
-            localStorage.setItem('patientTrackerLastUpdate', new Date().toISOString());
-        }
-        
-        function loadFromLocalStorage() { 
-            const saved = localStorage.getItem('patientTrackerData'); 
-            patients = (saved && saved !== '[]') ? JSON.parse(saved) : []; 
-            document.getElementById('recordCount').innerHTML = `📋 ${patients.length}`; 
-            renderCurrentTab(); 
-        }
-
-        function escapeHtml(str) { 
-            if (!str) return ''; 
-            return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); 
-        }
-
-        // ========== CROSS-DEVICE SYNC WITH GOOGLE SHEETS ==========
-        async function syncWithSheet() {
-            const userConfirmed = confirm(
-                `⚠️ Sync with Google Sheet (Cross-Device Sync)\n\n` +
-                `This will:\n` +
-                `✅ PUSH your local changes to the cloud\n` +
-                `✅ PULL updates from other devices\n` +
-                `✅ MERGE data based on File Number\n` +
-                `❌ NOT delete any existing records\n\n` +
-                `Current patients: ${patients.length}\n\n` +
-                `Proceed with sync?`
-            );
+        // ========== CLOUD API CALLS ==========
+        async function callCloudAPI(action, data = {}) {
+            if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
+                showError('Apps Script URL not configured. Please deploy Apps Script and update the URL.');
+                return { success: false, error: 'API not configured' };
+            }
             
-            if (!userConfirmed) return;
-            
-            document.getElementById('syncStatus').innerHTML = '🔄 Syncing with cloud...';
+            const params = new URLSearchParams({ action, ...data });
+            const url = `${APPS_SCRIPT_URL}?${params.toString()}`;
             
             try {
-                const response = await fetch(GOOGLE_SHEETS_CSV_URL);
-                const csvText = await response.text();
-                const rows = csvText.split('\n');
-                const headers = rows[0].split(',').map(h => h.trim().replace(/"/g, ''));
-                
-                const cloudPatients = [];
-                for (let i = 1; i < rows.length; i++) {
-                    if (!rows[i].trim()) continue;
-                    let values = [], inQuote = false, currentValue = '';
-                    for (let j = 0; j < rows[i].length; j++) {
-                        const char = rows[i][j];
-                        if (char === '"') inQuote = !inQuote;
-                        else if (char === ',' && !inQuote) { 
-                            values.push(currentValue.trim().replace(/^"|"$/g, '')); 
-                            currentValue = ''; 
-                        }
-                        else currentValue += char;
-                    }
-                    values.push(currentValue.trim().replace(/^"|"$/g, ''));
-                    const patient = {};
-                    headers.forEach((header, idx) => { 
-                        patient[header] = values[idx] || ''; 
-                    });
-                    if (patient['Patient Name'] && patient['Patient Name'] !== 'Patient Name') {
-                        patient['Injection Administered'] = patient['Injection Administered'] === 'TRUE';
-                        patient['Appointment Confirmed'] = patient['Appointment Confirmed'] === 'TRUE';
-                        patient['Pending'] = patient['Pending'] === 'TRUE';
-                        patient['Archived'] = patient['Archived'] === 'TRUE';
-                        if (!patient['Doses Remaining'] || patient['Doses Remaining'] === '') {
-                            patient['Doses Remaining'] = patient['Total Doses'] || '4';
-                        }
-                        cloudPatients.push(patient);
-                    }
-                }
-                
-                localStorage.setItem('patientTrackerBackup', JSON.stringify(patients));
-                
-                let updatedCount = 0;
-                let newCount = 0;
-                
-                for (const cloudPatient of cloudPatients) {
-                    const existingIndex = patients.findIndex(p => p['File Number'] === cloudPatient['File Number']);
-                    
-                    if (existingIndex === -1) {
-                        patients.push(cloudPatient);
-                        newCount++;
-                    } else {
-                        const localPatient = patients[existingIndex];
-                        const mergedPatient = { ...cloudPatient };
-                        
-                        mergedPatient['Doses Remaining'] = localPatient['Doses Remaining'];
-                        mergedPatient['Injection Administered'] = localPatient['Injection Administered'];
-                        mergedPatient['Appointment Confirmed'] = localPatient['Appointment Confirmed'] || cloudPatient['Appointment Confirmed'];
-                        mergedPatient['Pending'] = localPatient['Pending'];
-                        mergedPatient['Archived'] = localPatient['Archived'];
-                        mergedPatient['Previous Injection Site'] = localPatient['Previous Injection Site'] || cloudPatient['Previous Injection Site'];
-                        mergedPatient['Injection Site'] = localPatient['Injection Site'] || cloudPatient['Injection Site'];
-                        mergedPatient['Previous Injection Dates'] = localPatient['Previous Injection Dates'] || cloudPatient['Previous Injection Dates'];
-                        mergedPatient['Special Instructions'] = localPatient['Special Instructions'] || cloudPatient['Special Instructions'];
-                        mergedPatient['Adverse Effects Comments'] = localPatient['Adverse Effects Comments'] || cloudPatient['Adverse Effects Comments'];
-                        
-                        patients[existingIndex] = mergedPatient;
-                        updatedCount++;
-                    }
-                }
-                
-                saveToLocalStorage();
-                renderCurrentTab();
-                
-                let message = `✅ Sync Complete!\n\n`;
-                message += `📊 Total patients: ${patients.length}\n`;
-                message += `📥 New patients from cloud: ${newCount}\n`;
-                message += `🔄 Updated existing patients: ${updatedCount}\n`;
-                message += `💾 Backup saved automatically\n\n`;
-                message += `Your data is now synchronized across devices.`;
-                
-                alert(message);
-                document.getElementById('syncStatus').innerHTML = `✅ Synced: ${patients.length} patients | Last sync: ${new Date().toLocaleTimeString()}`;
-                
-                document.getElementById('restoreBackupBtn').style.display = 'inline-block';
-                
-            } catch(error) { 
-                document.getElementById('syncStatus').innerHTML = '❌ Sync failed'; 
-                console.error('Sync error:', error);
-                alert(`❌ Sync failed: ${error.message}\n\nPlease check your internet connection and try again.`);
-            }
-        }
-        
-        function restoreFromBackup() {
-            const backup = localStorage.getItem('patientTrackerBackup');
-            if (!backup) {
-                alert('No backup found. Run a sync first to create a backup.');
-                return;
-            }
-            
-            const backupData = JSON.parse(backup);
-            const currentCount = patients.length;
-            const backupCount = backupData.length;
-            
-            const confirmed = confirm(`⚠️ Restore from Backup\n\n` +
-                `Current patients: ${currentCount}\n` +
-                `Backup patients: ${backupCount}\n\n` +
-                `This will REPLACE all current data with the backup.\n\n` +
-                `⚠️ Any changes made since the last sync will be LOST.\n\n` +
-                `Are you sure you want to proceed?`);
-                
-            if (confirmed) {
-                patients = backupData;
-                saveToLocalStorage();
-                renderCurrentTab();
-                alert(`✅ Restored ${patients.length} patients from backup.`);
-                document.getElementById('syncStatus').innerHTML = `✅ Restored from backup: ${patients.length} patients`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                });
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                console.error('API Error:', error);
+                showError(`Sync failed: ${error.message}`);
+                return { success: false, error: error.message };
             }
         }
 
-        // ========== ENHANCED INJECTION FLOW ==========
+        function showError(message) {
+            const errorDiv = document.getElementById('syncError');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => { errorDiv.style.display = 'none'; }, 5000);
+        }
+
+        // ========== PULL DATA FROM CLOUD ==========
+        async function pullFromCloud(showLoading = true) {
+            if (isSyncing) return false;
+            isSyncing = true;
+            
+            if (showLoading) {
+                document.getElementById('loadingOverlay').style.display = 'flex';
+                document.getElementById('syncStatus').innerHTML = '🔄 Syncing from cloud...';
+            }
+            
+            try {
+                const result = await callCloudAPI('getAllPatients');
+                
+                if (result && result.success && result.patients) {
+                    patients = result.patients;
+                    // Save a backup copy to localStorage (only for emergency restore)
+                    localStorage.setItem('patientTrackerBackup', JSON.stringify(patients));
+                    localStorage.setItem('patientTrackerLastSync', new Date().toISOString());
+                    renderCurrentTab();
+                    document.getElementById('syncStatus').innerHTML = `✅ Synced: ${patients.length} patients | ${new Date().toLocaleTimeString()}`;
+                    document.getElementById('recordCount').innerHTML = `📋 ${patients.length}`;
+                    return true;
+                } else {
+                    showError(result?.error || 'Failed to sync with cloud');
+                    document.getElementById('syncStatus').innerHTML = '❌ Sync failed';
+                    return false;
+                }
+            } catch (error) {
+                showError(`Connection error: ${error.message}`);
+                document.getElementById('syncStatus').innerHTML = '❌ Offline mode';
+                return false;
+            } finally {
+                isSyncing = false;
+                if (showLoading) {
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                }
+            }
+        }
+
+        // ========== PUSH DATA TO CLOUD ==========
+        async function pushToCloud(action, patientData) {
+            document.getElementById('syncStatus').innerHTML = '🔄 Saving to cloud...';
+            
+            let result;
+            if (action === 'addPatient') {
+                result = await callCloudAPI('addPatient', { data: JSON.stringify(patientData) });
+            } else if (action === 'updatePatient') {
+                result = await callCloudAPI('updatePatient', { 
+                    fileNumber: patientData['File Number'], 
+                    data: JSON.stringify(patientData) 
+                });
+            } else if (action === 'deletePatient') {
+                result = await callCloudAPI('deletePatient', { fileNumber: patientData });
+            } else if (action === 'administerInjection') {
+                result = await callCloudAPI('administerInjection', { 
+                    fileNumber: patientData.fileNumber, 
+                    data: JSON.stringify(patientData.data) 
+                });
+            } else if (action === 'confirmAppointment') {
+                result = await callCloudAPI('confirmAppointment', { fileNumber: patientData });
+            }
+            
+            if (result && result.success) {
+                // After successful write, pull fresh data
+                await pullFromCloud(false);
+                return true;
+            } else {
+                showError(result?.error || 'Failed to save to cloud');
+                return false;
+            }
+        }
+
+        // ========== DATA OPERATIONS (with cloud sync) ==========
+        async function addPatientToCloud(patientData) {
+            return await pushToCloud('addPatient', patientData);
+        }
+        
+        async function updatePatientInCloud(patientData) {
+            return await pushToCloud('updatePatient', patientData);
+        }
+        
+        async function deletePatientFromCloud(fileNumber) {
+            return await pushToCloud('deletePatient', fileNumber);
+        }
+        
+        async function recordInjectionInCloud(fileNumber, injectionData) {
+            return await pushToCloud('administerInjection', { fileNumber, data: injectionData });
+        }
+        
+        async function confirmAppointmentInCloud(fileNumber) {
+            return await pushToCloud('confirmAppointment', fileNumber);
+        }
+
+        // ========== DOSING LOGIC ==========
+        function calculateNextDueDate(currentDueDate, dosePrescribed, referenceDate) {
+            const weeks = doseToWeeks[dosePrescribed] || 4;
+            const newDate = new Date(referenceDate);
+            newDate.setDate(newDate.getDate() + (weeks * 7));
+            return newDate.toISOString().split('T')[0];
+        }
+        
+        function getReferenceDateForDueDate(patient, injectionGivenToday = true) {
+            const today = new Date().toISOString().split('T')[0];
+            const apptDate = patient['Appointment Date & Time'] ? new Date(patient['Appointment Date & Time']).toISOString().split('T')[0] : null;
+            const injectionDate = patient['Previous Injection Dates'] ? patient['Previous Injection Dates'].split(',').pop()?.trim() : null;
+            const isInjectionConfirmed = patient['Injection Administered'] === true;
+            const isAppointmentConfirmed = patient['Appointment Confirmed'] === true;
+            const todayDate = new Date();
+            const apptDateObj = patient['Appointment Date & Time'] ? new Date(patient['Appointment Date & Time']) : null;
+            const hasAppointmentPassed = apptDateObj && apptDateObj < todayDate;
+            
+            if (isAppointmentConfirmed && isInjectionConfirmed && injectionDate === apptDate) return injectionDate;
+            if (hasAppointmentPassed && !isInjectionConfirmed && isAppointmentConfirmed) return apptDate;
+            return injectionGivenToday ? today : today;
+        }
+
+        // ========== INJECTION FLOW ==========
         function showInjectionModal(fileNumber) {
             pendingInjectionFileNumber = fileNumber;
             const patient = patients.find(p => p['File Number'] === fileNumber);
@@ -634,7 +508,6 @@
             
             const specialInstructions = document.getElementById('injectionSpecialInstructions').value;
             const adverseEvents = document.getElementById('injectionAdverseEvents').value;
-            
             const fileNumber = pendingInjectionFileNumber;
             const patient = patients.find(p => p['File Number'] === fileNumber);
             if (!patient) return;
@@ -645,8 +518,7 @@
             if (dosesRemaining <= 0) {
                 alert('No doses remaining! This patient will be moved to Pending tab.');
                 patient['Pending'] = true;
-                saveToLocalStorage();
-                renderCurrentTab();
+                await updatePatientInCloud(patient);
                 document.getElementById('injectionModal').style.display = 'none';
                 pendingInjectionFileNumber = null;
                 return;
@@ -657,9 +529,7 @@
             prevDates.push(today);
             patient['Previous Injection Dates'] = prevDates.join(', ');
             
-            if (patient['Injection Site']) {
-                patient['Previous Injection Site'] = patient['Injection Site'];
-            }
+            if (patient['Injection Site']) patient['Previous Injection Site'] = patient['Injection Site'];
             patient['Injection Site'] = injectionSite;
             
             if (specialInstructions) {
@@ -691,45 +561,12 @@
                 alert(`✅ Injection administered at ${injectionSite}.\n\nDoses given: ${totalDoses - newDosesRemaining} of ${totalDoses}\nDoses remaining: ${newDosesRemaining}\nNew due date: ${patient['Due Date'] || 'Not set'}`);
             }
             
-            saveToLocalStorage();
-            renderCurrentTab();
+            await recordInjectionInCloud(fileNumber, patient);
             document.getElementById('injectionModal').style.display = 'none';
             pendingInjectionFileNumber = null;
         }
-        
-        function calculateNextDueDate(currentDueDate, dosePrescribed, referenceDate) {
-            const weeks = doseToWeeks[dosePrescribed] || 4;
-            const newDate = new Date(referenceDate);
-            newDate.setDate(newDate.getDate() + (weeks * 7));
-            return newDate.toISOString().split('T')[0];
-        }
-        
-        function getReferenceDateForDueDate(patient, injectionGivenToday = true) {
-            const today = new Date().toISOString().split('T')[0];
-            const apptDate = patient['Appointment Date & Time'] ? new Date(patient['Appointment Date & Time']).toISOString().split('T')[0] : null;
-            const injectionDate = patient['Previous Injection Dates'] ? patient['Previous Injection Dates'].split(',').pop()?.trim() : null;
-            const isInjectionConfirmed = patient['Injection Administered'] === true;
-            const isAppointmentConfirmed = patient['Appointment Confirmed'] === true;
-            const todayDate = new Date();
-            const apptDateObj = patient['Appointment Date & Time'] ? new Date(patient['Appointment Date & Time']) : null;
-            const hasAppointmentPassed = apptDateObj && apptDateObj < todayDate;
-            
-            if (isAppointmentConfirmed && isInjectionConfirmed && injectionDate === apptDate) {
-                return injectionDate;
-            }
-            
-            if (hasAppointmentPassed && !isInjectionConfirmed && isAppointmentConfirmed) {
-                return apptDate;
-            }
-            
-            if (injectionGivenToday) {
-                return today;
-            }
-            
-            return today;
-        }
 
-        // ========== APPOINTMENT CONFIRMATION (Moves to Scheduled Tab) ==========
+        // ========== APPOINTMENT CONFIRMATION ==========
         function openAppointmentEditor(fileNumber) {
             pendingAppointmentFileNumber = fileNumber;
             const patient = patients.find(p => p['File Number'] === fileNumber);
@@ -758,9 +595,8 @@
             if (patient) {
                 patient['Appointment Date & Time'] = newAppointmentDate;
                 patient['Appointment Confirmed'] = true;
-                
-                saveToLocalStorage();
-                renderCurrentTab();
+                await confirmAppointmentInCloud(fileNumber);
+                await pullFromCloud(false);
                 
                 const dateDisplay = new Date(newAppointmentDate).toLocaleString();
                 alert(`✅ Appointment confirmed for ${patient['Patient Name']} on ${dateDisplay}\nPatient moved to Scheduled tab.`);
@@ -770,245 +606,65 @@
             pendingAppointmentFileNumber = null;
         }
 
-        // ========== ENHANCED PDF EXTRACTION ==========
-        async function importPDF(file) {
-            const fileInput = document.getElementById('pdfFileInput');
-            const selectedFile = fileInput.files[0];
-            
-            if (!selectedFile) {
-                alert('Please select a PDF file');
-                return;
-            }
-            
-            if (selectedFile.type !== 'application/pdf') {
-                alert('Please select a valid PDF file');
-                return;
-            }
-            
-            pdfExtractionCancelled = false;
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            loadingOverlay.style.display = 'flex';
-            document.getElementById('syncStatus').innerHTML = '🔄 Reading PDF...';
-            
-            try {
-                const arrayBuffer = await selectedFile.arrayBuffer();
-                
-                if (pdfExtractionCancelled) {
-                    loadingOverlay.style.display = 'none';
-                    document.getElementById('syncStatus').innerHTML = '⚡ Extraction cancelled';
-                    return;
-                }
-                
-                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-                const pdf = await loadingTask.promise;
-                
-                let fullText = '';
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    if (pdfExtractionCancelled) {
-                        loadingOverlay.style.display = 'none';
-                        document.getElementById('syncStatus').innerHTML = '⚡ Extraction cancelled';
-                        return;
-                    }
-                    const page = await pdf.getPage(i);
-                    const textContent = await page.getTextContent();
-                    const pageText = textContent.items.map(item => item.str).join(' ');
-                    fullText += pageText + '\n';
-                }
-                
-                loadingOverlay.style.display = 'none';
-                
-                if (!fullText.trim()) {
-                    alert('No readable text found in this PDF. It may be a scanned image.');
-                    return;
-                }
-                
-                const extractedData = extractPatientDataFromPDF(fullText);
-                lastExtractedData = extractedData;
-                showExtractionPreview(extractedData, fullText);
-                document.getElementById('syncStatus').innerHTML = '✅ PDF processed';
-                
-            } catch (error) {
-                loadingOverlay.style.display = 'none';
-                console.error('PDF extraction error:', error);
-                alert(`Error reading PDF: ${error.message}\n\nMake sure the PDF is not password-protected.`);
-                document.getElementById('syncStatus').innerHTML = '❌ PDF extraction failed';
-            }
-        }
-        
-        document.getElementById('cancelExtractBtn').addEventListener('click', () => {
-            pdfExtractionCancelled = true;
-            document.getElementById('loadingOverlay').style.display = 'none';
-            document.getElementById('syncStatus').innerHTML = '⚡ Extraction cancelled';
-        });
-
-        function extractPatientDataFromPDF(text) {
-            const extracted = {
-                patientName: null,
-                fileNumber: null,
-                address: null,
-                city: null,
-                phone1: null,
-                phone2: null,
-                dosePrescribed: null,
-                totalDoses: null,
-                appointmentDate: null
-            };
-            
-            const nameMatch = text.match(/(?:PATIENT NAME\/NOM DU PATIENT|PATIENT NAME|NOM DU PATIENT)[\s]*([A-Z][A-Z\s]+[A-Z])/i);
-            if (nameMatch) extracted.patientName = nameMatch[1].trim().replace(/\s+/g, ' ');
-            
-            const medicumMatch = text.match(/MEDICUM\s*#:\s*(\d+)/i);
-            if (medicumMatch) extracted.fileNumber = medicumMatch[1];
-            
-            const addressMatch = text.match(/ADDRESS\/ADRESSE[\s]*([A-Za-z0-9\s,.-]+?)(?:CITY|VILLE|$)/i);
-            if (addressMatch) extracted.address = addressMatch[1].trim();
-            
-            const phonePattern = /(\d{3}[\s-]?\d{3}[\s-]?\d{4})/g;
-            const phones = [...text.matchAll(phonePattern)];
-            if (phones.length > 0) extracted.phone1 = phones[0][1];
-            if (phones.length > 1) extracted.phone2 = phones[1][1];
-            
-            const doseMatch = text.match(/(\d+\.?\d*)\s*mg/i);
-            if (doseMatch && [7.5, 22.5, 30, 45].includes(parseFloat(doseMatch[1]))) {
-                extracted.dosePrescribed = parseFloat(doseMatch[1]).toString();
-            }
-            
-            const apptMatch = text.match(/injection seulement\s+(\d{1,2})\s+([A-Za-zéè]+)\s+(\d{4})/i);
-            if (apptMatch) {
-                const months = {'janvier':'01','février':'02','mars':'03','avril':'04','mai':'05','juin':'06','juillet':'07','août':'08','septembre':'09','octobre':'10','novembre':'11','décembre':'12'};
-                extracted.appointmentDate = `${apptMatch[3]}-${months[apptMatch[2].toLowerCase()] || '01'}-${apptMatch[1].padStart(2, '0')}`;
-            }
-            
-            return extracted;
-        }
-
-        function showExtractionPreview(extractedData, fullText) {
-            const previewContent = document.getElementById('pdfPreviewContent');
-            let existingPatient = null;
-            if (extractedData.fileNumber) {
-                existingPatient = patients.find(p => p['File Number'] === extractedData.fileNumber);
-            }
-            
-            let warningHtml = '';
-            if (existingPatient) {
-                warningHtml = `<div style="background:#fef3c7; padding:12px; border-radius:12px; margin-bottom:16px; color:#b45309;">
-                    ⚠️ WARNING: Patient with File # ${extractedData.fileNumber} already exists (${existingPatient['Patient Name']}). 
-                    Adding this will create a duplicate record.
-                </div>`;
-            }
-            
-            previewContent.innerHTML = `
-                ${warningHtml}
-                <div style="background:#f8fafc; padding:12px; border-radius:12px; margin-bottom:16px;">
-                    <h3 style="margin-bottom:12px;">📋 Extracted Information</h3>
-                    <div style="display:grid; gap:8px;">
-                        <div><strong>Patient Name:</strong> ${extractedData.patientName || '❌ Not found'}</div>
-                        <div><strong>File Number:</strong> ${extractedData.fileNumber || '❌ Not found'}</div>
-                        <div><strong>Address:</strong> ${extractedData.address || '❌ Not found'}</div>
-                        <div><strong>Phone 1:</strong> ${extractedData.phone1 || '❌ Not found'}</div>
-                        <div><strong>Phone 2:</strong> ${extractedData.phone2 || '❌ Not found'}</div>
-                        <div><strong>Dose Prescribed:</strong> ${extractedData.dosePrescribed ? `${extractedData.dosePrescribed} mg` : '❌ Not found'}</div>
-                        <div><strong>Appointment Date:</strong> ${extractedData.appointmentDate || '❌ Not found'}</div>
-                    </div>
-                </div>
-                <details style="margin-top:8px;">
-                    <summary style="cursor:pointer; color:#64748b;">🔍 View extracted raw text</summary>
-                    <textarea style="width:100%; height:150px; margin-top:10px; padding:8px; font-size:11px; border-radius:8px; border:1px solid #e2e8f0;" readonly>${escapeHtml(fullText)}</textarea>
-                </details>
-            `;
-            document.getElementById('pdfPreviewModal').style.display = 'block';
-        }
-
-        async function addExtractedPatient() {
-            const data = lastExtractedData;
-            if (!data || (!data.patientName && !data.fileNumber)) {
-                alert('No valid patient data to add');
-                document.getElementById('pdfPreviewModal').style.display = 'none';
-                return;
-            }
-            
-            if (data.fileNumber) {
-                const existingPatient = patients.find(p => p['File Number'] === data.fileNumber);
-                if (existingPatient && !confirm(`WARNING: Patient with File # ${data.fileNumber} already exists (${existingPatient['Patient Name']}).\n\nAdd duplicate?`)) {
-                    document.getElementById('pdfPreviewModal').style.display = 'none';
-                    return;
-                }
-            }
-            
-            const defaultDueDate = new Date();
-            defaultDueDate.setDate(defaultDueDate.getDate() + 7);
-            
-            const newPatient = {
-                'Patient Name': data.patientName || 'Unknown Patient',
-                'File Number': data.fileNumber || `PDF_${Date.now()}`,
-                'Address': data.address || '',
-                'Phone 1': data.phone1 || '',
-                'Phone 2': data.phone2 || '',
-                'Dose Prescribed': data.dosePrescribed || '7.5',
-                'Total Doses': '4',
-                'Doses Remaining': '4',
-                'Previous Injection Site': '',
-                'Injection Site': '',
-                'Due Date': defaultDueDate.toISOString().split('T')[0],
-                'Appointment Date & Time': data.appointmentDate ? `${data.appointmentDate}T10:00:00` : '',
-                'Previous Injection Dates': '',
-                'Assignment Type': 'Permanent',
-                'Special Instructions': '',
-                'Adverse Effects Comments': '',
-                'File Status': 'Active',
-                'Injection Administered': false,
-                'Appointment Confirmed': !!data.appointmentDate,
-                'Pending': false,
-                'Archived': false
-            };
-            
-            patients.push(newPatient);
-            saveToLocalStorage();
-            renderCurrentTab();
-            alert(`✅ Patient added from PDF: ${newPatient['Patient Name']} (${newPatient['File Number']})`);
-            document.getElementById('pdfPreviewModal').style.display = 'none';
-            lastExtractedData = null;
-        }
-
         // ========== PATIENT CRUD ==========
-        async function moveToAllPatients(fileNumber) { 
-            const p = patients.find(p => p['File Number'] === fileNumber); 
-            if(p) { 
-                showConfirmDialog(`Move ${p['Patient Name']} to All Patients?`, async () => { 
-                    p['Pending'] = false; 
-                    p['Archived'] = false; 
-                    saveToLocalStorage(); 
-                    renderCurrentTab();
-                }); 
-            } 
+        async function addPatientManually(patientData) {
+            const success = await addPatientToCloud(patientData);
+            if (success) {
+                await pullFromCloud(false);
+                alert('Patient saved successfully!');
+                return true;
+            }
+            return false;
         }
         
-        async function markPending(fileNumber) { 
-            const p = patients.find(p => p['File Number'] === fileNumber); 
-            if(p) { 
-                p['Pending'] = true; 
-                p['Archived'] = false; 
-                saveToLocalStorage(); 
-                renderCurrentTab();
-            } 
+        async function updatePatientManually(patientData) {
+            const success = await updatePatientInCloud(patientData);
+            if (success) {
+                await pullFromCloud(false);
+                alert('Patient updated successfully!');
+                return true;
+            }
+            return false;
         }
         
-        async function deletePatient(fileNumber) { 
-            patients = patients.filter(p => p['File Number'] !== fileNumber); 
-            saveToLocalStorage(); 
-            renderCurrentTab();
+        async function deletePatientManually(fileNumber) {
+            if (await deletePatientFromCloud(fileNumber)) {
+                await pullFromCloud(false);
+                return true;
+            }
+            return false;
+        }
+        
+        async function markPending(fileNumber) {
+            const p = patients.find(p => p['File Number'] === fileNumber);
+            if (p) {
+                p['Pending'] = true;
+                p['Archived'] = false;
+                await updatePatientInCloud(p);
+                await pullFromCloud(false);
+            }
+        }
+        
+        async function moveToAllPatients(fileNumber) {
+            const p = patients.find(p => p['File Number'] === fileNumber);
+            if (p) {
+                p['Pending'] = false;
+                p['Archived'] = false;
+                await updatePatientInCloud(p);
+                await pullFromCloud(false);
+            }
         }
 
-        // ========== FILTERING & SORTING (UPDATED) ==========
+        // ========== FILTERING & SORTING ==========
         function getFilteredPatients() {
             const today = new Date(); today.setHours(0,0,0,0);
             const todayStr = today.toISOString().split('T')[0];
             let filtered = patients.filter(p => {
-                // Handle archived and pending first
                 if (p['Archived'] && currentTab !== 'archived') return false;
                 if (!p['Archived'] && currentTab === 'archived') return false;
                 if (p['Pending'] && currentTab !== 'pending') return false;
                 if (!p['Pending'] && currentTab === 'pending') return false;
+                if (currentTab === 'all' && (p['Archived'] || p['Pending'])) return false;
                 
                 const dueDate = p['Due Date'] ? new Date(p['Due Date']) : null;
                 const apptDate = p['Appointment Date & Time'] ? new Date(p['Appointment Date & Time']) : null;
@@ -1018,33 +674,25 @@
                 const isOverdue = apptDate && apptDate < today && !p['Injection Administered'] && hasConfirmedAppointment;
                 
                 switch(currentTab) {
-                    case 'all': 
-                        // All Patients tab: ONLY patients with NO confirmed appointment
-                        // Or patients with appointment date that has passed and no injection (overdue logic)
-                        return !p['Archived'] && !p['Pending'] && !hasConfirmedAppointment;
-                    case 'today': 
-                        // Today tab: confirmed appointments for today that are not overdue
-                        return isAppointmentToday && hasConfirmedAppointment && !isOverdue;
-                    case 'scheduled': 
-                        // Scheduled tab: future confirmed appointments
-                        return isFutureAppointment && hasConfirmedAppointment === true && !p['Archived'] && !p['Pending'];
-                    case 'overdue': 
-                        // Overdue tab: appointment date passed, confirmed, but no injection given
-                        return isOverdue && !p['Archived'] && !p['Pending'];
-                    case 'pending': 
-                        return p['Pending'] && !p['Archived'];
-                    case 'archived': 
-                        return p['Archived'];
-                    default: 
-                        return !p['Archived'];
+                    case 'all': return !p['Archived'] && !p['Pending'] && !hasConfirmedAppointment;
+                    case 'today': return isAppointmentToday && hasConfirmedAppointment && !isOverdue;
+                    case 'scheduled': return isFutureAppointment && hasConfirmedAppointment && !p['Archived'] && !p['Pending'];
+                    case 'overdue': return isOverdue && !p['Archived'] && !p['Pending'];
+                    case 'pending': return p['Pending'] && !p['Archived'];
+                    case 'archived': return p['Archived'];
+                    default: return !p['Archived'];
                 }
             });
-            
             if (searchQuery) { 
                 const q = searchQuery.toLowerCase(); 
                 filtered = filtered.filter(p => (p['Patient Name'] || '').toLowerCase().includes(q) || (p['File Number'] || '').toLowerCase().includes(q)); 
             }
             return filtered.sort((a,b) => new Date(a['Due Date']) - new Date(b['Due Date']));
+        }
+
+        function escapeHtml(str) { 
+            if (!str) return ''; 
+            return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); 
         }
 
         // ========== RENDERING ==========
@@ -1141,7 +789,7 @@
             document.querySelectorAll('[data-action="pending"]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); showConfirmDialog('Mark as pending?', () => markPending(btn.getAttribute('data-filenumber'))); }));
             document.querySelectorAll('[data-action="move"]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); moveToAllPatients(btn.getAttribute('data-filenumber')); }));
             document.querySelectorAll('[data-action="edit"]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); openEditModal(btn.getAttribute('data-filenumber')); }));
-            document.querySelectorAll('[data-action="delete"]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); showConfirmDialog('Delete permanently?', () => deletePatient(btn.getAttribute('data-filenumber'))); }));
+            document.querySelectorAll('[data-action="delete"]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); showConfirmDialog('Delete permanently?', () => deletePatientManually(btn.getAttribute('data-filenumber'))); }));
         }
 
         // ========== MODAL FUNCTIONS ==========
@@ -1207,20 +855,17 @@
                 'Pending': false, 
                 'Archived': false 
             }; 
+            
+            let success;
             if(currentEditFileNumber) { 
-                const idx = patients.findIndex(p => p['File Number'] === currentEditFileNumber); 
-                if(idx !== -1) { 
-                    data['Injection Administered'] = patients[idx]['Injection Administered']; 
-                    data['Appointment Confirmed'] = patients[idx]['Appointment Confirmed']; 
-                    data['Pending'] = patients[idx]['Pending']; 
-                    data['Archived'] = patients[idx]['Archived']; 
-                    patients[idx] = data; 
-                } 
-            } else patients.push(data); 
-            saveToLocalStorage(); 
-            closeModal(); 
-            renderCurrentTab(); 
-            alert('Patient saved successfully!'); 
+                success = await updatePatientManually(data);
+            } else { 
+                success = await addPatientManually(data);
+            }
+            
+            if (success) {
+                closeModal(); 
+            }
         }
         
         function closeModal() { document.getElementById('patientModal').style.display = 'none'; currentEditFileNumber = null; }
@@ -1228,28 +873,190 @@
         
         // ========== IMPORT/EXPORT ==========
         function exportData() { const blob = new Blob([JSON.stringify(patients, null, 2)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `backup_${new Date().toISOString().split('T')[0]}.json`; a.click(); URL.revokeObjectURL(a.href); alert(`✅ Exported ${patients.length} patients to JSON file.`); }
-        function importData(file) { const reader = new FileReader(); reader.onload = (e) => { try { const imported = JSON.parse(e.target.result); if(Array.isArray(imported)) { patients = imported; saveToLocalStorage(); renderCurrentTab(); alert(`✅ Imported ${imported.length} patients`); } } catch(err) { alert('Invalid file'); } }; reader.readAsText(file); }
-        function importCSV(file) { const reader = new FileReader(); reader.onload = (e) => { try { const rows = e.target.result.split('\n'); const headers = rows[0].split(',').map(h => h.trim().replace(/"/g, '')); let importedCount = 0; for (let i = 1; i < rows.length; i++) { if (!rows[i].trim()) continue; const values = rows[i].split(',').map(v => v.trim().replace(/"/g, '')); const patient = {}; headers.forEach((header, idx) => { patient[header] = values[idx] || ''; }); if (patient['Patient Name'] && !patients.find(p => p['File Number'] === patient['File Number'])) { patient['Doses Remaining'] = patient['Doses Remaining'] || patient['Total Doses'] || 4; patient['Injection Administered'] = false; patient['Appointment Confirmed'] = false; patient['Pending'] = false; patient['Archived'] = false; patients.push(patient); importedCount++; } } saveToLocalStorage(); renderCurrentTab(); alert(`✅ Imported ${importedCount} patients`); } catch(err) { alert('Error parsing CSV'); } }; reader.readAsText(file); }
+        function importData(file) { const reader = new FileReader(); reader.onload = async (e) => { try { const imported = JSON.parse(e.target.result); if(Array.isArray(imported)) { for (const patient of imported) { await addPatientManually(patient); } alert(`✅ Imported ${imported.length} patients`); } } catch(err) { alert('Invalid file'); } }; reader.readAsText(file); }
+        function importCSV(file) { const reader = new FileReader(); reader.onload = async (e) => { try { const rows = e.target.result.split('\n'); const headers = rows[0].split(',').map(h => h.trim().replace(/"/g, '')); let importedCount = 0; for (let i = 1; i < rows.length; i++) { if (!rows[i].trim()) continue; const values = rows[i].split(',').map(v => v.trim().replace(/"/g, '')); const patient = {}; headers.forEach((header, idx) => { patient[header] = values[idx] || ''; }); if (patient['Patient Name'] && !patients.find(p => p['File Number'] === patient['File Number'])) { patient['Doses Remaining'] = patient['Doses Remaining'] || patient['Total Doses'] || 4; patient['Injection Administered'] = false; patient['Appointment Confirmed'] = false; patient['Pending'] = false; patient['Archived'] = false; await addPatientManually(patient); importedCount++; } } alert(`✅ Imported ${importedCount} patients`); } catch(err) { alert('Error parsing CSV'); } }; reader.readAsText(file); }
         
-        function generateCustomReport() { const field = document.getElementById('reportField').value; const condition = document.getElementById('reportCondition').value; const value = document.getElementById('reportValue').value.toLowerCase(); let filtered = patients.filter(p => { let fv = p[field]; if (field === 'Due Date') { if (!fv) return false; const due = new Date(fv); const val = new Date(value); if (condition === 'equals') return due.toDateString() === val.toDateString(); if (condition === 'greater') return due > val; if (condition === 'less') return due < val; if (condition === 'contains') return fv.includes(value); } else if (field === 'Dose Prescribed') { if (condition === 'equals') return fv === value; if (condition === 'contains') return fv.includes(value); if (condition === 'greater') return parseFloat(fv) > parseFloat(value); if (condition === 'less') return parseFloat(fv) < parseFloat(value); } else if (field === 'Doses Remaining') { const rem = parseInt(fv) || 0; const val = parseInt(value); if (condition === 'equals') return rem === val; if (condition === 'greater') return rem > val; if (condition === 'less') return rem < val; } else { fv = String(fv || '').toLowerCase(); if (condition === 'equals') return fv === value; if (condition === 'contains') return fv.includes(value); } return false; }); if (filtered.length === 0) { document.getElementById('reportOutput').innerHTML = '<div class="empty-state">📭 No patients match</div>'; return; } let html = `<div style="background:white; border-radius:16px; padding:16px;"><strong>${filtered.length} patients found</strong><button onclick="exportReportToCSV()" class="btn-sm btn-secondary" style="margin-left:8px;">📥 Export</button>`; const grouped = {}; filtered.forEach(p => { const d = p['Due Date'] ? new Date(p['Due Date']).toLocaleDateString() : 'No Date'; if(!grouped[d]) grouped[d] = []; grouped[d].push(p); }); Object.keys(grouped).sort().forEach(date => { html += `<div class="date-separator" style="margin-top:12px;">📅 ${date}</div>`; grouped[date].forEach(p => { html += `<div style="padding:12px; border-bottom:1px solid #e2e8f0; cursor:pointer;" onclick="openEditModal('${p['File Number']}')"><strong>${escapeHtml(p['Patient Name'])}</strong> #${escapeHtml(p['File Number'])}<div style="font-size:12px; color:#64748b;">💊 ${p['Dose Prescribed']}mg | 💉 Remaining: ${p['Doses Remaining']}</div></div>`; }); }); html += `</div>`; document.getElementById('reportOutput').innerHTML = html; window.lastReportData = filtered; }
-        function exportReportToCSV() { if (!window.lastReportData) return; const headers = ['Patient Name','File Number','Phone 1','Address','Dose Prescribed','Doses Remaining','Due Date']; const rows = [headers.join(',')]; window.lastReportData.forEach(p => { rows.push(headers.map(h => { let v = p[h] || ''; if (v.includes(',')) v = `"${v}"`; return v; }).join(',')); }); const blob = new Blob([rows.join('\n')], {type:'text/csv'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `report.csv`; a.click(); URL.revokeObjectURL(a.href); }
-        function quickReport(type) { let field, condition, value; if(type === 'dueToday') { field='Due Date'; condition='equals'; value=new Date().toISOString().split('T')[0]; } else if(type === 'noRepeatsLeft') { field='Doses Remaining'; condition='equals'; value='0'; } else if(type === 'pendingPatients') { field='Pending'; condition='equals'; value='true'; } else if(type === 'tempPatients') { field='Assignment Type'; condition='equals'; value='Temporary'; } else return; document.getElementById('reportField').value=field; document.getElementById('reportCondition').value=condition; document.getElementById('reportValue').value=value; generateCustomReport(); }
-
-        // ========== INITIALIZATION ==========
-        document.addEventListener('DOMContentLoaded', () => {
-            loadFromLocalStorage();
-            
-            const backupExists = localStorage.getItem('patientTrackerBackup');
-            if (backupExists) {
-                document.getElementById('restoreBackupBtn').style.display = 'inline-block';
+        function restoreFromBackup() {
+            const backup = localStorage.getItem('patientTrackerBackup');
+            if (!backup) { alert('No backup found.'); return; }
+            const backupData = JSON.parse(backup);
+            if (confirm(`Restore ${backupData.length} patients from backup? Current data will be replaced.`)) {
+                patients = backupData;
+                renderCurrentTab();
+                alert('Backup restored locally. Click Sync to save to cloud.');
+            }
+        }
+        
+        // Report functions
+        function generateCustomReport() { 
+            const field = document.getElementById('reportField').value; 
+            const condition = document.getElementById('reportCondition').value; 
+            const value = document.getElementById('reportValue').value.toLowerCase(); 
+            let filtered = patients.filter(p => { 
+                let fv = p[field]; 
+                if (field === 'Due Date') { 
+                    if (!fv) return false; 
+                    const due = new Date(fv); 
+                    const val = new Date(value); 
+                    if (condition === 'equals') return due.toDateString() === val.toDateString(); 
+                    if (condition === 'greater') return due > val; 
+                    if (condition === 'less') return due < val; 
+                    if (condition === 'contains') return fv.includes(value); 
+                } else if (field === 'Dose Prescribed') { 
+                    if (condition === 'equals') return fv === value; 
+                    if (condition === 'contains') return fv.includes(value); 
+                    if (condition === 'greater') return parseFloat(fv) > parseFloat(value); 
+                    if (condition === 'less') return parseFloat(fv) < parseFloat(value); 
+                } else if (field === 'Doses Remaining') { 
+                    const rem = parseInt(fv) || 0; 
+                    const val = parseInt(value); 
+                    if (condition === 'equals') return rem === val; 
+                    if (condition === 'greater') return rem > val; 
+                    if (condition === 'less') return rem < val; 
+                } else { 
+                    fv = String(fv || '').toLowerCase(); 
+                    if (condition === 'equals') return fv === value; 
+                    if (condition === 'contains') return fv.includes(value); 
+                } 
+                return false; 
+            }); 
+            if (filtered.length === 0) { 
+                document.getElementById('reportOutput').innerHTML = '<div class="empty-state">📭 No patients match</div>'; 
+                return; 
+            } 
+            let html = `<div style="background:white; border-radius:16px; padding:16px;"><strong>${filtered.length} patients found</strong>`; 
+            const grouped = {}; 
+            filtered.forEach(p => { const d = p['Due Date'] ? new Date(p['Due Date']).toLocaleDateString() : 'No Date'; if(!grouped[d]) grouped[d] = []; grouped[d].push(p); }); 
+            Object.keys(grouped).sort().forEach(date => { 
+                html += `<div class="date-separator" style="margin-top:12px;">📅 ${date}</div>`; 
+                grouped[date].forEach(p => { 
+                    html += `<div style="padding:12px; border-bottom:1px solid #e2e8f0; cursor:pointer;" onclick="openEditModal('${p['File Number']}')"><strong>${escapeHtml(p['Patient Name'])}</strong> #${escapeHtml(p['File Number'])}<div style="font-size:12px; color:#64748b;">💊 ${p['Dose Prescribed']}mg | 💉 Remaining: ${p['Doses Remaining']}</div></div>`; 
+                }); 
+            }); 
+            html += `<div style="margin-top:16px;"><button onclick="exportReportToCSV()" class="btn-sm btn-secondary">📥 Export CSV</button></div></div>`; 
+            document.getElementById('reportOutput').innerHTML = html; 
+            window.lastReportData = filtered; 
+        }
+        
+        function exportReportToCSV() { 
+            if (!window.lastReportData) return; 
+            const headers = ['Patient Name','File Number','Phone 1','Address','Dose Prescribed','Doses Remaining','Due Date']; 
+            const rows = [headers.join(',')]; 
+            window.lastReportData.forEach(p => { 
+                rows.push(headers.map(h => { let v = p[h] || ''; if (v.includes(',')) v = `"${v}"`; return v; }).join(',')); 
+            }); 
+            const blob = new Blob([rows.join('\n')], {type:'text/csv'}); 
+            const a = document.createElement('a'); 
+            a.href = URL.createObjectURL(blob); 
+            a.download = `report.csv`; 
+            a.click(); 
+            URL.revokeObjectURL(a.href); 
+        }
+        
+        async function importPDF(file) {
+            const fileInput = document.getElementById('pdfFileInput');
+            const selectedFile = fileInput.files[0];
+            if (!selectedFile || selectedFile.type !== 'application/pdf') {
+                alert('Please select a valid PDF file');
+                return;
             }
             
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => { document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); currentTab = btn.getAttribute('data-tab'); searchQuery = ''; document.getElementById('searchInput').value = ''; renderCurrentTab(); }));
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            try {
+                const arrayBuffer = await selectedFile.arrayBuffer();
+                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+                const pdf = await loadingTask.promise;
+                let fullText = '';
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    fullText += textContent.items.map(item => item.str).join(' ') + '\n';
+                }
+                document.getElementById('loadingOverlay').style.display = 'none';
+                
+                const extractedData = {
+                    patientName: null,
+                    fileNumber: null,
+                    address: null,
+                    phone1: null,
+                    phone2: null,
+                    dosePrescribed: null
+                };
+                
+                const nameMatch = fullText.match(/(?:PATIENT NAME\/NOM DU PATIENT|PATIENT NAME|NOM DU PATIENT)[\s]*([A-Z][A-Z\s]+[A-Z])/i);
+                if (nameMatch) extractedData.patientName = nameMatch[1].trim().replace(/\s+/g, ' ');
+                const medicumMatch = fullText.match(/MEDICUM\s*#:\s*(\d+)/i);
+                if (medicumMatch) extractedData.fileNumber = medicumMatch[1];
+                const addressMatch = fullText.match(/ADDRESS\/ADRESSE[\s]*([A-Za-z0-9\s,.-]+?)(?:CITY|VILLE|$)/i);
+                if (addressMatch) extractedData.address = addressMatch[1].trim();
+                const phonePattern = /(\d{3}[\s-]?\d{3}[\s-]?\d{4})/g;
+                const phones = [...fullText.matchAll(phonePattern)];
+                if (phones.length > 0) extractedData.phone1 = phones[0][1];
+                if (phones.length > 1) extractedData.phone2 = phones[1][1];
+                const doseMatch = fullText.match(/(\d+\.?\d*)\s*mg/i);
+                if (doseMatch && [7.5, 22.5, 30, 45].includes(parseFloat(doseMatch[1]))) {
+                    extractedData.dosePrescribed = parseFloat(doseMatch[1]).toString();
+                }
+                
+                if (extractedData.patientName && extractedData.fileNumber) {
+                    const defaultDueDate = new Date();
+                    defaultDueDate.setDate(defaultDueDate.getDate() + 7);
+                    const newPatient = {
+                        'Patient Name': extractedData.patientName,
+                        'File Number': extractedData.fileNumber,
+                        'Address': extractedData.address || '',
+                        'Phone 1': extractedData.phone1 || '',
+                        'Phone 2': extractedData.phone2 || '',
+                        'Dose Prescribed': extractedData.dosePrescribed || '7.5',
+                        'Total Doses': '4',
+                        'Doses Remaining': '4',
+                        'Previous Injection Site': '',
+                        'Injection Site': '',
+                        'Due Date': defaultDueDate.toISOString().split('T')[0],
+                        'Appointment Date & Time': '',
+                        'Previous Injection Dates': '',
+                        'Assignment Type': 'Permanent',
+                        'Special Instructions': '',
+                        'Adverse Effects Comments': '',
+                        'File Status': 'Active',
+                        'Injection Administered': false,
+                        'Appointment Confirmed': false,
+                        'Pending': false,
+                        'Archived': false
+                    };
+                    await addPatientManually(newPatient);
+                    alert(`✅ Patient added from PDF: ${newPatient['Patient Name']} (${newPatient['File Number']})`);
+                } else {
+                    alert('Could not extract complete patient information from PDF');
+                }
+            } catch (error) {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                alert('Error reading PDF: ' + error.message);
+            }
+        }
+
+        // ========== INITIALIZATION ==========
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Show loading
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            
+            // Load from cloud
+            await pullFromCloud(true);
+            
+            // Setup event listeners
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => { 
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); 
+                btn.classList.add('active'); 
+                currentTab = btn.getAttribute('data-tab'); 
+                searchQuery = ''; 
+                document.getElementById('searchInput').value = ''; 
+                renderCurrentTab(); 
+            }));
+            
             document.getElementById('generateReportBtn').addEventListener('click', generateCustomReport);
-            document.querySelectorAll('.quick-btn').forEach(btn => btn.addEventListener('click', () => quickReport(btn.getAttribute('data-quick'))));
             document.getElementById('searchInput').addEventListener('input', (e) => { if(currentTab !== 'report') { searchQuery = e.target.value; renderCurrentTab(); } });
             document.getElementById('clearSearchBtn').addEventListener('click', () => { document.getElementById('searchInput').value = ''; searchQuery = ''; renderCurrentTab(); });
-            document.getElementById('refreshBtn').addEventListener('click', syncWithSheet);
+            document.getElementById('refreshBtn').addEventListener('click', () => pullFromCloud(true));
             document.getElementById('restoreBackupBtn').addEventListener('click', restoreFromBackup);
             document.getElementById('addPatientBtn').addEventListener('click', openAddModal);
             document.getElementById('importCSVBtn').addEventListener('click', () => document.getElementById('csvFileInput').click());
@@ -1259,30 +1066,36 @@
             document.getElementById('exportBtn').addEventListener('click', exportData);
             document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
             document.getElementById('importFile').addEventListener('change', (e) => { if(e.target.files[0]) importData(e.target.files[0]); e.target.value = ''; });
+            
             document.querySelectorAll('.close').forEach(c => c.addEventListener('click', closeModal));
             document.querySelectorAll('.close-injection-modal').forEach(c => c.addEventListener('click', () => document.getElementById('injectionModal').style.display = 'none'));
             document.querySelectorAll('.close-appt').forEach(c => c.addEventListener('click', () => document.getElementById('apptEditModal').style.display = 'none'));
-            document.querySelectorAll('.close-pdf-preview').forEach(c => c.addEventListener('click', () => document.getElementById('pdfPreviewModal').style.display = 'none'));
+            
             window.addEventListener('click', (e) => { 
                 if(e.target === document.getElementById('patientModal')) closeModal(); 
                 if(e.target === document.getElementById('confirmModal')) document.getElementById('confirmModal').style.display = 'none'; 
-                if(e.target === document.getElementById('apptEditModal')) document.getElementById('apptEditModal').style.display = 'none'; 
-                if(e.target === document.getElementById('pdfPreviewModal')) document.getElementById('pdfPreviewModal').style.display = 'none';
+                if(e.target === document.getElementById('apptEditModal')) document.getElementById('apptEditModal').style.display = 'none';
                 if(e.target === document.getElementById('injectionModal')) document.getElementById('injectionModal').style.display = 'none';
             });
+            
             document.getElementById('patientForm').addEventListener('submit', (e) => { e.preventDefault(); savePatientFromModal(); });
-            document.getElementById('deletePatientBtn').addEventListener('click', () => { if(currentEditFileNumber) showConfirmDialog('Delete?', () => { deletePatient(currentEditFileNumber); closeModal(); }); });
+            document.getElementById('deletePatientBtn').addEventListener('click', () => { if(currentEditFileNumber) showConfirmDialog('Delete?', () => { deletePatientManually(currentEditFileNumber); closeModal(); }); });
             document.getElementById('confirmYes').addEventListener('click', () => { if(pendingConfirmCallback) pendingConfirmCallback(); document.getElementById('confirmModal').style.display = 'none'; pendingConfirmCallback = null; });
             document.getElementById('confirmNo').addEventListener('click', () => { document.getElementById('confirmModal').style.display = 'none'; pendingConfirmCallback = null; });
             document.getElementById('confirmInjectionBtn').addEventListener('click', performInjection);
             document.getElementById('cancelInjectionBtn').addEventListener('click', () => { document.getElementById('injectionModal').style.display = 'none'; pendingInjectionFileNumber = null; });
             document.getElementById('saveAppointmentBtn').addEventListener('click', saveAppointmentDate);
             document.getElementById('cancelAppointmentBtn').addEventListener('click', () => { document.getElementById('apptEditModal').style.display = 'none'; pendingAppointmentFileNumber = null; });
-            document.getElementById('confirmAddPatient').addEventListener('click', addExtractedPatient);
-            document.getElementById('cancelPdfPreview').addEventListener('click', () => { document.getElementById('pdfPreviewModal').style.display = 'none'; lastExtractedData = null; });
+            document.getElementById('cancelExtractBtn').addEventListener('click', () => { document.getElementById('loadingOverlay').style.display = 'none'; });
+            
             window.openEditModal = openEditModal;
             window.openAppointmentEditor = openAppointmentEditor;
             window.exportReportToCSV = exportReportToCSV;
+            
+            // Check if Apps Script URL is configured
+            if (APPS_SCRIPT_URL === "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
+                showError('⚠️ Apps Script URL not configured. Please deploy Apps Script and update the URL at the top of the code.');
+            }
         });
     </script>
 </body>

@@ -42,10 +42,8 @@
     
     /* Typography */
     --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
     
-    /* Spacing */
-    --spacing: 0.25rem;
+    /* Spacing - Using rem for responsiveness */
     --radius-sm: 0.375rem;
     --radius-md: 0.5rem;
     --radius-lg: 0.75rem;
@@ -61,12 +59,25 @@
 }
 
 html {
+    font-size: 16px;
     scroll-behavior: smooth;
+}
+
+@media (max-width: 768px) {
+    html {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    html {
+        font-size: 13px;
+    }
 }
 
 body {
     font-family: var(--font-sans);
-    font-size: 14px;
+    font-size: 0.875rem;
     line-height: 1.5;
     color: var(--gray-800);
     background: linear-gradient(135deg, #f5f7fa 0%, #eef2f6 100%);
@@ -74,26 +85,24 @@ body {
 }
 
 /* ========================================
-   TYPOGRAPHY
-   ======================================== */
-h1, h2, h3, h4, h5, h6 {
-    font-weight: 600;
-    line-height: 1.2;
-    letter-spacing: -0.02em;
-}
-
-/* ========================================
-   LAYOUT
+   LAYOUT - Responsive
    ======================================== */
 .app {
-    max-width: 1280px;
+    max-width: 90rem;
     margin: 0 auto;
     padding: 1.25rem;
 }
 
+@media (max-width: 768px) {
+    .app {
+        padding: 0.75rem;
+    }
+}
+
 .container {
-    max-width: 800px;
+    max-width: 56rem;
     margin: 0 auto;
+    width: 100%;
 }
 
 /* ========================================
@@ -102,11 +111,17 @@ h1, h2, h3, h4, h5, h6 {
 .header {
     background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(12px);
-    border-radius: 1.5rem;
+    border-radius: var(--radius-2xl);
     padding: 1.25rem 1.5rem;
     margin-bottom: 1.5rem;
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--border-light);
+}
+
+@media (max-width: 640px) {
+    .header {
+        padding: 1rem;
+    }
 }
 
 .header__top {
@@ -122,10 +137,17 @@ h1, h2, h3, h4, h5, h6 {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    flex-wrap: wrap;
 }
 
 .logo__icon {
     font-size: 1.75rem;
+}
+
+@media (max-width: 480px) {
+    .logo__icon {
+        font-size: 1.5rem;
+    }
 }
 
 .logo__text {
@@ -135,6 +157,12 @@ h1, h2, h3, h4, h5, h6 {
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+}
+
+@media (max-width: 480px) {
+    .logo__text {
+        font-size: 1.25rem;
+    }
 }
 
 .logo__badge {
@@ -147,45 +175,21 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: 2rem;
 }
 
-.header__actions {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.sync-status {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: none;
-    border: none;
-    font-size: 0.8rem;
-    color: var(--gray-600);
-    cursor: pointer;
-    padding: 0.25rem 0.5rem;
-    border-radius: 2rem;
-}
-
-.sync-status__dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--success);
-}
-
 /* ========================================
-   SEARCH
+   SEARCH - Responsive
    ======================================== */
 .search {
     position: relative;
     display: flex;
     align-items: center;
+    width: 100%;
 }
 
 .search__icon {
     position: absolute;
     left: 1rem;
     color: var(--gray-400);
+    pointer-events: none;
 }
 
 .search input {
@@ -220,20 +224,22 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ========================================
-   TABS
+   TABS - Responsive
    ======================================== */
 .tabs {
     background: white;
-    border-radius: 1rem;
+    border-radius: var(--radius-xl);
     padding: 0.5rem;
     margin-bottom: 1.5rem;
     box-shadow: var(--shadow-sm);
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .tabs__container {
     display: flex;
     gap: 0.5rem;
+    min-width: min-content;
 }
 
 .tab-btn {
@@ -249,6 +255,13 @@ h1, h2, h3, h4, h5, h6 {
     white-space: nowrap;
 }
 
+@media (max-width: 640px) {
+    .tab-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.75rem;
+    }
+}
+
 .tab-btn:hover {
     background: var(--gray-100);
     color: var(--gray-900);
@@ -260,7 +273,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ========================================
-   BUTTONS
+   BUTTONS - Responsive
    ======================================== */
 .btn {
     display: inline-flex;
@@ -274,6 +287,13 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
+}
+
+@media (max-width: 640px) {
+    .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.75rem;
+    }
 }
 
 .btn--primary {
@@ -324,7 +344,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ========================================
-   PATIENT CARDS
+   PATIENT CARDS - Modern Design
    ======================================== */
 .patient-list {
     display: flex;
@@ -337,9 +357,16 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: 1.25rem;
     padding: 1.25rem;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
     border: 1px solid var(--border-light);
     position: relative;
+    width: 100%;
+}
+
+@media (max-width: 640px) {
+    .patient-card {
+        padding: 1rem;
+    }
 }
 
 .patient-card:hover {
@@ -353,7 +380,25 @@ h1, h2, h3, h4, h5, h6 {
     background: var(--bg-secondary);
 }
 
-/* Patient Card Header */
+/* Special Instructions Gradient Overlay */
+.patient-card.has-special {
+    position: relative;
+    overflow: hidden;
+}
+
+.patient-card.has-special::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40%;
+    background: linear-gradient(to bottom, transparent, rgba(245, 158, 11, 0.08));
+    pointer-events: none;
+    border-radius: 0 0 1.25rem 1.25rem;
+}
+
+/* Patient Card Header - Icons moved for cleaner layout */
 .patient-card__header {
     display: flex;
     justify-content: space-between;
@@ -364,7 +409,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .patient-name {
-    font-size: 1.125rem;
+    font-size: clamp(1rem, 4vw, 1.125rem);
     font-weight: 600;
     color: var(--gray-900);
 }
@@ -407,6 +452,7 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 0.8125rem;
     color: var(--gray-600);
     margin-bottom: 0.5rem;
+    word-break: break-word;
 }
 
 .patient-due {
@@ -416,16 +462,48 @@ h1, h2, h3, h4, h5, h6 {
     margin-bottom: 0.5rem;
 }
 
-/* Patient Card Actions */
-.patient-actions {
+/* Progress Indicator */
+.progress {
     display: flex;
+    align-items: center;
     gap: 0.5rem;
+    margin-top: 0.5rem;
     flex-wrap: wrap;
 }
 
+.progress__bar {
+    flex: 1;
+    height: 0.375rem;
+    background: var(--gray-200);
+    border-radius: 1rem;
+    overflow: hidden;
+    min-width: 4rem;
+}
+
+.progress__fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    border-radius: 1rem;
+    transition: width 0.3s;
+}
+
+.progress__text {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--gray-600);
+    white-space: nowrap;
+}
+
+/* Action Icons - Cleaner Design, Positioned on Right Side */
+.patient-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
 .action-icon {
-    width: 2rem;
-    height: 2rem;
+    width: 2.25rem;
+    height: 2.25rem;
     border-radius: 50%;
     display: inline-flex;
     align-items: center;
@@ -433,6 +511,13 @@ h1, h2, h3, h4, h5, h6 {
     border: none;
     cursor: pointer;
     transition: all 0.2s;
+}
+
+@media (max-width: 480px) {
+    .action-icon {
+        width: 2rem;
+        height: 2rem;
+    }
 }
 
 .action-icon--call {
@@ -468,6 +553,7 @@ h1, h2, h3, h4, h5, h6 {
     padding: 0.5rem 0;
     border-bottom: 1px solid var(--gray-100);
     flex-wrap: wrap;
+    gap: 0.5rem;
 }
 
 .detail-label {
@@ -477,13 +563,20 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 0.8125rem;
 }
 
+@media (max-width: 480px) {
+    .detail-label {
+        width: 100%;
+    }
+}
+
 .detail-value {
     flex: 1;
     color: var(--gray-800);
     font-size: 0.875rem;
+    word-break: break-word;
 }
 
-/* Action Buttons */
+/* Action Buttons in Expanded View */
 .action-buttons {
     display: flex;
     gap: 0.625rem;
@@ -499,6 +592,13 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
+}
+
+@media (max-width: 480px) {
+    .action-btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.7rem;
+    }
 }
 
 .action-btn--inject {
@@ -530,6 +630,25 @@ h1, h2, h3, h4, h5, h6 {
     transform: translateY(-1px);
 }
 
+/* Edit Icon */
+.edit-icon {
+    cursor: pointer;
+    margin-left: 0.5rem;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    color: white;
+    font-size: 0.7rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: all 0.2s;
+}
+
+.edit-icon:hover {
+    transform: scale(1.02);
+}
+
 /* Date Separator */
 .date-separator {
     background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-50) 100%);
@@ -543,7 +662,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ========================================
-   FORMS
+   FORMS - Responsive
    ======================================== */
 .input, .select, .textarea {
     width: 100%;
@@ -574,7 +693,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ========================================
-   MODALS
+   MODALS - Responsive
    ======================================== */
 .modal {
     display: none;
@@ -598,6 +717,13 @@ h1, h2, h3, h4, h5, h6 {
     max-width: 32rem;
 }
 
+@media (max-width: 640px) {
+    .modal__content {
+        margin: 1rem auto;
+        width: calc(100% - 2rem);
+    }
+}
+
 .modal__content--small { max-width: 24rem; }
 .modal__content--medium { max-width: 32rem; }
 .modal__content--large { max-width: 48rem; }
@@ -613,6 +739,12 @@ h1, h2, h3, h4, h5, h6 {
 
 .modal__header h2 {
     font-size: 1.25rem;
+}
+
+@media (max-width: 480px) {
+    .modal__header h2 {
+        font-size: 1.125rem;
+    }
 }
 
 .modal__close {
@@ -633,6 +765,60 @@ h1, h2, h3, h4, h5, h6 {
     justify-content: flex-end;
     gap: 0.75rem;
     border-top: 1px solid var(--border-light);
+    flex-wrap: wrap;
+}
+
+/* Form Grid - Responsive */
+.form__grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    padding: 0 1.5rem;
+}
+
+@media (max-width: 640px) {
+    .form__grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+}
+
+.form__footer {
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    border-top: 1px solid var(--border-light);
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+/* ========================================
+   MODAL SPECIFIC
+   ======================================== */
+.modal__patient-name {
+    padding: 0.75rem 1rem;
+    background: var(--gray-100);
+    border-radius: 1rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.modal__info {
+    padding: 0.75rem;
+    background: var(--primary-light);
+    border-radius: 0.75rem;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+    color: var(--primary);
+}
+
+.confirm-message {
+    margin: 1.5rem 0;
+    color: var(--gray-600);
+    line-height: 1.5;
+    white-space: pre-line;
 }
 
 /* ========================================
@@ -692,7 +878,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ========================================
-   REPORT VIEW
+   REPORT VIEW - Responsive
    ======================================== */
 .report-view {
     margin-top: 1rem;
@@ -720,6 +906,12 @@ h1, h2, h3, h4, h5, h6 {
     padding: 1.25rem;
 }
 
+@media (max-width: 640px) {
+    .card__body {
+        padding: 1rem;
+    }
+}
+
 .button-group {
     display: flex;
     gap: 0.5rem;
@@ -737,6 +929,17 @@ h1, h2, h3, h4, h5, h6 {
 .report-controls .input {
     flex: 1;
     min-width: 8rem;
+}
+
+@media (max-width: 640px) {
+    .report-controls {
+        flex-direction: column;
+    }
+    
+    .report-controls .select,
+    .report-controls .input {
+        width: 100%;
+    }
 }
 
 .quick-reports {
@@ -766,45 +969,26 @@ h1, h2, h3, h4, h5, h6 {
     overflow-y: auto;
 }
 
-/* ========================================
-   UTILITIES
-   ======================================== */
-.full-width { width: 100%; }
-.text-center { text-align: center; }
-.hidden { display: none; }
+/* Report Items */
+.report-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border-light);
+    cursor: pointer;
+    transition: background 0.2s;
+    border-radius: 0.5rem;
+}
 
-/* ========================================
-   RESPONSIVE
-   ======================================== */
-@media (max-width: 640px) {
-    .app {
-        padding: 0.75rem;
-    }
-    
-    .header__top {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .patient-card__header {
-        flex-direction: column;
-    }
-    
-    .action-buttons {
-        justify-content: flex-start;
-    }
-    
-    .modal__content {
-        margin: 1rem;
-        width: calc(100% - 2rem);
-    }
-    
-    .report-controls {
-        flex-direction: column;
-    }
-    
-    .detail-label {
-        width: 100%;
-        margin-bottom: 0.25rem;
-    }
+.report-item:hover {
+    background: var(--gray-50);
+}
+
+.report-item__title {
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.report-item__subtitle {
+    font-size: 0.7rem;
+    color: var(--gray-500);
+    margin-top: 0.25rem;
 }

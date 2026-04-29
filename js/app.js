@@ -1,6 +1,7 @@
 // ========== SUPABASE CONFIG ==========
-const SUPABASE_URL = "https://wqlbmtjbjloxpvsbeqyb.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_gcyK2z_8lvbOgHNcJfdX1g_8QCWJ_Xi";
+// REPLACE WITH YOUR ACTUAL SUPABASE CREDENTIALS
+const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_YOUR_KEY_HERE";
 const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSYgD018ww2Mbkud6ZYmZHop7EXxcm_0Zl4V9bB2AaY4r4xXTWChAW6v-gUyjD4-2Qmg4H8O0kxryCf/pub?output=csv";
 
 let _supabase = null;
@@ -38,7 +39,7 @@ const columnMapping = {
     'Archived': 'archived'
 };
 
-// ========== DATE FUNCTIONS ==========
+// ========== DATE FUNCTIONS (NO TIMEZONE SHIFT) ==========
 function getTodayLocal() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -451,19 +452,21 @@ function renderPatientCard(p) {
     const apptDisplay = hasAppt ? new Date(p['Appointment Date & Time']).toLocaleString() : 'Not set';
     const special = p['Special Instructions'] || '';
     const progressPercent = (given / total) * 100;
+    const hasSpecialClass = special ? 'has-special' : '';
+
+    // SVG for navigation icon - modern location pin
+    const navIconSvg = `<svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+        <circle cx="12" cy="10" r="3"/>
+    </svg>`;
 
     return `
-        <div class="patient-card" data-id="${p.id}">
+        <div class="patient-card ${hasSpecialClass}" data-id="${p.id}">
             <div class="patient-card__header">
                 <div>
                     <span class="patient-name">${escapeHtml(p['Patient Name'])}</span>
                     <span class="patient-file">#${escapeHtml(p['File Number'])}</span>
                     ${dose ? `<span class="badge badge--dose">${dose}mg</span>` : ''}
-                </div>
-                <div class="patient-actions">
-                    ${p['Phone 1'] ? `<button class="action-icon action-icon--call" data-phone="${escapeHtml(p['Phone 1'])}">📞</button>` : ''}
-                    ${p['Phone 2'] ? `<button class="action-icon action-icon--call" data-phone="${escapeHtml(p['Phone 2'])}">📞2</button>` : ''}
-                    ${p['Address'] ? `<button class="action-icon action-icon--map" data-address="${escapeHtml(p['Address'])}">📍</button>` : ''}
                 </div>
             </div>
             <div class="patient-address">${escapeHtml(p['Address'] || 'No address')}</div>
@@ -473,6 +476,14 @@ function renderPatientCard(p) {
                 <div class="progress__text">${given}/${total} doses</div>
             </div>
             ${special ? `<div class="badge badge--special">⚠️ ${escapeHtml(special.substring(0, 50))}${special.length > 50 ? '...' : ''}</div>` : ''}
+            
+            <!-- Action Icons - Below text, left-aligned -->
+            <div class="patient-actions">
+                ${p['Phone 1'] ? `<button class="action-icon action-icon--call" data-phone="${escapeHtml(p['Phone 1'])}">📞</button>` : ''}
+                ${p['Phone 2'] ? `<button class="action-icon action-icon--call" data-phone="${escapeHtml(p['Phone 2'])}">📞2</button>` : ''}
+                ${p['Address'] ? `<button class="action-icon action-icon--map" data-address="${escapeHtml(p['Address'])}">${navIconSvg}</button>` : ''}
+            </div>
+            
             <div class="expanded-view">
                 <div class="detail-row"><div class="detail-label">File:</div><div>${escapeHtml(p['File Number'])}</div></div>
                 <div class="detail-row"><div class="detail-label">Dose:</div><div>${dose}mg (${doseToWeeks[dose] || 4} weeks)</div></div>

@@ -6,6 +6,11 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Patient Dosing Tracker</title>
+    <!-- PDF.js Library for PDF extraction -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #eef2f6; padding: 12px; padding-bottom: 80px; }
@@ -113,7 +118,7 @@
                 <button id="refreshBtn" class="btn-sm btn-primary">⟳ Refresh</button>
             </div>
             <div class="status-bar">
-                <span id="syncStatus">💾 Local storage only</span>
+                <span id="syncStatus">💾 Local storage</span>
                 <span id="recordCount"></span>
             </div>
         </div>
@@ -139,11 +144,13 @@
                 <div class="report-title" style="font-weight: 600; margin-bottom: 16px;">📊 Data Management & Reports</div>
                 <div class="data-buttons" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
                     <button id="importCSVBtn" class="btn-sm btn-secondary">📄 Import CSV</button>
+                    <button id="importPDFBtn" class="btn-sm btn-secondary">📑 Import PDF</button>
                     <button id="exportJSONBtn" class="btn-sm btn-secondary">📥 Export Backup (JSON)</button>
                     <button id="importJSONBtn" class="btn-sm btn-secondary">📤 Restore from Backup</button>
                     <button id="exportCSVReportBtn" class="btn-sm btn-secondary">📊 Export All to CSV</button>
                     <input type="file" id="importFile" accept=".json" style="display:none">
                     <input type="file" id="csvFileInput" accept=".csv" style="display:none">
+                    <input type="file" id="pdfFileInput" accept=".pdf" style="display:none">
                 </div>
                 <div class="report-title" style="font-weight: 600; margin-top: 16px; margin-bottom: 12px;">📋 Custom Report</div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
@@ -300,7 +307,7 @@
 
         const doseToWeeks = { '7.5': 4, '22.5': 12, '30': 16, '45': 24 };
 
-        // ========== STORAGE (NO CLOUD, NO FETCH) ==========
+        // ========== STORAGE ==========
         function saveToLocalStorage() { 
             localStorage.setItem('patientTrackerData', JSON.stringify(patients)); 
             document.getElementById('recordCount').innerHTML = `📋 ${patients.length}`;
@@ -537,6 +544,128 @@
                 p['Archived'] = false;
                 saveToLocalStorage();
                 renderCurrentTab();
+            }
+        }
+
+        // ========== PDF IMPORT FUNCTION (RESTORED) ==========
+        async function importPDF(file) {
+            const fileInput = document.getElementById('pdfFileInput');
+            const selectedFile = fileInput.files[0];
+            
+            if (!selectedFile) {
+                alert('Please select a PDF file');
+                return;
+            }
+            
+            if (selectedFile.type !== 'application/pdf') {
+                alert('Please select a valid PDF file');
+                return;
+            }
+            
+            document.getElementById('syncStatus').innerHTML = '🔄 Reading PDF...';
+            
+            try {
+                const arrayBuffer = await selectedFile.arrayBuffer();
+                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+                const pdf = await loadingTask.promise;
+                
+                let fullText = '';
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    fullText += pageText + '\n';
+                }
+                
+                if (!fullText.trim()) {
+                    alert('No readable text found in this PDF. It may be a scanned image.');
+                    document.getElementById('syncStatus').innerHTML = '💾 Local storage';
+                    return;
+                }
+                
+                // Extract patient data from PDF text
+                const extractedData = {
+                    patientName: null,
+                    fileNumber: null,
+                    address: null,
+                    phone1: null,
+                    phone2: null,
+                    dosePrescribed: null
+                };
+                
+                // Name extraction
+                const nameMatch = fullText.match(/(?:PATIENT NAME\/NOM DU PATIENT|PATIENT NAME|NOM DU PATIENT)[\s]*([A-Z][A-Z\s]+[A-Z])/i);
+                if (nameMatch) extractedData.patientName = nameMatch[1].trim().replace(/\s+/g, ' ');
+                
+                // File number extraction (MEDICUM #)
+                const medicumMatch = fullText.match(/MEDICUM\s*#:\s*(\d+)/i);
+                if (medicumMatch) extractedData.fileNumber = medicumMatch[1];
+                
+                // Address extraction
+                const addressMatch = fullText.match(/ADDRESS\/ADRESSE[\s]*([A-Za-z0-9\s,.-]+?)(?:CITY|VILLE|$)/i);
+                if (addressMatch) extractedData.address = addressMatch[1].trim();
+                
+                // Phone extraction
+                const phonePattern = /(\d{3}[\s-]?\d{3}[\s-]?\d{4})/g;
+                const phones = [...fullText.matchAll(phonePattern)];
+                if (phones.length > 0) extractedData.phone1 = phones[0][1];
+                if (phones.length > 1) extractedData.phone2 = phones[1][1];
+                
+                // Dose extraction
+                const doseMatch = fullText.match(/(\d+\.?\d*)\s*mg/i);
+                if (doseMatch && [7.5, 22.5, 30, 45].includes(parseFloat(doseMatch[1]))) {
+                    extractedData.dosePrescribed = parseFloat(doseMatch[1]).toString();
+                }
+                
+                if (extractedData.patientName && extractedData.fileNumber) {
+                    const defaultDueDate = new Date();
+                    defaultDueDate.setDate(defaultDueDate.getDate() + 7);
+                    
+                    const newPatient = {
+                        'Patient Name': extractedData.patientName,
+                        'File Number': extractedData.fileNumber,
+                        'Address': extractedData.address || '',
+                        'Phone 1': extractedData.phone1 || '',
+                        'Phone 2': extractedData.phone2 || '',
+                        'Dose Prescribed': extractedData.dosePrescribed || '7.5',
+                        'Total Doses': '4',
+                        'Doses Remaining': '4',
+                        'Previous Injection Site': '',
+                        'Injection Site': '',
+                        'Due Date': defaultDueDate.toISOString().split('T')[0],
+                        'Appointment Date & Time': '',
+                        'Previous Injection Dates': '',
+                        'Assignment Type': 'Permanent',
+                        'Special Instructions': '',
+                        'Adverse Effects Comments': '',
+                        'File Status': 'Active',
+                        'Injection Administered': false,
+                        'Appointment Confirmed': false,
+                        'Pending': false,
+                        'Archived': false
+                    };
+                    
+                    // Check for duplicate before adding
+                    if (!patients.find(p => p['File Number'] === newPatient['File Number'])) {
+                        patients.push(newPatient);
+                        saveToLocalStorage();
+                        renderCurrentTab();
+                        alert(`✅ Patient added from PDF: ${newPatient['Patient Name']} (${newPatient['File Number']})`);
+                    } else {
+                        alert(`❌ Patient with File # ${newPatient['File Number']} already exists.`);
+                    }
+                } else {
+                    alert('Could not extract complete patient information from PDF.\n\nMake sure the PDF contains patient name and file number.');
+                    // Show preview of extracted text for debugging
+                    console.log('Extracted text:', fullText.substring(0, 500));
+                }
+                
+                document.getElementById('syncStatus').innerHTML = '💾 Local storage';
+                
+            } catch (error) {
+                console.error('PDF extraction error:', error);
+                alert(`Error reading PDF: ${error.message}\n\nMake sure the PDF is not password-protected.`);
+                document.getElementById('syncStatus').innerHTML = '💾 Local storage';
             }
         }
 
@@ -940,6 +1069,8 @@
             document.getElementById('importFile').addEventListener('change', (e) => { if(e.target.files[0]) importFromJSON(e.target.files[0]); e.target.value = ''; });
             document.getElementById('importCSVBtn').addEventListener('click', () => document.getElementById('csvFileInput').click());
             document.getElementById('csvFileInput').addEventListener('change', (e) => { if(e.target.files[0]) importCSV(e.target.files[0]); e.target.value = ''; });
+            document.getElementById('importPDFBtn').addEventListener('click', () => document.getElementById('pdfFileInput').click());
+            document.getElementById('pdfFileInput').addEventListener('change', (e) => { if(e.target.files[0]) importPDF(e.target.files[0]); e.target.value = ''; });
             document.getElementById('exportCSVReportBtn').addEventListener('click', exportToCSV);
             
             // Patient actions
@@ -975,8 +1106,6 @@
             window.openEditModal = openEditModal;
             window.openAppointmentEditor = openAppointmentEditor;
             window.exportReportToCSV = exportReportToCSV;
-            
-            document.getElementById('syncStatus').innerHTML = '💾 Local storage only - use Export/Import to sync devices';
         });
     </script>
 </body>

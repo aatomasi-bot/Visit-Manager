@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Patient Dosing Tracker - Cross-Device</title>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Patient Dosing Tracker</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #eef2f6; padding: 12px; padding-bottom: 80px; }
@@ -12,30 +13,30 @@
         
         .header { background: white; padding: 14px 16px; border-radius: 16px; margin-bottom: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
         .header h1 { font-size: 20px; color: #0f172a; margin-bottom: 12px; font-weight: 600; }
-        .sync-status { font-size: 12px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: #475569; }
+        .status-bar { font-size: 12px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: #475569; }
         .top-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
         .search-wrapper { display: flex; gap: 6px; flex: 2; min-width: 200px; }
         .search-wrapper input { flex: 1; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 20px; font-size: 13px; background: #ffffff; }
         .search-wrapper input:focus { outline: none; border-color: #3b82f6; }
         .btn-sm { padding: 8px 14px; border: none; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
         .btn-primary { background: #3b82f6; color: white; }
-        .btn-primary:hover { background: #2563eb; transform: scale(1.02); }
+        .btn-primary:hover { background: #2563eb; }
         .btn-secondary { background: #e2e8f0; color: #1e293b; border: 1px solid #cbd5e1; }
-        .btn-secondary:hover { background: #cbd5e1; transform: scale(1.02); }
+        .btn-secondary:hover { background: #cbd5e1; }
         .btn-outline { background: transparent; color: #475569; border: 1px solid #cbd5e1; }
         .btn-outline:hover { background: #e2e8f0; }
         .btn-danger { background: #ef4444; color: white; border: none; }
-        .btn-danger:hover { background: #dc2626; transform: scale(1.02); }
+        .btn-danger:hover { background: #dc2626; }
         
         .add-btn { width: 100%; margin-bottom: 16px; padding: 12px; font-size: 15px; border-radius: 40px; background: #3b82f6; color: white; border: none; font-weight: 600; cursor: pointer; }
-        .add-btn:hover { background: #2563eb; transform: translateY(-1px); }
+        .add-btn:hover { background: #2563eb; }
         
-        .tabs { display: flex; gap: 6px; margin-bottom: 20px; overflow-x: auto; white-space: nowrap; }
-        .tab-btn { padding: 8px 16px; background: white; border: 1px solid #cbd5e1; border-radius: 40px; cursor: pointer; font-size: 13px; font-weight: 500; flex-shrink: 0; color: #475569; transition: all 0.2s; }
+        .tabs { display: flex; gap: 6px; margin-bottom: 20px; overflow-x: auto; white-space: nowrap; scrollbar-width: thin; }
+        .tab-btn { padding: 8px 16px; background: white; border: 1px solid #cbd5e1; border-radius: 40px; cursor: pointer; font-size: 13px; font-weight: 500; flex-shrink: 0; color: #475569; }
         .tab-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
         
         .patient-list { display: flex; flex-direction: column; gap: 12px; }
-        .patient-card { background: white; border-radius: 16px; padding: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.06); cursor: pointer; border: 1px solid #e2e8f0; transition: all 0.2s; }
+        .patient-card { background: white; border-radius: 16px; padding: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.06); cursor: pointer; border: 1px solid #e2e8f0; }
         .patient-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .patient-card.expanded { background: #fafcff; border-left: 3px solid #3b82f6; }
         
@@ -54,31 +55,24 @@
         .action-icon { width: 36px; height: 36px; border-radius: 30px; border: none; font-size: 16px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; font-weight: 600; }
         .action-icon:hover { transform: scale(1.05); }
         .call-icon { background: #27ae60; color: white; }
-        .call-icon:hover { background: #1e8f4f; }
         .nav-icon { background: #3b82f6; color: white; }
-        .nav-icon:hover { background: #2b6bcb; }
         
         .expanded-view { margin-top: 14px; padding-top: 14px; border-top: 1px solid #e2e8f0; display: none; }
         .detail-row { display: flex; padding: 6px 0; border-bottom: 1px solid #f1f5f9; flex-wrap: wrap; align-items: center; }
         .detail-label { width: 130px; font-weight: 500; color: #475569; font-size: 12px; }
         .detail-value { flex: 1; color: #1e293b; font-size: 13px; font-weight: 500; }
-        .edit-icon { cursor: pointer; margin-left: 8px; color: white; font-size: 12px; background: #3b82f6; padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; font-weight: 500; }
-        .edit-icon:hover { background: #2563eb; transform: scale(1.02); }
+        .edit-icon { cursor: pointer; margin-left: 8px; color: white; font-size: 12px; background: #3b82f6; padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px; font-weight: 500; }
+        .edit-icon:hover { background: #2563eb; }
         .ins-red { color: #dc2626; font-weight: 500; }
         
         .action-row { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; justify-content: center; }
         .action-sm { padding: 6px 14px; font-size: 12px; border-radius: 30px; border: none; font-weight: 600; cursor: pointer; transition: all 0.2s; }
         .action-sm:hover { transform: translateY(-1px); }
         .inject-sm { background: #27ae60; color: white; }
-        .inject-sm:hover { background: #1e8f4f; }
         .pending-sm { background: #f39c12; color: white; }
-        .pending-sm:hover { background: #e67e22; }
         .edit-sm { background: #3b82f6; color: white; }
-        .edit-sm:hover { background: #2563eb; }
         .delete-sm { background: #e74c3c; color: white; }
-        .delete-sm:hover { background: #c0392b; }
         .move-sm { background: #6b7280; color: white; }
-        .move-sm:hover { background: #4b5563; }
         
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; }
         .modal-content { background: white; max-width: 500px; margin: 50px auto; border-radius: 24px; padding: 24px; }
@@ -96,13 +90,6 @@
         
         .appt-edit-content { max-width: 380px; }
         .datetime-input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 14px; margin: 16px 0; }
-        
-        .injection-options { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
-        .injection-option { display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
-        .injection-option:hover { background: #f8fafc; border-color: #3b82f6; }
-        .injection-option.selected { background: #dbeafe; border-color: #3b82f6; }
-        .injection-option input { width: 18px; height: 18px; accent-color: #3b82f6; }
-        .injection-option label { flex: 1; cursor: pointer; font-weight: 500; }
         
         @media (max-width: 600px) {
             .collapsed-view { flex-direction: column; align-items: stretch; }
@@ -125,8 +112,8 @@
                 </div>
                 <button id="refreshBtn" class="btn-sm btn-primary">⟳ Refresh</button>
             </div>
-            <div class="sync-status">
-                <span id="syncStatus">💾 Local storage</span>
+            <div class="status-bar">
+                <span id="syncStatus">💾 Local storage only</span>
                 <span id="recordCount"></span>
             </div>
         </div>
@@ -149,7 +136,7 @@
         
         <div id="reportView" style="display:none;">
             <div class="report-section" style="padding: 4px;">
-                <div class="report-title">📊 Data Management & Reports</div>
+                <div class="report-title" style="font-weight: 600; margin-bottom: 16px;">📊 Data Management & Reports</div>
                 <div class="data-buttons" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
                     <button id="importCSVBtn" class="btn-sm btn-secondary">📄 Import CSV</button>
                     <button id="exportJSONBtn" class="btn-sm btn-secondary">📥 Export Backup (JSON)</button>
@@ -158,9 +145,9 @@
                     <input type="file" id="importFile" accept=".json" style="display:none">
                     <input type="file" id="csvFileInput" accept=".csv" style="display:none">
                 </div>
-                <div class="report-title" style="margin-top: 16px;">📋 Custom Report</div>
+                <div class="report-title" style="font-weight: 600; margin-top: 16px; margin-bottom: 12px;">📋 Custom Report</div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
-                    <select id="reportField" style="flex:1; padding:10px; border-radius:24px; border:1px solid #cbd5e1;">
+                    <select id="reportField" style="flex:1; padding:10px; border-radius:24px; border:1px solid #cbd5e1; background:white;">
                         <option value="Due Date">Due Date</option>
                         <option value="Dose Prescribed">Dose Prescribed</option>
                         <option value="Assignment Type">Assignment Type</option>
@@ -168,7 +155,7 @@
                         <option value="Patient Name">Patient Name</option>
                         <option value="File Number">File Number</option>
                     </select>
-                    <select id="reportCondition" style="flex:1; padding:10px; border-radius:24px; border:1px solid #cbd5e1;">
+                    <select id="reportCondition" style="flex:1; padding:10px; border-radius:24px; border:1px solid #cbd5e1; background:white;">
                         <option value="equals">Equals</option>
                         <option value="contains">Contains</option>
                         <option value="greater">Greater Than</option>
@@ -207,11 +194,11 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>📝 Special Instructions (for this injection)</label>
+                <label>📝 Special Instructions</label>
                 <textarea id="injectionSpecialInstructions" rows="2" style="width:100%; padding: 10px; border-radius: 12px; border: 1px solid #cbd5e1;"></textarea>
             </div>
             <div class="form-group">
-                <label>⚠️ Adverse Events / Reactions</label>
+                <label>⚠️ Adverse Events</label>
                 <textarea id="injectionAdverseEvents" rows="2" style="width:100%; padding: 10px; border-radius: 12px; border: 1px solid #cbd5e1;"></textarea>
             </div>
             <div class="modal-footer">
@@ -313,7 +300,7 @@
 
         const doseToWeeks = { '7.5': 4, '22.5': 12, '30': 16, '45': 24 };
 
-        // ========== STORAGE ==========
+        // ========== STORAGE (NO CLOUD, NO FETCH) ==========
         function saveToLocalStorage() { 
             localStorage.setItem('patientTrackerData', JSON.stringify(patients)); 
             document.getElementById('recordCount').innerHTML = `📋 ${patients.length}`;
@@ -988,6 +975,8 @@
             window.openEditModal = openEditModal;
             window.openAppointmentEditor = openAppointmentEditor;
             window.exportReportToCSV = exportReportToCSV;
+            
+            document.getElementById('syncStatus').innerHTML = '💾 Local storage only - use Export/Import to sync devices';
         });
     </script>
 </body>

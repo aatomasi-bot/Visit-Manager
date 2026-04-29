@@ -1,5 +1,4 @@
 // ========== SUPABASE CONFIG ==========
-// REPLACE WITH YOUR ACTUAL SUPABASE CREDENTIALS
 const SUPABASE_URL = "https://wqlbmtjbjloxpvsbeqyb.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_gcyK2z_8lvbOgHNcJfdX1g_8QCWJ_Xi";
 const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSYgD018ww2Mbkud6ZYmZHop7EXxcm_0Zl4V9bB2AaY4r4xXTWChAW6v-gUyjD4-2Qmg4H8O0kxryCf/pub?output=csv";
@@ -39,7 +38,7 @@ const columnMapping = {
     'Archived': 'archived'
 };
 
-// ========== DATE FUNCTIONS (NO TIMEZONE SHIFT) ==========
+// ========== DATE FUNCTIONS ==========
 function getTodayLocal() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -89,7 +88,6 @@ async function loadPatients() {
             p.id = row.id;
             return p;
         });
-        document.getElementById('recordCount').innerHTML = `📋 ${patients.length}`;
         renderCurrentTab();
     } catch (e) {
         console.error(e);
@@ -829,7 +827,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const ok = await initSupabase();
     if (ok) await loadPatients();
 
-    // Tab switching
     document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
@@ -837,7 +834,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderCurrentTab();
     }));
 
-    // Search
     const searchInput = document.getElementById('searchInput');
     searchInput.addEventListener('input', e => {
         if (currentTab !== 'report') {
@@ -851,13 +847,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderCurrentTab();
     });
 
-    // Refresh
     document.getElementById('refreshBtn').addEventListener('click', () => loadPatients());
-
-    // Add patient
     document.getElementById('addPatientBtn').addEventListener('click', openAddModal);
 
-    // Data import/export
     document.getElementById('importGoogleSheetsBtn').addEventListener('click', importFromGoogleSheets);
     document.getElementById('importCSVBtn').addEventListener('click', () => document.getElementById('csvFileInput').click());
     document.getElementById('csvFileInput').addEventListener('change', e => { if (e.target.files[0]) importCSV(e.target.files[0]); e.target.value = ''; });
@@ -866,11 +858,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('exportJSONBtn').addEventListener('click', exportJSON);
     document.getElementById('exportCSVReportBtn').addEventListener('click', exportCSV);
 
-    // Report
     document.getElementById('generateReportBtn').addEventListener('click', generateReport);
     document.querySelectorAll('.quick-btn').forEach(btn => btn.addEventListener('click', () => quickReport(btn.dataset.quick)));
 
-    // Modal close handlers
     document.querySelectorAll('.modal__close, .close').forEach(c => c.addEventListener('click', closeModal));
     document.querySelectorAll('.close-injection-modal').forEach(c => c.addEventListener('click', closeInjModal));
     document.querySelectorAll('.close-appt').forEach(c => c.addEventListener('click', () => document.getElementById('apptEditModal').style.display = 'none'));
@@ -881,13 +871,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (e.target === document.getElementById('injectionModal')) closeInjModal();
     });
 
-    // Form submit
     document.getElementById('patientForm').addEventListener('submit', e => { e.preventDefault(); savePatientModal(); });
     document.getElementById('deletePatientBtn').addEventListener('click', () => {
         if (currentEditId && confirm('Delete?')) deletePatient(currentEditId).then(() => closeModal());
     });
 
-    // Confirmation modal
     document.getElementById('confirmYes').addEventListener('click', () => {
         if (pendingConfirmCallback) pendingConfirmCallback();
         document.getElementById('confirmModal').style.display = 'none';
@@ -898,15 +886,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         pendingConfirmCallback = null;
     });
 
-    // Injection modal
     document.getElementById('confirmInjectionBtn').addEventListener('click', performInjection);
     document.getElementById('cancelInjectionBtn').addEventListener('click', closeInjModal);
 
-    // Appointment modal
     document.getElementById('saveAppointmentBtn').addEventListener('click', saveAppointmentDate);
     document.getElementById('cancelAppointmentBtn').addEventListener('click', () => document.getElementById('apptEditModal').style.display = 'none');
 
-    // Global exports for onclick handlers
     window.openEditModal = openEditModal;
     window.openAppointmentEditor = openAppointmentEditor;
     window.exportReportToCSV = exportReportToCSV;

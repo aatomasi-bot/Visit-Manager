@@ -691,7 +691,7 @@
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay" style="display:none;">
         <div class="loading-spinner"></div>
-        <div class="loading-text">Syncing with database...</div>
+        <div class="loading-text">Processing PDF...</div>
     </div>
 
     <!-- Enhanced Injection Modal -->
@@ -982,46 +982,9 @@
             return true;
         }
 
-        // ========== FIXED DUE DATE LOGIC WITH MISSED APPOINTMENT HANDLING ==========
-        // Logic:
-        // - If appointment + injection on same day: use injection date (today)
-        // - If appointment passed and NO injection: use appointment date
-        // - Otherwise: use today's date
+        // ========== COMPLETELY REWRITTEN PDF EXTRACTION ==========
+        // Extracts: Patient Name, File Number, Dose, Full Address, Phone 1, Phone 2, Date of Injection
         
-        function getReferenceDateForDueDate(patient, injectionGivenToday = true) {
-            const today = new Date().toISOString().split('T')[0];
-            const apptDateStr = patient['Appointment Date & Time'];
-            const apptDateObj = apptDateStr ? new Date(apptDateStr) : null;
-            const todayDate = new Date();
-            const isInjectionAdministered = patient['Injection Administered'] === true;
-            const isAppointmentConfirmed = patient['Appointment Confirmed'] === true;
-            
-            // Case 1: Same day (appointment and injection on same day)
-            if (isAppointmentConfirmed && isInjectionAdministered && apptDateStr) {
-                const injectionDate = patient['Previous Injection Dates'] ? patient['Previous Injection Dates'].split(',').pop()?.trim() : null;
-                const apptDateOnly = apptDateObj ? apptDateObj.toISOString().split('T')[0] : null;
-                if (injectionDate === apptDateOnly) {
-                    return injectionDate;
-                }
-            }
-            
-            // Case 2: Missed injection - appointment date passed, no injection given
-            if (isAppointmentConfirmed && !isInjectionAdministered && apptDateObj && apptDateObj < todayDate) {
-                return apptDateObj.toISOString().split('T')[0];
-            }
-            
-            // Case 3: Normal - use today's date
-            return injectionGivenToday ? today : today;
-        }
-
-        function calculateNextDueDate(currentDueDate, dosePrescribed, referenceDate) {
-            const weeks = doseToWeeks[dosePrescribed] || 4;
-            const newDate = new Date(referenceDate);
-            newDate.setDate(newDate.getDate() + (weeks * 7));
-            return newDate.toISOString().split('T')[0];
-        }
-
-        // ========== PDF EXTRACTION ==========
         async function importPDF(file) {
             const fileInput = document.getElementById('pdfFileInput');
             const selectedFile = fileInput.files[0];
@@ -1032,7 +995,7 @@
             }
             
             document.getElementById('loadingOverlay').style.display = 'flex';
-            document.getElementById('syncStatus').innerHTML = '🔄 Reading PDF...';
+            document.getElementById('syncStatus').innerHTML = '🔄 Processing PDF...';
             
             try {
                 const arrayBuffer = await selectedFile.arrayBuffer();
@@ -1043,47 +1006,64 @@
                 for (let i = 1; i <= pdf.numPages; i++) {
                     const page = await pdf.getPage(i);
                     const textContent = await page.getTextContent();
-                    fullText += textContent.items.map(item => item.str).join(' ') + '\n';
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    fullText += pageText + '\n';
                 }
                 
                 document.getElementById('loadingOverlay').style.display = 'none';
                 
                 if (!fullText.trim()) {
-                    alert('No readable text found in this PDF.');
+                    alert('No readable text found in this PDF. The file may be scanned or image-based.');
+                    document.getElementById('syncStatus').innerHTML = '❌ PDF extraction failed';
                     return;
                 }
                 
-                const extractedData = extractPatientDataFromPDF(fullText);
+                // Log for debugging
+                console.log('PDF Text Preview:', fullText.substring(0, 800));
                 
-                const confirmMsg = `Extracted Patient Information:\n\n` +
-                    `📋 Name: ${extractedData.patientName || '❌ Not found'}\n` +
-                    `🔢 File #: ${extractedData.fileNumber || '❌ Not found'}\n` +
-                    `📍 Address: ${extractedData.address || '❌ Not found'}\n` +
-                    `📞 Phone: ${extractedData.phone1 || '❌ Not found'}\n` +
-                    `💊 Dose: ${extractedData.dosePrescribed || '7.5'} mg\n` +
-                    `📅 Appointment: ${extractedData.appointmentDate || 'Not found'}\n\n` +
-                    `Add this patient?`;
+                // Extract data using the enhanced function
+                const extractedData = extractPatientDataAdvanced(fullText);
                 
-                if (extractedData.patientName && extractedData.fileNumber) {
+                // Build confirmation message
+                let confirmMsg = '📄 Extracted Patient Information:\n\n';
+                confirmMsg += `👤 Patient Name: ${extractedData.patient_name || '❌ NOT FOUND'}\n`;
+                confirmMsg += `🔢 File Number: ${extractedData.file_number || '❌ NOT FOUND'}\n`;
+                confirmMsg += `💊 Dose: ${extractedData.dose || '❌ NOT FOUND'}\n`;
+                confirmMsg += `📍 Address: ${extractedData.address || '❌ NOT FOUND'}\n`;
+                confirmMsg += `📞 Primary Phone: ${extractedData.phone_1 || '❌ NOT FOUND'}\n`;
+                confirmMsg += `📞 Secondary Phone: ${extractedData.phone_2 || 'Not provided'}\n`;
+                confirmMsg += `📅 Injection Date: ${extractedData.date_of_injection || '❌ NOT FOUND'}\n\n`;
+                confirmMsg += `Do you want to add this patient?`;
+                
+                if (extractedData.patient_name && extractedData.file_number) {
                     if (confirm(confirmMsg)) {
                         const defaultDueDate = new Date();
                         defaultDueDate.setDate(defaultDueDate.getDate() + 7);
                         
                         let appointmentDateTime = null;
-                        if (extractedData.appointmentDate) {
-                            const apptDate = new Date(extractedData.appointmentDate);
+                        if (extractedData.date_of_injection) {
+                            const apptDate = new Date(extractedData.date_of_injection);
                             if (!isNaN(apptDate.getTime())) {
                                 appointmentDateTime = apptDate.toISOString();
                             }
                         }
                         
+                        // Parse dose value
+                        let doseValue = '7.5';
+                        if (extractedData.dose) {
+                            const doseMatch = extractedData.dose.match(/(\d+\.?\d*)/);
+                            if (doseMatch && [7.5, 22.5, 30, 45].includes(parseFloat(doseMatch[1]))) {
+                                doseValue = parseFloat(doseMatch[1]).toString();
+                            }
+                        }
+                        
                         const newPatient = {
-                            'Patient Name': extractedData.patientName,
-                            'File Number': extractedData.fileNumber,
+                            'Patient Name': extractedData.patient_name,
+                            'File Number': extractedData.file_number,
                             'Address': extractedData.address || '',
-                            'Phone 1': extractedData.phone1 || '',
-                            'Phone 2': extractedData.phone2 || '',
-                            'Dose Prescribed': extractedData.dosePrescribed || '7.5',
+                            'Phone 1': extractedData.phone_1 || '',
+                            'Phone 2': extractedData.phone_2 || '',
+                            'Dose Prescribed': doseValue,
                             'Total Doses': '4',
                             'Doses Remaining': '4',
                             'Previous Injection Site': '',
@@ -1096,14 +1076,14 @@
                             'Adverse Effects Comments': '',
                             'File Status': 'Active',
                             'Injection Administered': false,
-                            'Appointment Confirmed': !!extractedData.appointmentDate,
+                            'Appointment Confirmed': !!extractedData.date_of_injection,
                             'Pending': false,
                             'Archived': false
                         };
                         
-                        const existing = patients.find(p => p['File Number'] === extractedData.fileNumber);
+                        const existing = patients.find(p => p['File Number'] === extractedData.file_number);
                         if (existing) {
-                            if (confirm(`Patient with File # ${extractedData.fileNumber} already exists. Update existing record?`)) {
+                            if (confirm(`Patient with File # ${extractedData.file_number} already exists. Update existing record?`)) {
                                 newPatient.id = existing.id;
                                 await updatePatient(newPatient);
                                 alert(`✅ Patient updated from PDF: ${newPatient['Patient Name']}`);
@@ -1114,7 +1094,21 @@
                         }
                     }
                 } else {
-                    alert('Could not extract complete patient information.\n\nMake sure the PDF contains patient name and file number.');
+                    // Show missing fields for manual review
+                    let missingFields = [];
+                    if (!extractedData.patient_name) missingFields.push('Patient Name');
+                    if (!extractedData.file_number) missingFields.push('File Number');
+                    if (!extractedData.dose) missingFields.push('Dose');
+                    if (!extractedData.address) missingFields.push('Address');
+                    if (!extractedData.phone_1) missingFields.push('Primary Phone');
+                    
+                    let errorMsg = '⚠️ Could not extract complete patient information.\n\n';
+                    errorMsg += `Missing fields: ${missingFields.join(', ')}\n\n`;
+                    errorMsg += 'Please check the PDF format or add the patient manually.';
+                    alert(errorMsg);
+                    
+                    // Show extracted text for debugging
+                    console.log('Full extracted text:', fullText);
                 }
                 
                 document.getElementById('syncStatus').innerHTML = '✅ PDF processed';
@@ -1122,76 +1116,173 @@
             } catch (error) {
                 document.getElementById('loadingOverlay').style.display = 'none';
                 console.error('PDF extraction error:', error);
-                alert(`Error reading PDF: ${error.message}`);
+                alert(`Error reading PDF: ${error.message}\n\nMake sure the PDF is not password-protected.`);
                 document.getElementById('syncStatus').innerHTML = '❌ PDF extraction failed';
             }
         }
 
-        function extractPatientDataFromPDF(text) {
-            const extracted = {
-                patientName: null,
-                fileNumber: null,
+        // Advanced PDF extraction function following the guidelines
+        function extractPatientDataAdvanced(text) {
+            const result = {
+                patient_name: null,
+                file_number: null,
+                dose: null,
                 address: null,
-                phone1: null,
-                phone2: null,
-                dosePrescribed: null,
-                appointmentDate: null
+                phone_1: null,
+                phone_2: null,
+                date_of_injection: null
             };
             
-            // Extract Name
-            const nameMatch = text.match(/PATIENT NAME\/NOM DU PATIENT\s*([A-Z][A-Z\s]+[A-Z])/i);
-            if (nameMatch) extracted.patientName = nameMatch[1].trim().replace(/\s+/g, ' ');
+            // ========== 1. EXTRACT PATIENT NAME ==========
+            // Look for variations of "PATIENT NAME" label
+            const namePatterns = [
+                /PATIENT NAME\/NOM DU PATIENT\s*([A-Z][A-Z\s]+[A-Z])/i,
+                /PATIENT NAME\s*:\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i,
+                /NOM DU PATIENT\s*:\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i,
+                /Name\s*:\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i
+            ];
             
-            // Extract File Number
-            const medicumMatch = text.match(/MEDICUM\s*#:\s*(\d+)/i);
-            if (medicumMatch) extracted.fileNumber = medicumMatch[1];
-            
-            // Extract Address
-            let addressText = '';
-            const addressSection = text.match(/ADDRESS\/ADRESSE\s*([A-Za-z0-9\s,.'-]+?)(?=CITY\/VILLE|TELEPHONE|$)/i);
-            if (addressSection) addressText = addressSection[1].trim();
-            
-            const cityPattern = text.match(/CITY\/VILLE\s*([A-Za-zÀ-ÿ\s.'-]+(?:,?\s*[A-Z]{2})?\s*\d{3}\s*\d{3})/i);
-            if (cityPattern && addressText) {
-                addressText += ', ' + cityPattern[1].trim();
-            } else if (cityPattern) {
-                addressText = cityPattern[1].trim();
+            for (const pattern of namePatterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    result.patient_name = match[1].trim().replace(/\s+/g, ' ');
+                    break;
+                }
             }
             
-            if (addressText) {
-                addressText = addressText
-                    .replace(/ADDRESS\/ADRESSE/gi, '')
-                    .replace(/CITY\/VILLE/gi, '')
-                    .replace(/\s+/g, ' ')
-                    .trim();
-            }
-            extracted.address = addressText;
-            
-            // Extract Phone
-            const phoneMatch = text.match(/TELEPHONE\/TELEPHONE\s*(\d{3}\s?\d{3}\s?\d{4})/i);
-            if (phoneMatch) extracted.phone1 = phoneMatch[1].replace(/\s/g, '');
-            
-            const phoneSecondaryMatch = text.match(/SECONDARY CONTACT[^0-9]*(\d{3}\s?\d{3}\s?\d{4})/i);
-            if (phoneSecondaryMatch) extracted.phone2 = phoneSecondaryMatch[1].replace(/\s/g, '');
-            
-            // Extract Dose
-            const doseMatch = text.match(/(\d+\.?\d*)\s*mg/i);
-            if (doseMatch && [7.5, 22.5, 30, 45].includes(parseFloat(doseMatch[1]))) {
-                extracted.dosePrescribed = parseFloat(doseMatch[1]).toString();
+            // Fallback: look for two-word capitalized name
+            if (!result.patient_name) {
+                const fallbackName = text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})(?=\s*(?:ADDRESS|MEDICUM|TELEPHONE|DOB|DATE))/i);
+                if (fallbackName) result.patient_name = fallbackName[1].trim();
             }
             
-            // Extract Appointment Date
-            const apptMatch = text.match(/injection seulement\s+(\d{1,2})\s+([A-Za-zéè]+)\s+(\d{4})/i);
-            if (apptMatch) {
-                const months = {
-                    'janvier': '01', 'février': '02', 'mars': '03', 'avril': '04', 'mai': '05', 'juin': '06',
-                    'juillet': '07', 'août': '08', 'septembre': '09', 'octobre': '10', 'novembre': '11', 'décembre': '12'
-                };
-                const monthNum = months[apptMatch[2].toLowerCase()] || '01';
-                extracted.appointmentDate = `${apptMatch[3]}-${monthNum}-${apptMatch[1].padStart(2, '0')}`;
+            // ========== 2. EXTRACT FILE NUMBER ==========
+            // Prioritize MEDICUM number, then patient ID, then other numbers
+            const filePatterns = [
+                /MEDICUM\s*#:\s*(\d+)/i,
+                /MEDICUM\s*#\s*(\d+)/i,
+                /PATIENT\s*ID\s*:\s*(\d+)/i,
+                /FILE\s*#\s*:\s*(\d+)/i,
+                /FILE\s*NUMBER\s*:\s*(\d+)/i,
+                /ID\s*:\s*(\d{4,8})/i
+            ];
+            
+            for (const pattern of filePatterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    result.file_number = match[1].trim();
+                    break;
+                }
             }
             
-            return extracted;
+            // ========== 3. EXTRACT DOSE ==========
+            // Look for dose patterns like "7.5 mg", "22.5mg", "30 mg (4 month)"
+            const dosePatterns = [
+                /(\d{1,2}\.?\d*)\s*mg/i,
+                /(\d{1,2}\.?\d*)\s*mg\s*\([^)]+\)/i,
+                /1-\s*m\s*\((\d{1,2}\.?\d*)\s*mg\)/i,
+                /dose\s*:\s*(\d{1,2}\.?\d*)\s*mg/i
+            ];
+            
+            for (const pattern of dosePatterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    const doseValue = parseFloat(match[1]);
+                    if ([7.5, 22.5, 30, 45].includes(doseValue)) {
+                        result.dose = doseValue.toString();
+                        break;
+                    }
+                }
+            }
+            
+            // ========== 4. EXTRACT FULL ADDRESS ==========
+            let addressParts = [];
+            
+            // Street address
+            const streetMatch = text.match(/ADDRESS\/ADRESSE\s*([A-Za-z0-9\s,.'-]+)/i);
+            if (streetMatch) addressParts.push(streetMatch[1].trim());
+            
+            // City
+            const cityMatch = text.match(/CITY\/VILLE\s*([A-Za-zÀ-ÿ\s.'-]+(?:,?\s*[A-Z]{2})?)/i);
+            if (cityMatch) addressParts.push(cityMatch[1].trim());
+            
+            // Postal code (Canadian format)
+            const postalMatch = text.match(/\b([A-Z]\d[A-Z]\s?\d[A-Z]\d)\b/i);
+            if (postalMatch && !addressParts.some(p => p.includes(postalMatch[1]))) {
+                addressParts.push(postalMatch[1].trim());
+            }
+            
+            // Combine address parts
+            if (addressParts.length > 0) {
+                result.address = addressParts.join(', ').replace(/\s+/g, ' ').trim();
+            }
+            
+            // ========== 5. EXTRACT PHONE NUMBERS ==========
+            // Get all phone numbers from text
+            const phoneRegex = /\b(\d{3})[\s-]?(\d{3})[\s-]?(\d{4})\b/g;
+            const allPhones = [];
+            let phoneMatch;
+            
+            while ((phoneMatch = phoneRegex.exec(text)) !== null) {
+                allPhones.push(phoneMatch[0].replace(/[\s-]/g, ''));
+            }
+            
+            // Identify primary phone (usually associated with TELEPHONE label)
+            const primaryPhoneMatch = text.match(/TELEPHONE\/TELEPHONE\s*(\d{3}\s?\d{3}\s?\d{4})/i);
+            if (primaryPhoneMatch) {
+                result.phone_1 = primaryPhoneMatch[1].replace(/\s/g, '');
+                // Remove primary phone from allPhones list
+                const primaryIndex = allPhones.indexOf(result.phone_1);
+                if (primaryIndex > -1) allPhones.splice(primaryIndex, 1);
+            }
+            
+            // Secondary phone (look for secondary contact or next available)
+            const secondaryMatch = text.match(/SECONDARY CONTACT[^0-9]*(\d{3}\s?\d{3}\s?\d{4})/i);
+            if (secondaryMatch) {
+                result.phone_2 = secondaryMatch[1].replace(/\s/g, '');
+            } else if (allPhones.length > 0) {
+                // Use next available phone number
+                result.phone_2 = allPhones[0];
+            }
+            
+            // ========== 6. EXTRACT DATE OF INJECTION ==========
+            const datePatterns = [
+                /injection seulement\s+(\d{1,2})\s+([A-Za-zéè]+)\s+(\d{4})/i,
+                /LAST INJECTION[^0-9]*(\d{1,2})[\/\s-](\d{1,2})[\/\s-](\d{4})/i,
+                /INJECTION DUE DATE[^0-9]*(\d{1,2})[\/\s-](\d{1,2})[\/\s-](\d{4})/i,
+                /INJECTION WILL BE READY[^0-9]*(\d{1,2})\s+([A-Za-zéè]+)\s+(\d{4})/i,
+                /\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})\b/
+            ];
+            
+            const months = {
+                'janvier': '01', 'février': '02', 'mars': '03', 'avril': '04', 'mai': '05', 'juin': '06',
+                'juillet': '07', 'août': '08', 'septembre': '09', 'octobre': '10', 'novembre': '11', 'décembre': '12',
+                'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04', 'may': '05', 'jun': '06',
+                'jul': '07', 'aug': '08', 'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12'
+            };
+            
+            for (const pattern of datePatterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    if (match[2] && isNaN(match[2]) && months[match[2].toLowerCase()]) {
+                        // French month format
+                        const year = match[3];
+                        const month = months[match[2].toLowerCase()];
+                        const day = match[1].padStart(2, '0');
+                        result.date_of_injection = `${year}-${month}-${day}`;
+                    } else if (match[1] && match[2] && match[3] && !isNaN(match[1]) && !isNaN(match[2]) && !isNaN(match[3])) {
+                        // Numeric date format (MM/DD/YYYY or DD/MM/YYYY)
+                        // Assume MM/DD/YYYY for now
+                        let month = match[1].padStart(2, '0');
+                        let day = match[2].padStart(2, '0');
+                        let year = match[3];
+                        result.date_of_injection = `${year}-${month}-${day}`;
+                    }
+                    break;
+                }
+            }
+            
+            return result;
         }
 
         // ========== GOOGLE SHEETS IMPORT ==========
@@ -1310,7 +1401,41 @@
             }
         }
 
-        // ========== FIXED INJECTION FLOW (UPDATED DUE DATE LOGIC) ==========
+        // ========== FIXED DUE DATE LOGIC ==========
+        function getReferenceDateForDueDate(patient, injectionGivenToday = true) {
+            const today = new Date().toISOString().split('T')[0];
+            const apptDateStr = patient['Appointment Date & Time'];
+            const apptDateObj = apptDateStr ? new Date(apptDateStr) : null;
+            const todayDate = new Date();
+            const isInjectionAdministered = patient['Injection Administered'] === true;
+            const isAppointmentConfirmed = patient['Appointment Confirmed'] === true;
+            
+            // Case 1: Same day (appointment and injection on same day)
+            if (isAppointmentConfirmed && isInjectionAdministered && apptDateStr) {
+                const injectionDate = patient['Previous Injection Dates'] ? patient['Previous Injection Dates'].split(',').pop()?.trim() : null;
+                const apptDateOnly = apptDateObj ? apptDateObj.toISOString().split('T')[0] : null;
+                if (injectionDate === apptDateOnly) {
+                    return injectionDate;
+                }
+            }
+            
+            // Case 2: Missed injection - appointment date passed, no injection given
+            if (isAppointmentConfirmed && !isInjectionAdministered && apptDateObj && apptDateObj < todayDate) {
+                return apptDateObj.toISOString().split('T')[0];
+            }
+            
+            // Case 3: Normal - use today's date
+            return injectionGivenToday ? today : today;
+        }
+
+        function calculateNextDueDate(currentDueDate, dosePrescribed, referenceDate) {
+            const weeks = doseToWeeks[dosePrescribed] || 4;
+            const newDate = new Date(referenceDate);
+            newDate.setDate(newDate.getDate() + (weeks * 7));
+            return newDate.toISOString().split('T')[0];
+        }
+
+        // ========== INJECTION FLOW ==========
         function showInjectionModal(patientId) {
             pendingInjectionId = patientId;
             const patient = patients.find(p => p.id === patientId);
@@ -1375,7 +1500,6 @@
             const newDosesRemaining = dosesRemaining - 1;
             patient['Doses Remaining'] = newDosesRemaining.toString();
             
-            // Use the updated due date logic with missed appointment handling
             const referenceDate = getReferenceDateForDueDate(patient, true);
             const currentDueDate = patient['Due Date'] || today;
             const newDueDate = calculateNextDueDate(currentDueDate, patient['Dose Prescribed'], referenceDate);
@@ -1400,7 +1524,7 @@
             pendingInjectionId = null;
         }
 
-        // ========== APPOINTMENT CONFIRMATION (MOVES TO SCHEDULED TAB) ==========
+        // ========== APPOINTMENT CONFIRMATION ==========
         function openAppointmentEditor(patientId) {
             pendingAppointmentId = patientId;
             const patient = patients.find(p => p.id === patientId);
@@ -1491,15 +1615,11 @@
             const today = new Date(); today.setHours(0,0,0,0);
             const todayStr = today.toISOString().split('T')[0];
             let filtered = patients.filter(p => {
-                // Archived tab logic
                 if (p['Archived'] && currentTab !== 'archived') return false;
                 if (!p['Archived'] && currentTab === 'archived') return false;
-                
-                // Pending tab logic
                 if (p['Pending'] && currentTab !== 'pending') return false;
                 if (!p['Pending'] && currentTab === 'pending') return false;
                 
-                // All Patients tab: ONLY patients with NO confirmed appointment
                 if (currentTab === 'all') {
                     return !p['Archived'] && !p['Pending'] && !p['Appointment Confirmed'];
                 }

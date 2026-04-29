@@ -4,556 +4,1511 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>Patient Dosing Tracker | Final Fix</title>
+    <title>Patient Dosing Tracker | Premium</title>
+    <!-- Supabase Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- PDF.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';</script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background: white; padding: 20px; padding-bottom: 80px; }
+        body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: white; min-height: 100vh; padding: 20px; padding-bottom: 80px; }
         .app-container { max-width: 800px; margin: 0 auto; }
+        
+        /* Premium Header */
         .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 24px; border-radius: 32px; margin-bottom: 24px; box-shadow: 0 10px 30px -10px rgba(102, 126, 234, 0.3); }
-        .header h1 { font-size: 28px; color: white; margin-bottom: 16px; }
-        .status-bar { font-size: 13px; margin-top: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; color: rgba(255,255,255,0.9); }
+        .header h1 { font-size: 28px; color: white; margin-bottom: 16px; font-weight: 700; letter-spacing: -0.5px; }
+        .status-bar { font-size: 13px; margin-top: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; color: rgba(255, 255, 255, 0.9); font-weight: 500; }
         .top-bar { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
         .search-wrapper { display: flex; gap: 8px; flex: 2; min-width: 220px; }
-        .search-wrapper input { flex: 1; padding: 12px 16px; border: 2px solid rgba(255,255,255,0.2); border-radius: 28px; font-size: 14px; background: rgba(255,255,255,0.95); }
-        .btn-sm { padding: 10px 18px; border: none; border-radius: 28px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-        .btn-primary { background: white; color: #667eea; }
-        .btn-primary:hover { transform: translateY(-2px); }
-        .btn-secondary { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); }
-        .btn-secondary:hover { background: rgba(255,255,255,0.3); }
-        .add-btn { width: 100%; margin-bottom: 24px; padding: 14px; border-radius: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; font-weight: 700; cursor: pointer; }
-        .tabs { display: flex; gap: 8px; margin-bottom: 24px; overflow-x: auto; }
-        .tab-btn { padding: 10px 20px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 40px; cursor: pointer; font-weight: 600; color: #475569; }
-        .tab-btn.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-color: transparent; }
+        .search-wrapper input { flex: 1; padding: 12px 16px; border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 28px; font-size: 14px; background: rgba(255, 255, 255, 0.95); transition: all 0.3s ease; font-weight: 500; }
+        .search-wrapper input:focus { outline: none; border-color: white; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2); }
+        
+        /* Buttons */
+        .btn-sm { padding: 10px 18px; border: none; border-radius: 28px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; letter-spacing: 0.3px; }
+        .btn-primary { background: white; color: #667eea; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15); }
+        .btn-secondary { background: rgba(255, 255, 255, 0.2); color: white; border: 1px solid rgba(255, 255, 255, 0.3); }
+        .btn-secondary:hover { background: rgba(255, 255, 255, 0.3); }
+        .btn-outline { background: rgba(255, 255, 255, 0.15); color: white; border: 1px solid rgba(255, 255, 255, 0.3); }
+        .btn-outline:hover { background: rgba(255, 255, 255, 0.25); }
+        .btn-danger { background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); color: white; box-shadow: 0 4px 15px rgba(244, 63, 94, 0.3); }
+        .btn-danger:hover { transform: translateY(-2px); }
+        
+        .add-btn { width: 100%; margin-bottom: 24px; padding: 14px; font-size: 16px; border-radius: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); }
+        .add-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5); }
+        
+        /* Tabs */
+        .tabs { display: flex; gap: 8px; margin-bottom: 24px; overflow-x: auto; white-space: nowrap; scrollbar-width: thin; padding-bottom: 4px; }
+        .tab-btn { padding: 10px 20px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 40px; cursor: pointer; font-size: 13px; font-weight: 600; flex-shrink: 0; color: #475569; transition: all 0.3s ease; }
+        .tab-btn.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-color: transparent; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); }
+        
+        /* Cards */
         .patient-list { display: flex; flex-direction: column; gap: 16px; }
-        .patient-card { background: white; border-radius: 24px; padding: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #e2e8f0; }
-        .patient-card.expanded { border-left: 4px solid #667eea; }
-        .date-separator { background: #e2e8f0; padding: 8px 16px; border-radius: 20px; margin: 12px 0; display: inline-block; font-weight: 600; }
+        .patient-card { background: white; border-radius: 24px; padding: 18px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); cursor: pointer; border: 1px solid #e2e8f0; transition: all 0.3s ease; }
+        .patient-card:hover { transform: translateY(-4px); box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.15); border-color: #cbd5e1; }
+        .patient-card.expanded { background: #fafcff; border-left: 4px solid #667eea; }
+        
+        .date-separator { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); padding: 8px 16px; border-radius: 20px; margin: 12px 0; font-weight: 600; color: #4c51bf; font-size: 13px; display: inline-block; border: 1px solid #e2e8f0; }
+        
         .collapsed-view { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
-        .patient-name { font-size: 18px; font-weight: 700; }
-        .patient-file { font-size: 12px; color: #64748b; margin-left: 8px; }
-        .action-buttons { display: flex; gap: 8px; }
-        .action-icon { width: 38px; height: 38px; border-radius: 50%; border: none; background: #e2e8f0; cursor: pointer; }
-        .call-icon { background: #10b981; color: white; }
-        .nav-icon { background: #3b82f6; color: white; }
+        .patient-info { flex: 2; }
+        .patient-name { font-size: 18px; font-family: 'Inter', 'Aptos', 'Segoe UI', sans-serif; font-weight: 700; color: #1e293b; }
+        .patient-file { font-size: 12px; color: #64748b; margin-left: 8px; font-weight: 500; }
+        .patient-address { font-size: 13px; color: #64748b; margin-top: 4px; line-height: 1.4; }
+        .due-date { font-size: 12px; color: #667eea; font-weight: 600; margin-top: 4px; }
+        .special-badge { display: inline-block; background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); color: #dc2626; font-size: 11px; padding: 3px 10px; border-radius: 20px; margin-top: 4px; font-weight: 600; }
+        .dose-badge { display: inline-block; background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); color: #4f46e5; font-size: 11px; padding: 3px 8px; border-radius: 12px; margin-left: 8px; font-weight: 600; }
+        
+        .action-buttons { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: flex-end; }
+        .action-icon { width: 38px; height: 38px; border-radius: 50%; border: none; font-size: 16px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.3s ease; font-weight: 600; }
+        .action-icon:hover { transform: scale(1.08); }
+        .call-icon { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3); }
+        .nav-icon { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3); }
+        
         .expanded-view { margin-top: 16px; padding-top: 16px; border-top: 2px solid #f1f5f9; display: none; }
-        .detail-row { display: flex; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
-        .detail-label { width: 140px; font-weight: 600; }
-        .action-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
-        .action-sm { padding: 8px 18px; border-radius: 30px; border: none; font-weight: 600; cursor: pointer; }
-        .inject-sm { background: #10b981; color: white; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 1000; overflow-y: auto; }
-        .modal-content { background: white; max-width: 550px; margin: 60px auto; border-radius: 32px; padding: 28px; }
+        .detail-row { display: flex; padding: 8px 0; border-bottom: 1px solid #f1f5f9; flex-wrap: wrap; align-items: center; }
+        .detail-label { width: 140px; font-weight: 600; color: #475569; font-size: 13px; }
+        .detail-value { flex: 1; color: #1e293b; font-size: 13px; font-weight: 500; }
+        .edit-icon { cursor: pointer; margin-left: 8px; color: white; font-size: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 5px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; transition: all 0.3s ease; font-weight: 600; }
+        .edit-icon:hover { transform: scale(1.05); }
+        .ins-red { color: #dc2626; font-weight: 600; }
+        
+        .action-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; justify-content: center; }
+        .action-sm { padding: 8px 18px; font-size: 13px; border-radius: 30px; border: none; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+        .action-sm:hover { transform: translateY(-2px); }
+        .inject-sm { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3); }
+        .pending-sm { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
+        .edit-sm { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; }
+        .delete-sm { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; }
+        .move-sm { background: linear-gradient(135deg, #64748b 0%, #475569 100%); color: white; }
+        
+        /* Modals */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); z-index: 1000; overflow-y: auto; }
+        .modal-content { background: white; max-width: 550px; margin: 60px auto; border-radius: 32px; padding: 28px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-        .close { font-size: 32px; cursor: pointer; color: #94a3b8; }
+        .modal-header h2 { font-size: 24px; font-weight: 700; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .close { font-size: 32px; cursor: pointer; color: #94a3b8; transition: all 0.3s ease; }
+        .close:hover { color: #475569; transform: scale(1.1); }
+        
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .form-group { display: flex; flex-direction: column; gap: 6px; }
         .form-group.full-width { grid-column: span 2; }
-        .form-group input, .form-group select, .form-group textarea { padding: 12px; border: 2px solid #e2e8f0; border-radius: 16px; }
+        .form-group label { font-weight: 600; font-size: 13px; color: #475569; }
+        .form-group input, .form-group select, .form-group textarea { padding: 12px 14px; border: 2px solid #e2e8f0; border-radius: 16px; font-size: 14px; transition: all 0.3s ease; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        
         .modal-footer { margin-top: 24px; display: flex; justify-content: flex-end; gap: 12px; }
-        .empty-state { text-align: center; padding: 60px 20px; color: #94a3b8; }
-        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; flex-direction: column; z-index: 10000; }
-        .loading-spinner { width: 60px; height: 60px; border: 4px solid white; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #94a3b8; font-weight: 500; }
+        
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 10000; flex-direction: column; gap: 20px; }
+        .loading-spinner { width: 60px; height: 60px; border: 4px solid rgba(255, 255, 255, 0.2); border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .loading-text { color: white; margin-top: 16px; }
-        @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } .form-group.full-width { grid-column: span 1; } .top-bar { flex-direction: column; } .search-wrapper { width: 100%; } }
+        .loading-text { color: white; font-size: 16px; font-weight: 600; }
+        
+        @media (max-width: 600px) {
+            body { padding: 12px; }
+            .collapsed-view { flex-direction: column; align-items: stretch; }
+            .action-buttons { justify-content: flex-start; }
+            .form-grid { grid-template-columns: 1fr; }
+            .form-group.full-width { grid-column: span 1; }
+            .top-bar { flex-direction: column; align-items: stretch; }
+            .search-wrapper { width: 100%; }
+        }
     </style>
 </head>
 <body>
-<div class="app-container">
-    <div class="header">
-        <h1>💉 Patient Dosing Tracker</h1>
-        <div class="top-bar">
-            <div class="search-wrapper"><input type="text" id="searchInput" placeholder="Search..."><button id="clearSearchBtn" class="btn-sm btn-outline">Clear</button></div>
-            <button id="refreshBtn" class="btn-sm btn-primary">⟳ Refresh</button>
-        </div>
-        <div class="status-bar"><span id="syncStatus">🔄 Connecting...</span><span id="recordCount"></span></div>
-    </div>
-    <div class="tabs" id="tabsContainer">
-        <button class="tab-btn active" data-tab="all">All</button><button class="tab-btn" data-tab="today">Today</button>
-        <button class="tab-btn" data-tab="scheduled">Scheduled</button><button class="tab-btn" data-tab="overdue">Overdue</button>
-        <button class="tab-btn" data-tab="pending">Pending</button><button class="tab-btn" data-tab="archived">Archived</button>
-        <button class="tab-btn" data-tab="report">Reports</button>
-    </div>
-    <button id="addPatientBtn" class="add-btn">+ Add New Patient</button>
-    <div id="patientList" class="patient-list"><div class="empty-state">Loading...</div></div>
-    <div id="reportView" style="display:none;">
-        <div class="report-section" style="padding:8px">
-            <div style="font-weight:700;font-size:20px;margin-bottom:20px">📊 Data Management</div>
-            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
-                <button id="importGoogleSheetsBtn" class="btn-sm btn-primary" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white">📊 Import Google Sheets</button>
-                <button id="importCSVBtn" class="btn-sm btn-secondary" style="background:#e2e8f0;color:#475569">📄 Import CSV</button>
-                <button id="importPDFBtn" class="btn-sm btn-secondary" style="background:#e2e8f0;color:#475569">📑 Import PDF</button>
-                <button id="exportJSONBtn" class="btn-sm btn-secondary" style="background:#e2e8f0;color:#475569">📥 Backup JSON</button>
-                <button id="exportCSVReportBtn" class="btn-sm btn-secondary" style="background:#e2e8f0;color:#475569">📊 Export CSV</button>
-                <input type="file" id="csvFileInput" accept=".csv" style="display:none">
-                <input type="file" id="pdfFileInput" accept=".pdf" style="display:none">
+    <div class="app-container">
+        <div class="header">
+            <h1>💉 Patient Dosing Tracker</h1>
+            <div class="top-bar">
+                <div class="search-wrapper">
+                    <input type="text" id="searchInput" placeholder="Search name or file...">
+                    <button id="clearSearchBtn" class="btn-sm btn-outline">Clear</button>
+                </div>
+                <button id="refreshBtn" class="btn-sm btn-primary">⟳ Refresh</button>
             </div>
-            <div style="font-weight:700;font-size:18px;margin:20px 0 16px">📋 Custom Report</div>
-            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
-                <select id="reportField" style="flex:1;padding:12px;border-radius:28px;border:2px solid #e2e8f0">
-                    <option value="due_date">Due Date</option><option value="dose_prescribed">Dose</option>
-                    <option value="assignment_type">Assignment</option><option value="doses_remaining">Doses Left</option>
-                </select>
-                <select id="reportCondition" style="flex:1;padding:12px;border-radius:28px;border:2px solid #e2e8f0">
-                    <option value="equals">Equals</option><option value="contains">Contains</option>
-                    <option value="greater">Greater Than</option><option value="less">Less Than</option>
-                </select>
-                <input type="text" id="reportValue" placeholder="Value" style="flex:1;padding:12px;border-radius:28px;border:2px solid #e2e8f0">
-                <button id="generateReportBtn" class="btn-sm btn-primary" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white">Generate</button>
+            <div class="status-bar">
+                <span id="syncStatus">🔄 Connecting to database...</span>
+                <span id="recordCount"></span>
             </div>
-            <div id="reportOutput"><div class="empty-state">Generate a report</div></div>
+        </div>
+
+        <div class="tabs" id="tabsContainer">
+            <button class="tab-btn active" data-tab="all">All Patients</button>
+            <button class="tab-btn" data-tab="today">Today</button>
+            <button class="tab-btn" data-tab="scheduled">Scheduled</button>
+            <button class="tab-btn" data-tab="overdue">Overdue</button>
+            <button class="tab-btn" data-tab="pending">Pending</button>
+            <button class="tab-btn" data-tab="archived">Archived</button>
+            <button class="tab-btn" data-tab="report">Generate Report</button>
+        </div>
+
+        <button id="addPatientBtn" class="add-btn">+ Add New Patient</button>
+
+        <div id="patientList" class="patient-list">
+            <div class="empty-state">Loading patients...</div>
+        </div>
+
+        <div id="reportView" style="display:none;">
+            <div class="report-section" style="padding: 8px;">
+                <div class="report-title" style="font-weight: 700; font-size: 20px; margin-bottom: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">📊 Data Management & Reports</div>
+                <div class="data-buttons" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+                    <button id="importGoogleSheetsBtn" class="btn-sm btn-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">📊 Import from Google Sheets</button>
+                    <button id="importCSVBtn" class="btn-sm btn-secondary" style="background: #e2e8f0; color: #475569;">📄 Import CSV</button>
+                    <button id="importPDFBtn" class="btn-sm btn-secondary" style="background: #e2e8f0; color: #475569;">📑 Import PDF</button>
+                    <button id="exportJSONBtn" class="btn-sm btn-secondary" style="background: #e2e8f0; color: #475569;">📥 Export Backup</button>
+                    <button id="exportCSVReportBtn" class="btn-sm btn-secondary" style="background: #e2e8f0; color: #475569;">📊 Export All to CSV</button>
+                    <input type="file" id="csvFileInput" accept=".csv" style="display:none">
+                    <input type="file" id="pdfFileInput" accept=".pdf" style="display:none">
+                </div>
+                <div class="report-title" style="font-weight: 700; font-size: 18px; margin-top: 20px; margin-bottom: 16px;">📋 Custom Report</div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+                    <select id="reportField" style="flex:1; padding: 12px; border-radius: 28px; border: 2px solid #e2e8f0; background: white; font-weight: 500;">
+                        <option value="due_date">Due Date</option>
+                        <option value="dose_prescribed">Dose Prescribed</option>
+                        <option value="assignment_type">Assignment Type</option>
+                        <option value="doses_remaining">Doses Remaining</option>
+                        <option value="patient_name">Patient Name</option>
+                        <option value="file_number">File Number</option>
+                    </select>
+                    <select id="reportCondition" style="flex:1; padding: 12px; border-radius: 28px; border: 2px solid #e2e8f0; background: white; font-weight: 500;">
+                        <option value="equals">Equals</option>
+                        <option value="contains">Contains</option>
+                        <option value="greater">Greater Than</option>
+                        <option value="less">Less Than</option>
+                    </select>
+                    <input type="text" id="reportValue" placeholder="Value" style="flex:1; padding: 12px; border-radius: 28px; border: 2px solid #e2e8f0;">
+                    <button id="generateReportBtn" class="btn-sm btn-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">Generate</button>
+                </div>
+                <div class="quick-reports" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+                    <button class="quick-btn" data-quick="dueToday" style="padding: 8px 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 28px; cursor: pointer; font-weight: 600;">📅 Due Today</button>
+                    <button class="quick-btn" data-quick="noRepeatsLeft" style="padding: 8px 16px; background: #f1f5f9; border: none; border-radius: 28px; cursor: pointer; font-weight: 600;">⚠️ No Repeats Left</button>
+                    <button class="quick-btn" data-quick="pendingPatients" style="padding: 8px 16px; background: #f1f5f9; border: none; border-radius: 28px; cursor: pointer; font-weight: 600;">⏳ Pending</button>
+                    <button class="quick-btn" data-quick="tempPatients" style="padding: 8px 16px; background: #f1f5f9; border: none; border-radius: 28px; cursor: pointer; font-weight: 600;">📋 Temporary</button>
+                </div>
+                <div id="reportOutput"><div class="empty-state">Select criteria and click Generate</div></div>
+            </div>
         </div>
     </div>
-</div>
 
-<div id="loadingOverlay" class="loading-overlay" style="display:none"><div class="loading-spinner"></div><div class="loading-text">Processing...</div></div>
-
-<!-- Injection Modal with Comments -->
-<div id="injectionModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header"><h2>💉 Confirm Injection</h2><span class="close-injection-modal">&times;</span></div>
-        <div id="injectionPatientName" style="margin-bottom:16px;padding:12px;background:#f8fafc;border-radius:16px"></div>
-        <div id="injectionCurrentInfo" style="margin-bottom:16px;padding:8px;background:#e0e7ff;border-radius:12px"></div>
-        <div class="form-group"><label>Injection Site *</label><select id="injectionSiteSelect"><option value="">Select...</option><option value="Right Side">Right Side</option><option value="Left Side">Left Side</option><option value="Right Glute">Right Glute</option><option value="Left Glute">Left Glute</option></select></div>
-        <div class="form-group"><label>Special Instructions</label><textarea id="injectionSpecialInstructions" rows="2"></textarea></div>
-        <div class="form-group"><label>Adverse Events</label><textarea id="injectionAdverseEvents" rows="2"></textarea></div>
-        <div class="form-group"><label>💬 Comments (Optional)</label><textarea id="injectionComments" rows="2" placeholder="Additional notes, patient remarks, follow-up..."></textarea></div>
-        <div class="modal-footer"><button id="cancelInjectionBtn" class="btn-sm btn-secondary">Cancel</button><button id="confirmInjectionBtn" class="btn-sm btn-primary" style="background:#10b981;color:white">Confirm</button></div>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display:none;">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Processing...</div>
     </div>
-</div>
 
-<div id="apptEditModal" class="modal"><div class="modal-content"><div class="modal-header"><h2>📅 Appointment</h2><span class="close-appt">&times;</span></div><input type="datetime-local" id="appointmentDateInput" style="width:100%;padding:12px;border-radius:16px;border:2px solid #e2e8f0;margin:16px 0"><div class="modal-footer"><button id="saveAppointmentBtn" class="btn-sm btn-primary">Confirm</button><button id="cancelAppointmentBtn" class="btn-sm btn-secondary">Cancel</button></div></div></div>
-<div id="confirmModal" class="modal"><div class="modal-content"><h3>Confirm</h3><p id="confirmMessage" style="margin:16px 0"></p><div style="display:flex;gap:12px;justify-content:center"><button id="confirmYes" class="btn-sm btn-primary">Yes</button><button id="confirmNo" class="btn-sm btn-secondary">No</button></div></div></div>
-<div id="patientModal" class="modal"><div class="modal-content"><div class="modal-header"><h2 id="modalTitle">Add Patient</h2><span class="close">&times;</span></div><form id="patientForm"><div class="form-grid"><div class="form-group"><label>Patient Name *</label><input type="text" id="patientName" required></div><div class="form-group"><label>File Number *</label><input type="text" id="fileNumber" required></div><div class="form-group full-width"><label>Address</label><input type="text" id="address"></div><div class="form-group"><label>Phone 1</label><input type="tel" id="phone1"></div><div class="form-group"><label>Phone 2</label><input type="tel" id="phone2"></div><div class="form-group"><label>💊 Dose</label><select id="dosePrescribed"><option value="7.5">7.5 mg (4 weeks)</option><option value="22.5">22.5 mg (12 weeks)</option><option value="30">30 mg (16 weeks)</option><option value="45">45 mg (24 weeks)</option></select></div><div class="form-group"><label>Total Doses</label><input type="number" id="totalDoses" value="4" min="1"></div><div class="form-group"><label>Doses Left</label><input type="number" id="dosesRemaining" value="4" min="0"></div><div class="form-group"><label>Prev Injection Site</label><input type="text" id="prevInjSite"></div><div class="form-group"><label>Injection Site</label><select id="injSite"><option value="">Select</option><option value="Right Side">Right Side</option><option value="Left Side">Left Side</option><option value="Right Glute">Right Glute</option><option value="Left Glute">Left Glute</option></select></div><div class="form-group"><label>Due Date</label><input type="date" id="dueDate"></div><div class="form-group"><label>Appointment</label><input type="datetime-local" id="appointmentDateTime"></div><div class="form-group full-width"><label>Prev Injection Dates</label><input type="text" id="prevInjDates"></div><div class="form-group"><label>Assignment</label><select id="assignmentType"><option value="Permanent">Permanent</option><option value="Temporary">Temporary</option></select></div><div class="form-group full-width"><label>Special Instructions</label><textarea id="specialInstructions" rows="2"></textarea></div><div class="form-group full-width"><label>Adverse Effects</label><textarea id="adverseEffects" rows="2"></textarea></div></div><div class="modal-footer"><button type="button" id="deletePatientBtn" class="btn-sm btn-danger" style="display:none">Delete</button><button type="submit" class="btn-sm btn-primary">Save</button></div></form></div></div>
+    <!-- Enhanced Injection Modal with Comments Field -->
+    <div id="injectionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>💉 Confirm Injection</h2>
+                <span class="close-injection-modal">&times;</span>
+            </div>
+            <div id="injectionPatientName" style="margin-bottom: 16px; padding: 12px; background: #f8fafc; border-radius: 16px; font-weight: 600;"></div>
+            <div id="injectionCurrentInfo" style="margin-bottom: 16px; padding: 8px; background: #e0e7ff; border-radius: 12px; font-size: 13px; color: #4f46e5;"></div>
+            <div class="form-group">
+                <label>Injection Site *</label>
+                <select id="injectionSiteSelect" style="width:100%; padding: 12px; border-radius: 16px; border: 2px solid #e2e8f0;" required>
+                    <option value="">Select injection site...</option>
+                    <option value="Right Side">Right Side</option>
+                    <option value="Left Side">Left Side</option>
+                    <option value="Right Glute">Right Glute</option>
+                    <option value="Left Glute">Left Glute</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>📝 Special Instructions</label>
+                <textarea id="injectionSpecialInstructions" rows="2" style="width:100%; padding: 12px; border-radius: 16px; border: 2px solid #e2e8f0;" placeholder="Any special notes..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>⚠️ Adverse Events</label>
+                <textarea id="injectionAdverseEvents" rows="2" style="width:100%; padding: 12px; border-radius: 16px; border: 2px solid #e2e8f0;" placeholder="Record any adverse reactions..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>💬 Comments</label>
+                <textarea id="injectionComments" rows="2" style="width:100%; padding: 12px; border-radius: 16px; border: 2px solid #e2e8f0;" placeholder="Additional comments, patient remarks, follow-up notes..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelInjectionBtn" class="btn-sm btn-secondary" style="background: #e2e8f0; color: #475569;">Cancel</button>
+                <button id="confirmInjectionBtn" class="btn-sm btn-primary" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">Confirm Injection</button>
+            </div>
+        </div>
+    </div>
 
-<script>
-    // ==================== SUPABASE CONFIG ====================
-    const SUPABASE_URL = "https://wqlbmtjbjloxpvsbeqyb.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_gcyK2z_8lvbOgHNcJfdX1g_8QCWJ_Xi";
-    const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSYgD018ww2Mbkud6ZYmZHop7EXxcm_0Zl4V9bB2AaY4r4xXTWChAW6v-gUyjD4-2Qmg4H8O0kxryCf/pub?output=csv";
-    
-    let _supabase = null, patients = [], currentEditId = null, pendingConfirmCallback = null, currentTab = 'all', searchQuery = '', pendingInjectionId = null, pendingAppointmentId = null;
-    const doseToWeeks = { '7.5': 4, '22.5': 12, '30': 16, '45': 24 };
-    const columnMapping = {
-        'Patient Name': 'patient_name', 'File Number': 'file_number', 'Address': 'address', 'Phone 1': 'phone1', 'Phone 2': 'phone2',
-        'Dose Prescribed': 'dose_prescribed', 'Total Doses': 'total_doses', 'Doses Remaining': 'doses_remaining',
-        'Previous Injection Site': 'previous_injection_site', 'Injection Site': 'injection_site', 'Due Date': 'due_date',
-        'Appointment Date & Time': 'appointment_date_time', 'Previous Injection Dates': 'previous_injection_dates',
-        'Assignment Type': 'assignment_type', 'Special Instructions': 'special_instructions', 'Adverse Effects Comments': 'adverse_effects_comments',
-        'File Status': 'file_status', 'Injection Administered': 'injection_administered', 'Appointment Confirmed': 'appointment_confirmed',
-        'Pending': 'pending', 'Archived': 'archived', 'Comments': 'comments'
-    };
+    <!-- Appointment Date Edit Modal -->
+    <div id="apptEditModal" class="modal">
+        <div class="modal-content appt-edit-content">
+            <div class="modal-header">
+                <h2>📅 Edit Appointment Date & Time</h2>
+                <span class="close-appt">&times;</span>
+            </div>
+            <div class="form-group">
+                <label>Appointment Date & Time:</label>
+                <input type="datetime-local" id="appointmentDateInput" class="datetime-input" style="width:100%; padding: 12px; border-radius: 16px; border: 2px solid #e2e8f0;">
+                <small style="color:#64748b; font-size:11px;">Setting this date will automatically confirm the appointment</small>
+            </div>
+            <div class="modal-footer">
+                <button id="saveAppointmentBtn" class="btn-sm btn-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">Save & Confirm</button>
+                <button id="cancelAppointmentBtn" class="btn-sm btn-secondary" style="background: #e2e8f0; color: #475569;">Cancel</button>
+            </div>
+        </div>
+    </div>
 
-    // ==================== FIXED: LOCAL DATE HANDLING (NO OFFSET) ====================
-    function getLocalDateFromInput(dateInput) {
-        // For <input type="date"> values like "2026-04-30"
-        if (!dateInput) return null;
-        // If already YYYY-MM-DD format, return as is
-        if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
-            return dateInput;
-        }
-        const date = new Date(dateInput);
-        if (isNaN(date.getTime())) return null;
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
-    
-    function getLocalDateTimeFromInput(dtInput) {
-        if (!dtInput) return null;
-        if (typeof dtInput === 'string' && dtInput.includes('T')) return dtInput;
-        const date = new Date(dtInput);
-        if (isNaN(date.getTime())) return null;
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
-    }
+    <div id="confirmModal" class="modal">
+        <div class="modal-content confirm-modal" style="max-width: 380px; text-align: center;">
+            <h3 style="margin-bottom: 16px;">Confirm Action</h3>
+            <p id="confirmMessage" style="margin: 16px 0; color: #475569;"></p>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button id="confirmYes" class="btn-sm btn-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">Yes</button>
+                <button id="confirmNo" class="btn-sm btn-secondary" style="background: #e2e8f0; color: #475569;">No</button>
+            </div>
+        </div>
+    </div>
 
-    // Convert local date YYYY-MM-DD to Date object without timezone shift
-    function parseLocalDate(dateStr) {
-        if (!dateStr) return null;
-        const [year, month, day] = dateStr.split('-').map(Number);
-        return new Date(year, month - 1, day);
-    }
+    <div id="patientModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add Patient</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="patientForm">
+                <div class="form-grid">
+                    <div class="form-group"><label>Patient Name *</label><input type="text" id="patientName" required></div>
+                    <div class="form-group"><label>File Number *</label><input type="text" id="fileNumber" required></div>
+                    <div class="form-group full-width"><label>Address</label><input type="text" id="address"></div>
+                    <div class="form-group"><label>Phone 1</label><input type="tel" id="phone1"></div>
+                    <div class="form-group"><label>Phone 2</label><input type="tel" id="phone2"></div>
+                    <div class="form-group"><label>💊 Dose Prescribed</label>
+                        <select id="dosePrescribed">
+                            <option value="7.5">7.5 mg (4 weeks)</option>
+                            <option value="22.5">22.5 mg (12 weeks)</option>
+                            <option value="30">30 mg (16 weeks)</option>
+                            <option value="45">45 mg (24 weeks)</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Total Doses</label><input type="number" id="totalDoses" value="4" min="1"></div>
+                    <div class="form-group"><label>Doses Remaining</label><input type="number" id="dosesRemaining" value="4" min="0"></div>
+                    <div class="form-group"><label>Previous Injection Site</label><input type="text" id="prevInjSite"></div>
+                    <div class="form-group"><label>Injection Site</label>
+                        <select id="injSite">
+                            <option value="">Select</option>
+                            <option value="Right Side">Right Side</option>
+                            <option value="Left Side">Left Side</option>
+                            <option value="Right Glute">Right Glute</option>
+                            <option value="Left Glute">Left Glute</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Due Date</label><input type="date" id="dueDate"></div>
+                    <div class="form-group"><label>Appointment Date & Time</label><input type="datetime-local" id="appointmentDateTime"></div>
+                    <div class="form-group full-width"><label>Previous Injection Dates</label><input type="text" id="prevInjDates"></div>
+                    <div class="form-group"><label>Assignment Type</label>
+                        <select id="assignmentType"><option value="Permanent">Permanent</option><option value="Temporary">Temporary</option></select>
+                    </div>
+                    <div class="form-group full-width"><label>⚠️ Special Instructions</label><textarea id="specialInstructions" rows="2"></textarea></div>
+                    <div class="form-group full-width"><label>Adverse Effects Comments</label><textarea id="adverseEffects" rows="2"></textarea></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="deletePatientBtn" class="btn-sm btn-danger" style="display:none;">Delete</button>
+                    <button type="submit" class="btn-sm btn-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">Save Patient</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    // Add weeks to a local date
-    function addWeeksToLocalDate(dateStr, weeks) {
-        const date = parseLocalDate(dateStr);
-        if (!date) return null;
-        date.setDate(date.getDate() + (weeks * 7));
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
+    <script>
+        // ========== SUPABASE CONFIGURATION ==========
+        // REPLACE WITH YOUR ACTUAL SUPABASE CREDENTIALS
+        const SUPABASE_URL = "https://wqlbmtjbjloxpvsbeqyb.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_gcyK2z_8lvbOgHNcJfdX1g_8QCWJ_Xi";
+        
+        // Google Sheets CSV URL for import
+        const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSYgD018ww2Mbkud6ZYmZHop7EXxcm_0Zl4V9bB2AaY4r4xXTWChAW6v-gUyjD4-2Qmg4H8O0kxryCf/pub?output=csv";
+        
+        // Global variables
+        let _supabase = null;
+        let patients = [];
+        let currentEditId = null;
+        let pendingConfirmCallback = null;
+        let currentTab = 'all';
+        let searchQuery = '';
+        let pendingInjectionId = null;
+        let pendingAppointmentId = null;
 
-    // ==================== SUPABASE FUNCTIONS ====================
-    async function initSupabase() {
-        if (SUPABASE_URL === "https://YOUR_PROJECT_ID.supabase.co") { document.getElementById('syncStatus').innerHTML = '⚠️ Configure Supabase'; return false; }
-        try {
-            _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            const { error } = await _supabase.from('patients').select('count', { count: 'exact', head: true });
-            if (error) throw error;
-            document.getElementById('syncStatus').innerHTML = '✅ Connected';
-            return true;
-        } catch(e) { console.error(e); document.getElementById('syncStatus').innerHTML = '❌ Connection failed'; return false; }
-    }
-    async function loadPatients() {
-        if (!_supabase) return;
-        document.getElementById('loadingOverlay').style.display = 'flex';
-        try {
-            const { data, error } = await _supabase.from('patients').select('*').order('created_at', { ascending: false });
-            if (error) throw error;
-            patients = data.map(row => { const p = {}; for (let [display, db] of Object.entries(columnMapping)) p[display] = row[db]; p.id = row.id; return p; });
-            document.getElementById('recordCount').innerHTML = `📋 ${patients.length}`;
-            renderCurrentTab();
-        } catch(e) { console.error(e); alert('Load error: ' + e.message); }
-        finally { document.getElementById('loadingOverlay').style.display = 'none'; }
-    }
-    async function addPatientToDB(p) { const db = {}; for (let [display, dbName] of Object.entries(columnMapping)) db[dbName] = p[display] || null; const { error } = await _supabase.from('patients').insert([db]); if(error) { alert('Error: '+error.message); return false; } return true; }
-    async function updatePatientInDB(id, p) { const db = {}; for (let [display, dbName] of Object.entries(columnMapping)) db[dbName] = p[display] || null; const { error } = await _supabase.from('patients').update(db).eq('id', id); if(error) { alert('Error: '+error.message); return false; } return true; }
-    async function deletePatientFromDB(id) { const { error } = await _supabase.from('patients').delete().eq('id', id); if(error) { alert('Error: '+error.message); return false; } return true; }
-
-    // ==================== PDF EXTRACTION ====================
-    async function importPDF(file) {
-        const fileInput = document.getElementById('pdfFileInput');
-        const selectedFile = fileInput.files[0];
-        if (!selectedFile || selectedFile.type !== 'application/pdf') { alert('Select a PDF'); return; }
-        document.getElementById('loadingOverlay').style.display = 'flex';
-        try {
-            const arrayBuffer = await selectedFile.arrayBuffer();
-            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-            let fullText = '';
-            for (let i = 1; i <= pdf.numPages; i++) { const page = await pdf.getPage(i); const textContent = await page.getTextContent(); fullText += textContent.items.map(t => t.str).join(' ') + '\n'; }
-            document.getElementById('loadingOverlay').style.display = 'none';
-            
-            // Extract data
-            let patientName = null, fileNumber = null, dose = null, address = null, phone1 = null, phone2 = null, injectionDate = null;
-            const nameMatch = fullText.match(/PATIENT NAME\/NOM DU PATIENT\s*([A-Z][A-Z\s]+[A-Z])/i);
-            if (nameMatch) patientName = nameMatch[1].trim().replace(/\s+/g, ' ');
-            const fileMatch = fullText.match(/MEDICUM\s*#:\s*(\d+)/i);
-            if (fileMatch) fileNumber = fileMatch[1];
-            const doseMatch = fullText.match(/(\d+\.?\d*)\s*mg/i);
-            if (doseMatch && [7.5,22.5,30,45].includes(parseFloat(doseMatch[1]))) dose = parseFloat(doseMatch[1]).toString();
-            let addrParts = [];
-            const street = fullText.match(/ADDRESS\/ADRESSE\s*([A-Za-z0-9\s,.'-]+)/i);
-            if (street) addrParts.push(street[1].trim());
-            const city = fullText.match(/CITY\/VILLE\s*([A-Za-zÀ-ÿ\s.'-]+(?:,?\s*[A-Z]{2})?)/i);
-            if (city) addrParts.push(city[1].trim());
-            const postal = fullText.match(/\b([A-Z]\d[A-Z]\s?\d[A-Z]\d)\b/i);
-            if (postal && !addrParts.some(p=>p.includes(postal[1]))) addrParts.push(postal[1].trim());
-            if (addrParts.length) address = addrParts.join(', ').replace(/\s+/g,' ').trim();
-            const phoneMatch1 = fullText.match(/TELEPHONE\/TELEPHONE\s*(\d{3}\s?\d{3}\s?\d{4})/i);
-            if (phoneMatch1) phone1 = phoneMatch1[1].replace(/\s/g,'');
-            else { const phoneStd = fullText.match(/TELEPHONE\s*(\d{3}\s?\d{3}\s?\d{4})/i); if(phoneStd) phone1 = phoneStd[1].replace(/\s/g,''); }
-            const phoneSec = fullText.match(/SECONDARY CONTACT[^0-9]*(\d{3}\s?\d{3}\s?\d{4})/i);
-            if (phoneSec) phone2 = phoneSec[1].replace(/\s/g,'');
-            const injMatch = fullText.match(/injection seulement\s+(\d{1,2})\s+([A-Za-zéè]+)\s+(\d{4})/i);
-            if (injMatch) {
-                const months = {'janvier':'01','février':'02','mars':'03','avril':'04','mai':'05','juin':'06','juillet':'07','août':'08','septembre':'09','octobre':'10','novembre':'11','décembre':'12'};
-                injectionDate = `${injMatch[3]}-${months[injMatch[2].toLowerCase()]}-${injMatch[1].padStart(2,'0')}`;
-            }
-            if (patientName && fileNumber && confirm(`Add: ${patientName} (${fileNumber})?`)) {
-                const defaultDue = new Date(); defaultDue.setDate(defaultDue.getDate()+7);
-                const dueDateStr = `${defaultDue.getFullYear()}-${String(defaultDue.getMonth()+1).padStart(2,'0')}-${String(defaultDue.getDate()).padStart(2,'0')}`;
-                await addPatient({
-                    'Patient Name': patientName, 'File Number': fileNumber, 'Address': address||'', 'Phone 1': phone1||'', 'Phone 2': phone2||'',
-                    'Dose Prescribed': dose||'7.5', 'Total Doses': '4', 'Doses Remaining': '4', 'Previous Injection Site': '', 'Injection Site': '',
-                    'Due Date': dueDateStr, 'Appointment Date & Time': injectionDate, 'Previous Injection Dates': '', 'Assignment Type': 'Permanent',
-                    'Special Instructions': '', 'Adverse Effects Comments': '', 'File Status': 'Active', 'Injection Administered': false,
-                    'Appointment Confirmed': !!injectionDate, 'Pending': false, 'Archived': false
-                });
-                alert('Patient added');
-            } else alert('Could not extract required data');
-        } catch(e) { console.error(e); alert('PDF error: '+e.message); } finally { document.getElementById('loadingOverlay').style.display = 'none'; }
-    }
-
-    // ==================== GOOGLE SHEETS IMPORT ====================
-    async function importFromGoogleSheets() {
-        if (!confirm('Import from Google Sheets?')) return;
-        document.getElementById('loadingOverlay').style.display = 'flex';
-        try {
-            const resp = await fetch(GOOGLE_SHEETS_CSV_URL);
-            const csv = await resp.text();
-            const rows = csv.split('\n');
-            const headers = rows[0].split(',').map(h=>h.trim().replace(/"/g,''));
-            let imported=0, dup=0;
-            for(let i=1;i<rows.length;i++) {
-                if(!rows[i].trim()) continue;
-                let vals=[], inQuote=false, cur='';
-                for(let ch of rows[i]) {
-                    if(ch==='"') inQuote=!inQuote;
-                    else if(ch===',' && !inQuote) { vals.push(cur.trim().replace(/^"|"$/g,'')); cur=''; }
-                    else cur+=ch;
-                }
-                vals.push(cur.trim().replace(/^"|"$/g,''));
-                const p={}; headers.forEach((h,idx)=>p[h]=vals[idx]||'');
-                if(p['Patient Name'] && !patients.find(ex=>ex['File Number']===p['File Number'])) {
-                    const defDue = new Date(); defDue.setDate(defDue.getDate()+7);
-                    const due = `${defDue.getFullYear()}-${String(defDue.getMonth()+1).padStart(2,'0')}-${String(defDue.getDate()).padStart(2,'0')}`;
-                    await addPatient({
-                        'Patient Name': p['Patient Name'], 'File Number': p['File Number'], 'Address': p['Address']||'', 'Phone 1': p['Phone 1']||'', 'Phone 2': p['Phone 2']||'',
-                        'Dose Prescribed': p['Dose Prescribed']||'7.5', 'Total Doses': p['Total Doses']||'4', 'Doses Remaining': p['Doses Remaining']||'4',
-                        'Previous Injection Site': '', 'Injection Site': '', 'Due Date': due, 'Appointment Date & Time': null,
-                        'Previous Injection Dates': '', 'Assignment Type': 'Permanent', 'Special Instructions': '', 'Adverse Effects Comments': '',
-                        'File Status': 'Active', 'Injection Administered': false, 'Appointment Confirmed': false, 'Pending': false, 'Archived': false
-                    });
-                    imported++;
-                } else dup++;
-            }
-            alert(`Imported ${imported}, skipped ${dup} duplicates`);
-            await loadPatients();
-        } catch(e) { alert('Import error: '+e.message); }
-        finally { document.getElementById('loadingOverlay').style.display = 'none'; }
-    }
-
-    // ==================== DOSING LOGIC (FIXED DATES) ====================
-    function getReferenceDateForDueDate(patient) {
-        const today = new Date();
-        const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-        const apptDateStr = patient['Appointment Date & Time'];
-        const apptOnly = apptDateStr ? apptDateStr.split('T')[0] : null;
-        const isConfirmed = patient['Appointment Confirmed'] === true;
-        const isInjected = patient['Injection Administered'] === true;
-        if (isConfirmed && !isInjected && apptOnly) {
-            const apptDate = parseLocalDate(apptOnly);
-            const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-            if (apptDate && apptDate < todayDate) return apptOnly;
-        }
-        return todayStr;
-    }
-    function calculateNextDueDate(currentDue, dose, refDate) {
-        const weeks = doseToWeeks[dose] || 4;
-        return addWeeksToLocalDate(refDate, weeks);
-    }
-
-    // ==================== INJECTION FLOW ====================
-    function showInjectionModal(id) {
-        pendingInjectionId = id;
-        const p = patients.find(p=>p.id===id);
-        if(!p) return;
-        document.getElementById('injectionPatientName').innerHTML = `<strong>${escapeHtml(p['Patient Name'])}</strong> (${p['Dose Prescribed']}mg, ${p['Doses Remaining']} left)`;
-        document.getElementById('injectionCurrentInfo').innerHTML = `Next due: +${doseToWeeks[p['Dose Prescribed']]} weeks`;
-        document.getElementById('injectionSiteSelect').value = '';
-        document.getElementById('injectionSpecialInstructions').value = '';
-        document.getElementById('injectionAdverseEvents').value = '';
-        document.getElementById('injectionComments').value = '';
-        document.getElementById('injectionModal').style.display = 'block';
-    }
-    async function performInjection() {
-        const site = document.getElementById('injectionSiteSelect').value;
-        if(!site) { alert('Select injection site'); return; }
-        const spec = document.getElementById('injectionSpecialInstructions').value;
-        const adverse = document.getElementById('injectionAdverseEvents').value;
-        const comments = document.getElementById('injectionComments').value;
-        const id = pendingInjectionId;
-        const p = patients.find(p=>p.id===id);
-        if(!p) return;
-        let left = parseInt(p['Doses Remaining']) || 0;
-        const total = parseInt(p['Total Doses']) || 4;
-        if(left<=0) { alert('No doses left'); document.getElementById('injectionModal').style.display='none'; pendingInjectionId=null; return; }
-        const today = new Date();
-        const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-        let prev = p['Previous Injection Dates'] ? p['Previous Injection Dates'].split(',') : [];
-        prev.push(todayStr);
-        p['Previous Injection Dates'] = prev.join(', ');
-        if(p['Injection Site']) p['Previous Injection Site'] = p['Injection Site'];
-        p['Injection Site'] = site;
-        if(spec) p['Special Instructions'] = (p['Special Instructions']?p['Special Instructions']+' | ':'') + `[${todayStr}] ${spec}`;
-        if(adverse) p['Adverse Effects Comments'] = (p['Adverse Effects Comments']?p['Adverse Effects Comments']+' | ':'') + `[${todayStr}] ${adverse}`;
-        if(comments) p['Comments'] = (p['Comments']?p['Comments']+' | ':'') + `[${todayStr}] ${comments}`;
-        const newLeft = left-1;
-        p['Doses Remaining'] = newLeft;
-        const ref = getReferenceDateForDueDate(p);
-        p['Due Date'] = calculateNextDueDate(p['Due Date'], p['Dose Prescribed'], ref);
-        p['Injection Administered'] = true;
-        p['Appointment Confirmed'] = false;
-        p['Appointment Date & Time'] = null;
-        p['Pending'] = false;
-        if(newLeft===0) p['Pending'] = true;
-        await updatePatientInDB(id, p);
-        await loadPatients();
-        document.getElementById('injectionModal').style.display = 'none';
-        pendingInjectionId = null;
-        alert(`Injection recorded. ${newLeft} doses left. Next due: ${p['Due Date']}`);
-    }
-
-    // ==================== APPOINTMENT CONFIRMATION ====================
-    function openAppointmentEditor(id) {
-        pendingAppointmentId = id;
-        const p = patients.find(p=>p.id===id);
-        const val = p && p['Appointment Date & Time'] ? p['Appointment Date & Time'] : '';
-        document.getElementById('appointmentDateInput').value = val;
-        document.getElementById('apptEditModal').style.display = 'block';
-    }
-    async function saveAppointmentDate() {
-        const id = pendingAppointmentId;
-        const dt = document.getElementById('appointmentDateInput').value;
-        if(!dt) { alert('Select date/time'); return; }
-        const p = patients.find(p=>p.id===id);
-        if(p) {
-            p['Appointment Date & Time'] = dt;
-            p['Appointment Confirmed'] = true;
-            await updatePatientInDB(id, p);
-            await loadPatients();
-            alert(`Appointment confirmed for ${p['Patient Name']}`);
-        }
-        document.getElementById('apptEditModal').style.display = 'none';
-        pendingAppointmentId = null;
-    }
-
-    // ==================== CRUD ====================
-    async function addPatient(p) { const exists = patients.find(ex=>ex['File Number']===p['File Number']); if(exists) { alert('File number exists'); return false; } const ok = await addPatientToDB(p); if(ok) await loadPatients(); return ok; }
-    async function updatePatient(p) { const ok = await updatePatientInDB(p.id, p); if(ok) await loadPatients(); return ok; }
-    async function deletePatient(id) { if(await deletePatientFromDB(id)) await loadPatients(); else alert('Delete failed'); }
-    async function markPending(id) { const p = patients.find(p=>p.id===id); if(p) { p['Pending']=true; await updatePatientInDB(id,p); await loadPatients(); } }
-    async function moveToAll(id) { const p = patients.find(p=>p.id===id); if(p) { p['Pending']=false; p['Archived']=false; await updatePatientInDB(id,p); await loadPatients(); } }
-
-    // ==================== FILTER & RENDER ====================
-    function getFiltered() {
-        const today = new Date();
-        const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-        return patients.filter(p => {
-            if(p['Archived'] && currentTab!=='archived') return false;
-            if(!p['Archived'] && currentTab==='archived') return false;
-            if(p['Pending'] && currentTab!=='pending') return false;
-            if(!p['Pending'] && currentTab==='pending') return false;
-            if(currentTab==='all') return !p['Archived'] && !p['Pending'] && !p['Appointment Confirmed'];
-            const appt = p['Appointment Date & Time'];
-            const apptDate = appt ? appt.split('T')[0] : null;
-            const confirmed = p['Appointment Confirmed'] === true;
-            const isToday = apptDate === todayStr;
-            const isFuture = apptDate && apptDate > todayStr;
-            const overdue = apptDate && apptDate < todayStr && !p['Injection Administered'] && confirmed;
-            if(currentTab==='today') return isToday && confirmed && !overdue;
-            if(currentTab==='scheduled') return isFuture && confirmed;
-            if(currentTab==='overdue') return overdue;
-            return false;
-        }).filter(p => !searchQuery || p['Patient Name'].toLowerCase().includes(searchQuery) || p['File Number'].toLowerCase().includes(searchQuery))
-          .sort((a,b)=> (a['Due Date']||'').localeCompare(b['Due Date']||''));
-    }
-    function renderPatientCard(p) {
-        const due = p['Due Date'] ? parseLocalDate(p['Due Date']).toLocaleDateString() : 'Not set';
-        const dose = p['Dose Prescribed'] || '';
-        const total = parseInt(p['Total Doses'])||4;
-        const left = parseInt(p['Doses Remaining'])||0;
-        const given = total-left;
-        const appt = p['Appointment Date & Time'];
-        const confirmed = p['Appointment Confirmed'];
-        return `<div class="patient-card" data-id="${p.id}">
-            <div class="collapsed-view"><div><span class="patient-name">${escapeHtml(p['Patient Name'])}</span><span class="patient-file">#${escapeHtml(p['File Number'])}</span>${dose?`<span style="margin-left:8px;background:#e0e7ff;padding:2px 8px;border-radius:12px">${dose}mg</span>`:''}</div>
-            <div class="action-buttons">${p['Phone 1']?`<button class="action-icon call-icon" data-phone="${escapeHtml(p['Phone 1'])}">📞</button>`:''}${p['Phone 2']?`<button class="action-icon call-icon" data-phone="${escapeHtml(p['Phone 2'])}">📞2</button>`:''}${p['Address']?`<button class="action-icon nav-icon" data-address="${escapeHtml(p['Address'])}">📍</button>`:''}</div></div>
-            <div class="expanded-view"><div class="detail-row"><div class="detail-label">File:</div><div>${escapeHtml(p['File Number'])}</div></div>
-            <div class="detail-row"><div class="detail-label">Dose:</div><div>${dose}mg (${doseToWeeks[dose]||4} weeks)</div></div>
-            <div class="detail-row"><div class="detail-label">Doses:</div><div>${given}/${total} given, ${left} left</div></div>
-            <div class="detail-row"><div class="detail-label">Last Injection:</div><div>${escapeHtml(p['Injection Site']||'None')}</div></div>
-            <div class="detail-row"><div class="detail-label">Appointment:</div><div>${appt?new Date(appt).toLocaleString():'Not set'} <span class="edit-icon" onclick="openAppointmentEditor(${p.id})">✏️ ${confirmed?'Edit':'Set'}</span></div></div>
-            <div class="detail-row"><div class="detail-label">Assignment:</div><div>${p['Assignment Type']}</div></div>
-            ${p['Special Instructions']?`<div class="detail-row"><div class="detail-label">⚠️ Instructions:</div><div>${escapeHtml(p['Special Instructions'])}</div></div>`:''}
-            ${p['Comments']?`<div class="detail-row"><div class="detail-label">💬 Comments:</div><div>${escapeHtml(p['Comments'])}</div></div>`:''}
-            <div class="action-row"><button class="action-sm inject-sm" data-id="${p.id}" data-action="inject">💉 Injection (${left})</button>
-            ${currentTab==='pending'||currentTab==='archived'?`<button class="action-sm move-sm" data-id="${p.id}" data-action="move">⟳ Move</button>`:`<button class="action-sm pending-sm" data-id="${p.id}" data-action="pending">⏳ Pending</button>`}
-            <button class="action-sm edit-sm" data-id="${p.id}" data-action="edit">✎ Edit</button>
-            <button class="action-sm delete-sm" data-id="${p.id}" data-action="delete">🗑 Delete</button></div></div></div>`;
-    }
-    function renderCurrentTab() {
-        if(currentTab==='report') { document.getElementById('patientList').style.display='none'; document.getElementById('reportView').style.display='block'; return; }
-        document.getElementById('patientList').style.display='flex'; document.getElementById('reportView').style.display='none';
-        const filtered = getFiltered();
-        if(!filtered.length) { document.getElementById('patientList').innerHTML='<div class="empty-state">✨ No patients</div>'; return; }
-        const grouped = {};
-        filtered.forEach(p=>{ const d = p['Due Date'] ? parseLocalDate(p['Due Date']).toLocaleDateString() : 'No Date'; if(!grouped[d]) grouped[d]=[]; grouped[d].push(p); });
-        let html = '';
-        for(let date of Object.keys(grouped).sort((a,b)=>new Date(a)-new Date(b))) {
-            html += `<div class="date-separator">📅 ${date}</div>`;
-            grouped[date].forEach(p=>html+=renderPatientCard(p));
-        }
-        document.getElementById('patientList').innerHTML = html;
-        attachEvents();
-    }
-    function attachEvents() {
-        document.querySelectorAll('.patient-card').forEach(card=>{ const exp = card.querySelector('.expanded-view'); card.addEventListener('click',e=>{ if(e.target.tagName!=='BUTTON'){ const show=exp.style.display==='block'; exp.style.display=show?'none':'block'; card.classList.toggle('expanded',!show); } }); });
-        document.querySelectorAll('.call-icon').forEach(btn=>btn.addEventListener('click',e=>{ e.stopPropagation(); window.location.href=`tel:${btn.dataset.phone}`; }));
-        document.querySelectorAll('.nav-icon').forEach(btn=>btn.addEventListener('click',e=>{ e.stopPropagation(); window.open(`https://maps.google.com/?q=${encodeURIComponent(btn.dataset.address)}`); }));
-        document.querySelectorAll('[data-action="inject"]').forEach(btn=>btn.addEventListener('click',e=>{ e.stopPropagation(); showInjectionModal(parseInt(btn.dataset.id)); }));
-        document.querySelectorAll('[data-action="pending"]').forEach(btn=>btn.addEventListener('click',e=>{ e.stopPropagation(); if(confirm('Mark as pending?')) markPending(parseInt(btn.dataset.id)); }));
-        document.querySelectorAll('[data-action="move"]').forEach(btn=>btn.addEventListener('click',e=>{ e.stopPropagation(); moveToAll(parseInt(btn.dataset.id)); }));
-        document.querySelectorAll('[data-action="edit"]').forEach(btn=>btn.addEventListener('click',e=>{ e.stopPropagation(); openEditModal(parseInt(btn.dataset.id)); }));
-        document.querySelectorAll('[data-action="delete"]').forEach(btn=>btn.addEventListener('click',e=>{ e.stopPropagation(); if(confirm('Delete permanently?')) deletePatient(parseInt(btn.dataset.id)); }));
-    }
-    function openAddModal() { currentEditId=null; document.getElementById('patientForm').reset(); document.getElementById('deletePatientBtn').style.display='none'; const d=new Date(); d.setDate(d.getDate()+7); document.getElementById('dueDate').value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; document.getElementById('totalDoses').value=4; document.getElementById('dosesRemaining').value=4; document.getElementById('patientModal').style.display='block'; }
-    function openEditModal(id) { const p=patients.find(p=>p.id===id); if(!p) return; currentEditId=id; document.getElementById('modalTitle').innerText='Edit Patient'; document.getElementById('patientName').value=p['Patient Name']; document.getElementById('fileNumber').value=p['File Number']; document.getElementById('address').value=p['Address']||''; document.getElementById('phone1').value=p['Phone 1']||''; document.getElementById('phone2').value=p['Phone 2']||''; document.getElementById('dosePrescribed').value=p['Dose Prescribed']||'7.5'; document.getElementById('totalDoses').value=p['Total Doses']; document.getElementById('dosesRemaining').value=p['Doses Remaining']; document.getElementById('prevInjSite').value=p['Previous Injection Site']||''; document.getElementById('injSite').value=p['Injection Site']||''; document.getElementById('dueDate').value=p['Due Date']||''; document.getElementById('appointmentDateTime').value=p['Appointment Date & Time']||''; document.getElementById('prevInjDates').value=p['Previous Injection Dates']||''; document.getElementById('assignmentType').value=p['Assignment Type']; document.getElementById('specialInstructions').value=p['Special Instructions']||''; document.getElementById('adverseEffects').value=p['Adverse Effects Comments']||''; document.getElementById('deletePatientBtn').style.display='block'; document.getElementById('patientModal').style.display='block'; }
-    async function savePatientModal() {
-        const fn = document.getElementById('fileNumber').value.trim();
-        if(!fn) { alert('File number required'); return; }
-        if(!currentEditId && patients.find(p=>p['File Number']===fn)) { alert('File number exists'); return; }
-        const data = {
-            'Patient Name': document.getElementById('patientName').value, 'File Number': fn, 'Address': document.getElementById('address').value,
-            'Phone 1': document.getElementById('phone1').value, 'Phone 2': document.getElementById('phone2').value,
-            'Dose Prescribed': document.getElementById('dosePrescribed').value, 'Total Doses': document.getElementById('totalDoses').value,
-            'Doses Remaining': document.getElementById('dosesRemaining').value, 'Previous Injection Site': document.getElementById('prevInjSite').value,
-            'Injection Site': document.getElementById('injSite').value, 'Due Date': document.getElementById('dueDate').value,
-            'Appointment Date & Time': document.getElementById('appointmentDateTime').value || null,
-            'Previous Injection Dates': document.getElementById('prevInjDates').value, 'Assignment Type': document.getElementById('assignmentType').value,
-            'Special Instructions': document.getElementById('specialInstructions').value, 'Adverse Effects Comments': document.getElementById('adverseEffects').value,
-            'File Status': 'Active', 'Injection Administered': false, 'Appointment Confirmed': false, 'Pending': false, 'Archived': false
+        const doseToWeeks = { '7.5': 4, '22.5': 12, '30': 16, '45': 24 };
+        
+        // Column mapping
+        const columnMapping = {
+            'Patient Name': 'patient_name',
+            'File Number': 'file_number',
+            'Address': 'address',
+            'Phone 1': 'phone1',
+            'Phone 2': 'phone2',
+            'Dose Prescribed': 'dose_prescribed',
+            'Total Doses': 'total_doses',
+            'Doses Remaining': 'doses_remaining',
+            'Previous Injection Site': 'previous_injection_site',
+            'Injection Site': 'injection_site',
+            'Due Date': 'due_date',
+            'Appointment Date & Time': 'appointment_date_time',
+            'Previous Injection Dates': 'previous_injection_dates',
+            'Assignment Type': 'assignment_type',
+            'Special Instructions': 'special_instructions',
+            'Adverse Effects Comments': 'adverse_effects_comments',
+            'File Status': 'file_status',
+            'Injection Administered': 'injection_administered',
+            'Appointment Confirmed': 'appointment_confirmed',
+            'Pending': 'pending',
+            'Archived': 'archived',
+            'Comments': 'comments'
         };
-        let ok;
-        if(currentEditId) { data.id=currentEditId; ok=await updatePatient(data); }
-        else ok=await addPatient(data);
-        if(ok) { closeModal(); alert('Saved'); }
-    }
-    function closeModal() { document.getElementById('patientModal').style.display='none'; currentEditId=null; }
-    function exportJSON() { const blob = new Blob([JSON.stringify(patients,null,2)], {type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`backup_${new Date().toISOString().split('T')[0]}.json`; a.click(); URL.revokeObjectURL(a.href); alert(`Exported ${patients.length} patients`); }
-    function exportCSV() { if(!patients.length) return; const headers = ['Patient Name','File Number','Address','Phone 1','Phone 2','Dose Prescribed','Total Doses','Doses Remaining','Due Date','Assignment Type','Comments']; const rows=[headers.join(',')]; patients.forEach(p=>{ rows.push(headers.map(h=>{ let v=p[h]||''; if(v.includes(',')) v=`"${v}"`; return v; }).join(',')); }); const blob=new Blob([rows.join('\n')],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`patients_${new Date().toISOString().split('T')[0]}.csv`; a.click(); alert('Exported'); }
-    function importCSV(file) { const r=new FileReader(); r.onload=async e=>{ try { const rows=e.target.result.split('\n'); const headers=rows[0].split(',').map(h=>h.trim().replace(/"/g,'')); let cnt=0; for(let i=1;i<rows.length;i++) { if(!rows[i].trim()) continue; const vals=rows[i].split(',').map(v=>v.trim().replace(/"/g,'')); const p={}; headers.forEach((h,idx)=>p[h]=vals[idx]||''); if(p['Patient Name'] && !patients.find(ex=>ex['File Number']===p['File Number'])) { await addPatient({ 'Patient Name':p['Patient Name'], 'File Number':p['File Number'], 'Address':p['Address']||'', 'Phone 1':p['Phone 1']||'', 'Phone 2':p['Phone 2']||'', 'Dose Prescribed':p['Dose Prescribed']||'7.5', 'Total Doses':p['Total Doses']||'4', 'Doses Remaining':p['Doses Remaining']||'4', 'Due Date':p['Due Date']||'', 'Assignment Type':'Permanent', 'Special Instructions':'', 'Adverse Effects Comments':'', 'Comments':'', 'File Status':'Active', 'Injection Administered':false, 'Appointment Confirmed':false, 'Pending':false, 'Archived':false }); cnt++; } } alert(`Imported ${cnt}`); } catch(err){ alert('Invalid CSV'); } }; r.readAsText(file); }
-    function generateReport() { const field=document.getElementById('reportField').value; const cond=document.getElementById('reportCondition').value; const val=document.getElementById('reportValue').value.toLowerCase(); let filtered=patients.filter(p=>{ let fv=p[field]; if(field==='due_date') { if(!fv) return false; const due=new Date(fv); const vdate=new Date(val); if(cond==='equals') return due.toDateString()===vdate.toDateString(); if(cond==='greater') return due>vdate; if(cond==='less') return due<vdate; } else if(field==='dose_prescribed') { if(cond==='equals') return fv===val; if(cond==='greater') return parseFloat(fv)>parseFloat(val); if(cond==='less') return parseFloat(fv)<parseFloat(val); } else if(field==='doses_remaining') { const rem=parseInt(fv)||0; const v=parseInt(val); if(cond==='equals') return rem===v; if(cond==='greater') return rem>v; if(cond==='less') return rem<v; } else { fv=String(fv||'').toLowerCase(); if(cond==='equals') return fv===val; if(cond==='contains') return fv.includes(val); } return false; }); if(!filtered.length) { document.getElementById('reportOutput').innerHTML='<div class="empty-state">No matches</div>'; return; } let html=`<div style="background:white;border-radius:20px;padding:20px"><strong>${filtered.length} found</strong><button onclick="exportReportToCSV()" class="btn-sm btn-secondary" style="margin-left:12px">📥 Export</button>`; const grouped={}; filtered.forEach(p=>{ const d=p['Due Date']?new Date(p['Due Date']).toLocaleDateString():'No Date'; if(!grouped[d]) grouped[d]=[]; grouped[d].push(p); }); Object.keys(grouped).sort().forEach(date=>{ html+=`<div class="date-separator" style="margin-top:16px">📅 ${date}</div>`; grouped[date].forEach(p=>{ html+=`<div style="padding:14px;border-bottom:1px solid #e2e8f0;cursor:pointer" onclick="openEditModal(${p.id})"><strong>${escapeHtml(p['Patient Name'])}</strong> #${escapeHtml(p['File Number'])}<div style="font-size:12px;color:#64748b">💊 ${p['Dose Prescribed']}mg</div></div>`; }); }); html+=`</div>`; document.getElementById('reportOutput').innerHTML=html; window.lastReport=filtered; }
-    function exportReportToCSV() { if(!window.lastReport || !window.lastReport.length) return; const headers=['Patient Name','File Number','Phone 1','Address','Dose Prescribed','Doses Remaining','Due Date']; const rows=[headers.join(',')]; window.lastReport.forEach(p=>{ rows.push(headers.map(h=>{ let v=p[h]||''; if(v.includes(',')) v=`"${v}"`; return v; }).join(',')); }); const blob=new Blob([rows.join('\n')],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`report.csv`; a.click(); }
-    function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
 
-    // ==================== INIT ====================
-    document.addEventListener('DOMContentLoaded', async () => {
-        const ok = await initSupabase();
-        if(ok) await loadPatients();
-        document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>{
-            document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-            btn.classList.add('active'); currentTab=btn.dataset.tab; searchQuery=''; document.getElementById('searchInput').value=''; renderCurrentTab();
-        }));
-        document.getElementById('refreshBtn').addEventListener('click',()=>loadPatients());
-        document.getElementById('clearSearchBtn').addEventListener('click',()=>{ document.getElementById('searchInput').value=''; searchQuery=''; renderCurrentTab(); });
-        document.getElementById('searchInput').addEventListener('input',e=>{ if(currentTab!=='report'){ searchQuery=e.target.value.toLowerCase(); renderCurrentTab(); } });
-        document.getElementById('addPatientBtn').addEventListener('click',openAddModal);
-        document.getElementById('importGoogleSheetsBtn').addEventListener('click',importFromGoogleSheets);
-        document.getElementById('importCSVBtn').addEventListener('click',()=>document.getElementById('csvFileInput').click());
-        document.getElementById('csvFileInput').addEventListener('change',e=>{ if(e.target.files[0]) importCSV(e.target.files[0]); e.target.value=''; });
-        document.getElementById('importPDFBtn').addEventListener('click',()=>document.getElementById('pdfFileInput').click());
-        document.getElementById('pdfFileInput').addEventListener('change',e=>{ if(e.target.files[0]) importPDF(e.target.files[0]); e.target.value=''; });
-        document.getElementById('exportJSONBtn').addEventListener('click',exportJSON);
-        document.getElementById('exportCSVReportBtn').addEventListener('click',exportCSV);
-        document.getElementById('generateReportBtn').addEventListener('click',generateReport);
-        document.querySelectorAll('.close').forEach(c=>c.addEventListener('click',closeModal));
-        document.querySelectorAll('.close-injection-modal').forEach(c=>c.addEventListener('click',()=>document.getElementById('injectionModal').style.display='none'));
-        document.querySelectorAll('.close-appt').forEach(c=>c.addEventListener('click',()=>document.getElementById('apptEditModal').style.display='none'));
-        window.addEventListener('click',e=>{ if(e.target===document.getElementById('patientModal')) closeModal(); if(e.target===document.getElementById('confirmModal')) document.getElementById('confirmModal').style.display='none'; });
-        document.getElementById('patientForm').addEventListener('submit',e=>{ e.preventDefault(); savePatientModal(); });
-        document.getElementById('deletePatientBtn').addEventListener('click',()=>{ if(currentEditId && confirm('Delete?')) deletePatient(currentEditId).then(()=>closeModal()); });
-        document.getElementById('confirmYes').addEventListener('click',()=>{ if(pendingConfirmCallback) pendingConfirmCallback(); document.getElementById('confirmModal').style.display='none'; pendingConfirmCallback=null; });
-        document.getElementById('confirmNo').addEventListener('click',()=>{ document.getElementById('confirmModal').style.display='none'; pendingConfirmCallback=null; });
-        document.getElementById('confirmInjectionBtn').addEventListener('click',performInjection);
-        document.getElementById('cancelInjectionBtn').addEventListener('click',()=>document.getElementById('injectionModal').style.display='none');
-        document.getElementById('saveAppointmentBtn').addEventListener('click',saveAppointmentDate);
-        document.getElementById('cancelAppointmentBtn').addEventListener('click',()=>document.getElementById('apptEditModal').style.display='none');
-        window.openEditModal = openEditModal;
-        window.openAppointmentEditor = openAppointmentEditor;
-        window.exportReportToCSV = exportReportToCSV;
-    });
-</script>
+        // ==================== FIXED: DATE HANDLING (NO OFFSET) ====================
+        function parseLocalDate(dateStr) {
+            if (!dateStr) return null;
+            // If it's already YYYY-MM-DD format
+            if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                const [year, month, day] = dateStr.split('-').map(Number);
+                return new Date(year, month - 1, day);
+            }
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return null;
+            return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        }
+        
+        function formatLocalDate(date) {
+            if (!date) return null;
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        function addWeeksToLocalDate(dateStr, weeks) {
+            const date = parseLocalDate(dateStr);
+            if (!date) return null;
+            date.setDate(date.getDate() + (weeks * 7));
+            return formatLocalDate(date);
+        }
+        
+        function formatLocalDateTime(dateInput) {
+            if (!dateInput) return null;
+            // If it's already in datetime-local format
+            if (typeof dateInput === 'string' && dateInput.includes('T')) {
+                return dateInput;
+            }
+            const date = new Date(dateInput);
+            if (isNaN(date.getTime())) return null;
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
+        // ========== SUPABASE INITIALIZATION ==========
+        async function initSupabase() {
+            if (SUPABASE_URL === "https://YOUR_PROJECT_ID.supabase.co") {
+                document.getElementById('syncStatus').innerHTML = '⚠️ Configure Supabase URL in the code';
+                return false;
+            }
+            
+            try {
+                _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                const { error } = await _supabase.from('patients').select('count', { count: 'exact', head: true });
+                if (error) throw error;
+                document.getElementById('syncStatus').innerHTML = '✅ Connected to database';
+                return true;
+            } catch (error) {
+                console.error('Supabase connection error:', error);
+                document.getElementById('syncStatus').innerHTML = '❌ Connection failed: ' + error.message;
+                return false;
+            }
+        }
+
+        // ========== DATABASE OPERATIONS ==========
+        async function loadPatients() {
+            if (!_supabase) return;
+            
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            document.getElementById('syncStatus').innerHTML = '🔄 Loading patients...';
+            
+            try {
+                const { data, error } = await _supabase
+                    .from('patients')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                
+                patients = data.map(row => {
+                    const patient = {};
+                    for (const [displayName, dbName] of Object.entries(columnMapping)) {
+                        patient[displayName] = row[dbName];
+                    }
+                    patient.id = row.id;
+                    return patient;
+                });
+                
+                document.getElementById('recordCount').innerHTML = `📋 ${patients.length}`;
+                renderCurrentTab();
+                document.getElementById('syncStatus').innerHTML = `✅ Loaded ${patients.length} patients`;
+                
+            } catch (error) {
+                console.error('Load error:', error);
+                document.getElementById('syncStatus').innerHTML = '❌ Failed to load: ' + error.message;
+            } finally {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+        }
+
+        async function addPatientToDB(patientData) {
+            if (!_supabase) return false;
+            
+            const dbPatient = {};
+            for (const [displayName, dbName] of Object.entries(columnMapping)) {
+                let value = patientData[displayName];
+                dbPatient[dbName] = value !== undefined && value !== '' ? value : null;
+            }
+            
+            const { error } = await _supabase.from('patients').insert([dbPatient]);
+            
+            if (error) {
+                alert('Error adding patient: ' + error.message);
+                return false;
+            }
+            return true;
+        }
+
+        async function updatePatientInDB(id, patientData) {
+            if (!_supabase) return false;
+            
+            const dbPatient = {};
+            for (const [displayName, dbName] of Object.entries(columnMapping)) {
+                let value = patientData[displayName];
+                dbPatient[dbName] = value !== undefined && value !== '' ? value : null;
+            }
+            
+            const { error } = await _supabase.from('patients').update(dbPatient).eq('id', id);
+            
+            if (error) {
+                alert('Error updating patient: ' + error.message);
+                return false;
+            }
+            return true;
+        }
+
+        async function deletePatientFromDB(id) {
+            if (!_supabase) return false;
+            
+            const { error } = await _supabase.from('patients').delete().eq('id', id);
+            
+            if (error) {
+                alert('Error deleting patient: ' + error.message);
+                return false;
+            }
+            return true;
+        }
+
+        // ========== PDF EXTRACTION ==========
+        async function importPDF(file) {
+            const fileInput = document.getElementById('pdfFileInput');
+            const selectedFile = fileInput.files[0];
+            
+            if (!selectedFile || selectedFile.type !== 'application/pdf') {
+                alert('Please select a valid PDF file');
+                return;
+            }
+            
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            document.getElementById('syncStatus').innerHTML = '🔄 Processing PDF...';
+            
+            try {
+                const arrayBuffer = await selectedFile.arrayBuffer();
+                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+                const pdf = await loadingTask.promise;
+                
+                let fullText = '';
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    fullText += pageText + '\n';
+                }
+                
+                document.getElementById('loadingOverlay').style.display = 'none';
+                
+                if (!fullText.trim()) {
+                    alert('No readable text found in this PDF.');
+                    document.getElementById('syncStatus').innerHTML = '❌ PDF extraction failed';
+                    return;
+                }
+                
+                const extractedData = extractPatientDataAdvanced(fullText);
+                
+                let confirmMsg = '📄 Extracted Patient Information:\n\n';
+                confirmMsg += `👤 Patient Name: ${extractedData.patient_name || '❌ NOT FOUND'}\n`;
+                confirmMsg += `🔢 File Number: ${extractedData.file_number || '❌ NOT FOUND'}\n`;
+                confirmMsg += `💊 Dose: ${extractedData.dose || '❌ NOT FOUND'}\n`;
+                confirmMsg += `📍 Address: ${extractedData.address || '❌ NOT FOUND'}\n`;
+                confirmMsg += `📞 Primary Phone: ${extractedData.phone_1 || '❌ NOT FOUND'}\n`;
+                confirmMsg += `📞 Secondary Phone: ${extractedData.phone_2 || 'Not provided'}\n`;
+                confirmMsg += `📅 Injection Date: ${extractedData.date_of_injection || '❌ NOT FOUND'}\n\n`;
+                confirmMsg += `Do you want to add this patient?`;
+                
+                if (extractedData.patient_name && extractedData.file_number) {
+                    if (confirm(confirmMsg)) {
+                        const defaultDueDate = new Date();
+                        defaultDueDate.setDate(defaultDueDate.getDate() + 7);
+                        const defaultDueDateStr = formatLocalDate(defaultDueDate);
+                        
+                        let appointmentDateTime = null;
+                        if (extractedData.date_of_injection) {
+                            appointmentDateTime = extractedData.date_of_injection + 'T12:00:00';
+                        }
+                        
+                        let doseValue = '7.5';
+                        if (extractedData.dose) {
+                            const doseMatch = extractedData.dose.match(/(\d+\.?\d*)/);
+                            if (doseMatch && [7.5, 22.5, 30, 45].includes(parseFloat(doseMatch[1]))) {
+                                doseValue = parseFloat(doseMatch[1]).toString();
+                            }
+                        }
+                        
+                        const newPatient = {
+                            'Patient Name': extractedData.patient_name,
+                            'File Number': extractedData.file_number,
+                            'Address': extractedData.address || '',
+                            'Phone 1': extractedData.phone_1 || '',
+                            'Phone 2': extractedData.phone_2 || '',
+                            'Dose Prescribed': doseValue,
+                            'Total Doses': '4',
+                            'Doses Remaining': '4',
+                            'Previous Injection Site': '',
+                            'Injection Site': '',
+                            'Due Date': defaultDueDateStr,
+                            'Appointment Date & Time': appointmentDateTime,
+                            'Previous Injection Dates': '',
+                            'Assignment Type': 'Permanent',
+                            'Special Instructions': '',
+                            'Adverse Effects Comments': '',
+                            'File Status': 'Active',
+                            'Injection Administered': false,
+                            'Appointment Confirmed': !!extractedData.date_of_injection,
+                            'Pending': false,
+                            'Archived': false
+                        };
+                        
+                        const existing = patients.find(p => p['File Number'] === extractedData.file_number);
+                        if (existing) {
+                            if (confirm(`Patient with File # ${extractedData.file_number} already exists. Update existing record?`)) {
+                                newPatient.id = existing.id;
+                                await updatePatient(newPatient);
+                                alert(`✅ Patient updated from PDF: ${newPatient['Patient Name']}`);
+                            }
+                        } else {
+                            await addPatient(newPatient);
+                            alert(`✅ Patient added from PDF: ${newPatient['Patient Name']}`);
+                        }
+                    }
+                } else {
+                    let missingFields = [];
+                    if (!extractedData.patient_name) missingFields.push('Patient Name');
+                    if (!extractedData.file_number) missingFields.push('File Number');
+                    
+                    let errorMsg = '⚠️ Could not extract complete patient information.\n\n';
+                    errorMsg += `Missing fields: ${missingFields.join(', ')}\n\n`;
+                    errorMsg += 'Please check the PDF format or add the patient manually.';
+                    alert(errorMsg);
+                }
+                
+                document.getElementById('syncStatus').innerHTML = '✅ PDF processed';
+                
+            } catch (error) {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                console.error('PDF extraction error:', error);
+                alert(`Error reading PDF: ${error.message}`);
+                document.getElementById('syncStatus').innerHTML = '❌ PDF extraction failed';
+            }
+        }
+
+        function extractPatientDataAdvanced(text) {
+            const result = {
+                patient_name: null,
+                file_number: null,
+                dose: null,
+                address: null,
+                phone_1: null,
+                phone_2: null,
+                date_of_injection: null
+            };
+            
+            // Extract Name
+            const nameMatch = text.match(/PATIENT NAME\/NOM DU PATIENT\s*([A-Z][A-Z\s]+[A-Z])/i);
+            if (nameMatch) result.patient_name = nameMatch[1].trim().replace(/\s+/g, ' ');
+            
+            // Extract File Number
+            const fileMatch = text.match(/MEDICUM\s*#:\s*(\d+)/i);
+            if (fileMatch) result.file_number = fileMatch[1];
+            
+            // Extract Dose
+            const doseMatch = text.match(/(\d+\.?\d*)\s*mg/i);
+            if (doseMatch && [7.5, 22.5, 30, 45].includes(parseFloat(doseMatch[1]))) {
+                result.dose = parseFloat(doseMatch[1]).toString();
+            }
+            
+            // Extract Address
+            let addressParts = [];
+            const streetMatch = text.match(/ADDRESS\/ADRESSE\s*([A-Za-z0-9\s,.'-]+)/i);
+            if (streetMatch) addressParts.push(streetMatch[1].trim());
+            const cityMatch = text.match(/CITY\/VILLE\s*([A-Za-zÀ-ÿ\s.'-]+(?:,?\s*[A-Z]{2})?)/i);
+            if (cityMatch) addressParts.push(cityMatch[1].trim());
+            const postalMatch = text.match(/\b([A-Z]\d[A-Z]\s?\d[A-Z]\d)\b/i);
+            if (postalMatch && !addressParts.some(p => p.includes(postalMatch[1]))) {
+                addressParts.push(postalMatch[1].trim());
+            }
+            if (addressParts.length > 0) {
+                result.address = addressParts.join(', ').replace(/\s+/g, ' ').trim();
+            }
+            
+            // Extract Phone
+            const phoneMatch1 = text.match(/TELEPHONE\/TELEPHONE\s*(\d{3}\s?\d{3}\s?\d{4})/i);
+            if (phoneMatch1) {
+                result.phone_1 = phoneMatch1[1].replace(/\s/g, '');
+            } else {
+                const phoneStd = text.match(/TELEPHONE\s*(\d{3}\s?\d{3}\s?\d{4})/i);
+                if (phoneStd) result.phone_1 = phoneStd[1].replace(/\s/g, '');
+            }
+            
+            const phoneSec = text.match(/SECONDARY CONTACT[^0-9]*(\d{3}\s?\d{3}\s?\d{4})/i);
+            if (phoneSec) result.phone_2 = phoneSec[1].replace(/\s/g, '');
+            
+            // Extract Injection Date
+            const injMatch = text.match(/injection seulement\s+(\d{1,2})\s+([A-Za-zéè]+)\s+(\d{4})/i);
+            if (injMatch) {
+                const months = {
+                    'janvier': '01', 'février': '02', 'mars': '03', 'avril': '04', 'mai': '05', 'juin': '06',
+                    'juillet': '07', 'août': '08', 'septembre': '09', 'octobre': '10', 'novembre': '11', 'décembre': '12'
+                };
+                const monthNum = months[injMatch[2].toLowerCase()] || '01';
+                result.date_of_injection = `${injMatch[3]}-${monthNum}-${injMatch[1].padStart(2, '0')}`;
+            }
+            
+            return result;
+        }
+
+        // ========== GOOGLE SHEETS IMPORT ==========
+        async function importFromGoogleSheets() {
+            if (!confirm('Import patients from Google Sheets? This will add new patients without deleting existing ones.')) return;
+            
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            document.getElementById('syncStatus').innerHTML = '🔄 Importing from Google Sheets...';
+            
+            try {
+                const response = await fetch(GOOGLE_SHEETS_CSV_URL);
+                const csvText = await response.text();
+                const rows = csvText.split('\n');
+                const headers = rows[0].split(',').map(h => h.trim().replace(/"/g, ''));
+                
+                let importedCount = 0;
+                let duplicateCount = 0;
+                let errorCount = 0;
+                
+                for (let i = 1; i < rows.length; i++) {
+                    if (!rows[i].trim()) continue;
+                    
+                    let values = [];
+                    let inQuote = false;
+                    let currentValue = '';
+                    const row = rows[i];
+                    
+                    for (let j = 0; j < row.length; j++) {
+                        const char = row[j];
+                        if (char === '"') {
+                            inQuote = !inQuote;
+                        } else if (char === ',' && !inQuote) {
+                            values.push(currentValue.trim().replace(/^"|"$/g, ''));
+                            currentValue = '';
+                        } else {
+                            currentValue += char;
+                        }
+                    }
+                    values.push(currentValue.trim().replace(/^"|"$/g, ''));
+                    
+                    const sheetPatient = {};
+                    headers.forEach((header, idx) => {
+                        sheetPatient[header] = values[idx] || '';
+                    });
+                    
+                    if (sheetPatient['Patient Name'] && sheetPatient['Patient Name'] !== 'Patient Name') {
+                        const existing = patients.find(p => p['File Number'] === sheetPatient['File Number']);
+                        if (!existing) {
+                            try {
+                                let appointmentDate = null;
+                                if (sheetPatient['Appointment Date & Time']) {
+                                    appointmentDate = sheetPatient['Appointment Date & Time'];
+                                }
+                                
+                                let dueDate = null;
+                                if (sheetPatient['Due Date']) {
+                                    dueDate = sheetPatient['Due Date'];
+                                }
+                                
+                                const defaultDueDate = new Date();
+                                defaultDueDate.setDate(defaultDueDate.getDate() + 7);
+                                const defaultDueDateStr = formatLocalDate(defaultDueDate);
+                                
+                                const newPatient = {
+                                    'Patient Name': sheetPatient['Patient Name'],
+                                    'File Number': sheetPatient['File Number'] || `IMP_${Date.now()}_${i}`,
+                                    'Address': sheetPatient['Address'] || '',
+                                    'Phone 1': sheetPatient['Phone 1'] || '',
+                                    'Phone 2': sheetPatient['Phone 2'] || '',
+                                    'Dose Prescribed': sheetPatient['Dose Prescribed'] || '7.5',
+                                    'Total Doses': sheetPatient['Total Doses'] || '4',
+                                    'Doses Remaining': sheetPatient['Doses Repeats Left'] || sheetPatient['Doses Remaining'] || '4',
+                                    'Previous Injection Site': sheetPatient['Previous Injection Site'] || '',
+                                    'Injection Site': sheetPatient['Injection Site'] || '',
+                                    'Due Date': dueDate || defaultDueDateStr,
+                                    'Appointment Date & Time': appointmentDate,
+                                    'Previous Injection Dates': sheetPatient['Previous Injection Dates'] || '',
+                                    'Assignment Type': sheetPatient['Assignment Type'] || 'Permanent',
+                                    'Special Instructions': sheetPatient['Special Instructions'] || '',
+                                    'Adverse Effects Comments': sheetPatient['Adverse Effects Comments'] || '',
+                                    'File Status': 'Active',
+                                    'Injection Administered': sheetPatient['Injection Administered'] === 'TRUE',
+                                    'Appointment Confirmed': sheetPatient['Appointment Confirmed'] === 'TRUE',
+                                    'Pending': sheetPatient['Pending'] === 'TRUE',
+                                    'Archived': sheetPatient['Archived'] === 'TRUE'
+                                };
+                                
+                                const success = await addPatientToDB(newPatient);
+                                if (success) importedCount++;
+                                else errorCount++;
+                            } catch (err) {
+                                console.error('Error importing row:', err);
+                                errorCount++;
+                            }
+                        } else {
+                            duplicateCount++;
+                        }
+                    }
+                }
+                
+                await loadPatients();
+                alert(`✅ Import complete!\n\nNew patients added: ${importedCount}\nDuplicates skipped: ${duplicateCount}\nErrors: ${errorCount}`);
+                document.getElementById('syncStatus').innerHTML = `✅ Imported ${importedCount} patients`;
+                
+            } catch (error) {
+                console.error('Import error:', error);
+                alert('Error importing from Google Sheets: ' + error.message);
+                document.getElementById('syncStatus').innerHTML = '❌ Import failed';
+            } finally {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+        }
+
+        // ========== DUE DATE LOGIC (FIXED DATES) ==========
+        function getReferenceDateForDueDate(patient, injectionGivenToday = true) {
+            const today = new Date();
+            const todayStr = formatLocalDate(today);
+            const apptDateStr = patient['Appointment Date & Time'];
+            const apptOnly = apptDateStr ? apptDateStr.split('T')[0] : null;
+            const isConfirmed = patient['Appointment Confirmed'] === true;
+            const isInjected = patient['Injection Administered'] === true;
+            const todayDate = parseLocalDate(todayStr);
+            const apptDate = parseLocalDate(apptOnly);
+            
+            // Case 1: Same day appointment and injection
+            if (isConfirmed && isInjected && apptOnly) {
+                const injectionDate = patient['Previous Injection Dates'] ? patient['Previous Injection Dates'].split(',').pop()?.trim() : null;
+                if (injectionDate === apptOnly) return apptOnly;
+            }
+            
+            // Case 2: Missed injection - appointment passed, no injection given
+            if (isConfirmed && !isInjected && apptDate && apptDate < todayDate) {
+                return apptOnly;
+            }
+            
+            // Case 3: Normal - use today's date
+            return injectionGivenToday ? todayStr : todayStr;
+        }
+        
+        function calculateNextDueDate(currentDueDate, dosePrescribed, referenceDate) {
+            const weeks = doseToWeeks[dosePrescribed] || 4;
+            return addWeeksToLocalDate(referenceDate, weeks);
+        }
+
+        // ========== INJECTION FLOW (with Comments) ==========
+        function showInjectionModal(patientId) {
+            pendingInjectionId = patientId;
+            const patient = patients.find(p => p.id === patientId);
+            if (!patient) return;
+            
+            const dosesRemaining = parseInt(patient['Doses Remaining']) || 0;
+            const weeksToAdd = doseToWeeks[patient['Dose Prescribed']] || 4;
+            
+            document.getElementById('injectionPatientName').innerHTML = `Patient: <strong>${escapeHtml(patient['Patient Name'])}</strong>`;
+            document.getElementById('injectionCurrentInfo').innerHTML = `💊 ${patient['Dose Prescribed']}mg | 📅 ${dosesRemaining} doses left | ⏰ Next due: +${weeksToAdd} weeks`;
+            document.getElementById('injectionSiteSelect').value = '';
+            document.getElementById('injectionSpecialInstructions').value = '';
+            document.getElementById('injectionAdverseEvents').value = '';
+            document.getElementById('injectionComments').value = '';
+            document.getElementById('injectionModal').style.display = 'block';
+        }
+        
+        async function performInjection() {
+            const injectionSite = document.getElementById('injectionSiteSelect').value;
+            if (!injectionSite) {
+                alert('Please select an injection site');
+                return;
+            }
+            
+            const specialInstructions = document.getElementById('injectionSpecialInstructions').value;
+            const adverseEvents = document.getElementById('injectionAdverseEvents').value;
+            const comments = document.getElementById('injectionComments').value;
+            const patientId = pendingInjectionId;
+            const patient = patients.find(p => p.id === patientId);
+            if (!patient) return;
+            
+            let dosesRemaining = parseInt(patient['Doses Remaining']) || 0;
+            const totalDoses = parseInt(patient['Total Doses']) || 4;
+            
+            if (dosesRemaining <= 0) {
+                alert('No doses remaining! This patient will be moved to Pending tab.');
+                patient['Pending'] = true;
+                patient['Appointment Confirmed'] = false;
+                patient['Appointment Date & Time'] = null;
+                await updatePatientInDB(patientId, patient);
+                await loadPatients();
+                document.getElementById('injectionModal').style.display = 'none';
+                pendingInjectionId = null;
+                return;
+            }
+            
+            const today = new Date();
+            const todayStr = formatLocalDate(today);
+            const prevDates = patient['Previous Injection Dates'] ? patient['Previous Injection Dates'].split(',').map(d => d.trim()) : [];
+            prevDates.push(todayStr);
+            patient['Previous Injection Dates'] = prevDates.join(', ');
+            
+            if (patient['Injection Site']) patient['Previous Injection Site'] = patient['Injection Site'];
+            patient['Injection Site'] = injectionSite;
+            
+            if (specialInstructions) {
+                const existingSpecial = patient['Special Instructions'] || '';
+                patient['Special Instructions'] = existingSpecial ? `${existingSpecial} | [${todayStr}] ${specialInstructions}` : `[${todayStr}] ${specialInstructions}`;
+            }
+            if (adverseEvents) {
+                const existingAdverse = patient['Adverse Effects Comments'] || '';
+                patient['Adverse Effects Comments'] = existingAdverse ? `${existingAdverse} | [${todayStr}] ${adverseEvents}` : `[${todayStr}] ${adverseEvents}`;
+            }
+            if (comments) {
+                const existingComments = patient['Comments'] || '';
+                patient['Comments'] = existingComments ? `${existingComments} | [${todayStr}] ${comments}` : `[${todayStr}] ${comments}`;
+            }
+            
+            const newDosesRemaining = dosesRemaining - 1;
+            patient['Doses Remaining'] = newDosesRemaining.toString();
+            
+            const referenceDate = getReferenceDateForDueDate(patient, true);
+            const currentDueDate = patient['Due Date'] || todayStr;
+            const newDueDate = calculateNextDueDate(currentDueDate, patient['Dose Prescribed'], referenceDate);
+            patient['Due Date'] = newDueDate;
+            
+            patient['Injection Administered'] = true;
+            patient['Appointment Confirmed'] = false;
+            patient['Appointment Date & Time'] = null;
+            patient['Pending'] = false;
+            patient['Archived'] = false;
+            
+            if (newDosesRemaining === 0) {
+                patient['Pending'] = true;
+                alert(`✅ Injection administered at ${injectionSite}.\n\n${patient['Patient Name']} has completed all ${totalDoses} doses and has been moved to Pending tab.`);
+            } else {
+                alert(`✅ Injection administered at ${injectionSite}.\n\n💊 Dose: ${patient['Dose Prescribed']}mg\n📅 New due date: ${new Date(newDueDate).toLocaleDateString()}\n💉 Doses remaining: ${newDosesRemaining}`);
+            }
+            
+            await updatePatientInDB(patientId, patient);
+            await loadPatients();
+            document.getElementById('injectionModal').style.display = 'none';
+            pendingInjectionId = null;
+        }
+
+        // ========== APPOINTMENT CONFIRMATION ==========
+        function openAppointmentEditor(patientId) {
+            pendingAppointmentId = patientId;
+            const patient = patients.find(p => p.id === patientId);
+            if (patient && patient['Appointment Date & Time']) {
+                const apptDateTime = patient['Appointment Date & Time'];
+                let formattedValue = apptDateTime;
+                if (apptDateTime && !apptDateTime.includes('T')) {
+                    formattedValue = apptDateTime + 'T12:00';
+                }
+                document.getElementById('appointmentDateInput').value = formattedValue;
+            } else {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
+                document.getElementById('appointmentDateInput').value = formattedDate;
+            }
+            document.getElementById('apptEditModal').style.display = 'block';
+        }
+        
+        async function saveAppointmentDate() {
+            const patientId = pendingAppointmentId;
+            const newAppointmentDateTime = document.getElementById('appointmentDateInput').value;
+            
+            if (!newAppointmentDateTime) {
+                alert('Please select an appointment date and time');
+                return;
+            }
+            
+            const patient = patients.find(p => p.id === patientId);
+            if (patient) {
+                patient['Appointment Date & Time'] = newAppointmentDateTime;
+                patient['Appointment Confirmed'] = true;
+                await updatePatientInDB(patientId, patient);
+                await loadPatients();
+                
+                const dateDisplay = new Date(newAppointmentDateTime).toLocaleString();
+                alert(`✅ Appointment confirmed for ${patient['Patient Name']} on ${dateDisplay}\nPatient moved to Scheduled tab.`);
+            }
+            
+            document.getElementById('apptEditModal').style.display = 'none';
+            pendingAppointmentId = null;
+        }
+
+        // ========== PATIENT CRUD ==========
+        async function addPatient(patientData) {
+            const existing = patients.find(p => p['File Number'] === patientData['File Number']);
+            if (existing && existing.id !== patientData.id) {
+                alert('File Number already exists!');
+                return false;
+            }
+            const success = await addPatientToDB(patientData);
+            if (success) await loadPatients();
+            return success;
+        }
+        
+        async function updatePatient(patientData) {
+            const success = await updatePatientInDB(patientData.id, patientData);
+            if (success) await loadPatients();
+            return success;
+        }
+        
+        async function deletePatient(patientId) {
+            if (await deletePatientFromDB(patientId)) {
+                await loadPatients();
+                return true;
+            }
+            return false;
+        }
+        
+        async function markPending(patientId) {
+            const patient = patients.find(p => p.id === patientId);
+            if (patient) {
+                patient['Pending'] = true;
+                patient['Archived'] = false;
+                await updatePatientInDB(patientId, patient);
+                await loadPatients();
+            }
+        }
+        
+        async function moveToAllPatients(patientId) {
+            const patient = patients.find(p => p.id === patientId);
+            if (patient) {
+                patient['Pending'] = false;
+                patient['Archived'] = false;
+                await updatePatientInDB(patientId, patient);
+                await loadPatients();
+            }
+        }
+
+        // ========== FILTERING & SORTING ==========
+        function getFilteredPatients() {
+            const today = new Date();
+            const todayStr = formatLocalDate(today);
+            
+            let filtered = patients.filter(p => {
+                if (p['Archived'] && currentTab !== 'archived') return false;
+                if (!p['Archived'] && currentTab === 'archived') return false;
+                if (p['Pending'] && currentTab !== 'pending') return false;
+                if (!p['Pending'] && currentTab === 'pending') return false;
+                
+                if (currentTab === 'all') {
+                    return !p['Archived'] && !p['Pending'] && !p['Appointment Confirmed'];
+                }
+                
+                const apptDateStr = p['Appointment Date & Time'];
+                let apptDate = null;
+                if (apptDateStr) {
+                    apptDate = parseLocalDate(apptDateStr.split('T')[0]);
+                }
+                const hasConfirmedAppointment = p['Appointment Confirmed'] === true;
+                let isAppointmentToday = false;
+                let isFutureAppointment = false;
+                let isOverdueAppointment = false;
+                
+                if (apptDate) {
+                    const todayDate = parseLocalDate(todayStr);
+                    isAppointmentToday = formatLocalDate(apptDate) === todayStr;
+                    isFutureAppointment = apptDate > todayDate;
+                    isOverdueAppointment = apptDate < todayDate && !p['Injection Administered'] && hasConfirmedAppointment;
+                }
+                
+                switch(currentTab) {
+                    case 'today': 
+                        return isAppointmentToday && hasConfirmedAppointment && !isOverdueAppointment && !p['Archived'] && !p['Pending'];
+                    case 'scheduled': 
+                        return isFutureAppointment && hasConfirmedAppointment === true && !p['Archived'] && !p['Pending'] && !isOverdueAppointment;
+                    case 'overdue': 
+                        return isOverdueAppointment && !p['Archived'] && !p['Pending'];
+                    case 'pending': 
+                        return p['Pending'] && !p['Archived'];
+                    case 'archived': 
+                        return p['Archived'];
+                    default: 
+                        return !p['Archived'];
+                }
+            });
+            
+            if (searchQuery) { 
+                const q = searchQuery.toLowerCase(); 
+                filtered = filtered.filter(p => (p['Patient Name'] || '').toLowerCase().includes(q) || (p['File Number'] || '').toLowerCase().includes(q)); 
+            }
+            return filtered.sort((a,b) => {
+                const aDue = a['Due Date'] ? parseLocalDate(a['Due Date']) : new Date(8640000000000000);
+                const bDue = b['Due Date'] ? parseLocalDate(b['Due Date']) : new Date(8640000000000000);
+                return aDue - bDue;
+            });
+        }
+
+        function escapeHtml(str) { 
+            if (!str) return ''; 
+            return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); 
+        }
+
+        // ========== RICH COLLAPSED VIEW RENDER ==========
+        function renderPatientCard(patient) {
+            const dueDateStr = patient['Due Date'] ? parseLocalDate(patient['Due Date']).toLocaleDateString() : 'Not set';
+            const special = patient['Special Instructions'] || '';
+            const doseMg = patient['Dose Prescribed'] ? `${patient['Dose Prescribed']}mg` : '';
+            const total = parseInt(patient['Total Doses']) || 4;
+            const remain = parseInt(patient['Doses Remaining']) || total;
+            const given = total - remain;
+            const hasAppt = patient['Appointment Date & Time'];
+            const isConfirmed = patient['Appointment Confirmed'] === true;
+            const apptStr = hasAppt ? new Date(patient['Appointment Date & Time']).toLocaleString() : 'Not set';
+            
+            return `
+                <div class="patient-card" data-id="${patient.id}">
+                    <div class="collapsed-view">
+                        <div class="patient-info">
+                            <div>
+                                <span class="patient-name">${escapeHtml(patient['Patient Name'])}</span>
+                                <span class="patient-file">#${escapeHtml(patient['File Number'])}</span>
+                                ${doseMg ? `<span class="dose-badge">${doseMg}</span>` : ''}
+                                ${special ? `<span class="special-badge">⚠️ ${escapeHtml(special.substring(0, 30))}${special.length > 30 ? '...' : ''}</span>` : ''}
+                            </div>
+                            <div class="patient-address">${escapeHtml(patient['Address'] || 'No address')}</div>
+                            <div class="due-date">📅 Due: ${dueDateStr} | 💉 ${given}/${total} given</div>
+                            ${hasAppt ? `<div style="font-size: 11px; color: #64748b; margin-top: 2px;">📆 Appointment: ${new Date(hasAppt).toLocaleString()} ${isConfirmed ? '✓' : '✗'}</div>` : ''}
+                        </div>
+                        <div class="action-buttons">
+                            ${patient['Phone 1'] ? `<button class="action-icon call-icon" data-phone="${escapeHtml(patient['Phone 1'])}">📞</button>` : ''}
+                            ${patient['Phone 2'] ? `<button class="action-icon call-icon" data-phone="${escapeHtml(patient['Phone 2'])}">📞2</button>` : ''}
+                            ${patient['Address'] ? `<button class="action-icon nav-icon" data-address="${escapeHtml(patient['Address'])}">📍</button>` : ''}
+                        </div>
+                    </div>
+                    <div class="expanded-view">
+                        <div class="detail-row"><div class="detail-label">File:</div><div class="detail-value">${escapeHtml(patient['File Number'])}</div></div>
+                        <div class="detail-row"><div class="detail-label">Dose:</div><div class="detail-value"><strong>${doseMg} (${doseToWeeks[patient['Dose Prescribed']] || 4} weeks)</strong></div></div>
+                        <div class="detail-row"><div class="detail-label">Doses:</div><div class="detail-value">${given}/${total} given, ${remain} left</div></div>
+                        <div class="detail-row"><div class="detail-label">Last Injection Site:</div><div class="detail-value">${escapeHtml(patient['Injection Site'] || 'Not set')}</div></div>
+                        <div class="detail-row">
+                            <div class="detail-label">Appointment:</div>
+                            <div class="detail-value">
+                                ${apptStr}
+                                <span class="edit-icon" onclick="openAppointmentEditor(${patient.id})">
+                                    ✏️ ${isConfirmed ? 'Edit/Confirm' : 'Set & Confirm'}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="detail-row"><div class="detail-label">Assignment:</div><div class="detail-value">${escapeHtml(patient['Assignment Type'])}</div></div>
+                        ${special ? `<div class="detail-row"><div class="detail-label ins-red">⚠️ Special Instructions:</div><div class="detail-value ins-red">${escapeHtml(special)}</div></div>` : ''}
+                        ${patient['Adverse Effects Comments'] ? `<div class="detail-row"><div class="detail-label">Adverse Effects:</div><div class="detail-value">${escapeHtml(patient['Adverse Effects Comments'])}</div></div>` : ''}
+                        ${patient['Comments'] ? `<div class="detail-row"><div class="detail-label">💬 Comments:</div><div class="detail-value">${escapeHtml(patient['Comments'])}</div></div>` : ''}
+                        <div class="action-row">
+                            <button class="action-sm inject-sm" data-id="${patient.id}" data-action="inject">💉 Injection (${remain} left)</button>
+                            ${currentTab === 'pending' || currentTab === 'archived' ? `<button class="action-sm move-sm" data-id="${patient.id}" data-action="move">⟳ Move</button>` : `<button class="action-sm pending-sm" data-id="${patient.id}" data-action="pending">⏳ Pending</button>`}
+                            <button class="action-sm edit-sm" data-id="${patient.id}" data-action="edit">✎ Edit</button>
+                            <button class="action-sm delete-sm" data-id="${patient.id}" data-action="delete">🗑 Delete</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderWithDateSeparators(list) {
+            if (!list.length) return '<div class="empty-state">✨ No patients</div>';
+            const grouped = {};
+            list.forEach(p => { 
+                const d = p['Due Date'] ? parseLocalDate(p['Due Date']).toLocaleDateString() : 'No Date'; 
+                if(!grouped[d]) grouped[d] = []; 
+                grouped[d].push(p); 
+            });
+            const sorted = Object.keys(grouped).sort((a,b) => { 
+                if(a === 'No Date') return 1; 
+                if(b === 'No Date') return -1; 
+                return new Date(a) - new Date(b); 
+            });
+            let html = '';
+            for(const date of sorted) { 
+                html += `<div class="date-separator">📅 ${date}</div>`; 
+                for(const p of grouped[date]) html += renderPatientCard(p); 
+            }
+            return html;
+        }
+        
+        function renderCurrentTab() {
+            if (currentTab === 'report') { 
+                document.getElementById('patientList').style.display = 'none'; 
+                document.getElementById('reportView').style.display = 'block'; 
+                return; 
+            }
+            document.getElementById('patientList').style.display = 'flex'; 
+            document.getElementById('reportView').style.display = 'none';
+            const filtered = getFilteredPatients();
+            document.getElementById('patientList').innerHTML = filtered.length ? renderWithDateSeparators(filtered) : '<div class="empty-state">✨ No patients in this tab</div>';
+            attachEventListeners();
+        }
+        
+        function attachEventListeners() {
+            document.querySelectorAll('.patient-card').forEach(card => { 
+                const exp = card.querySelector('.expanded-view'); 
+                card.addEventListener('click', (e) => { 
+                    if(e.target.tagName === 'BUTTON' || e.target.classList.contains('edit-icon')) return; 
+                    const show = exp.style.display === 'block'; 
+                    exp.style.display = show ? 'none' : 'block'; 
+                    card.classList.toggle('expanded', !show); 
+                }); 
+            });
+            document.querySelectorAll('.call-icon').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); window.location.href = `tel:${btn.getAttribute('data-phone')}`; }));
+            document.querySelectorAll('.nav-icon').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); window.open(`https://maps.google.com/?q=${encodeURIComponent(btn.getAttribute('data-address'))}`, '_blank'); }));
+            document.querySelectorAll('[data-action="inject"]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); const id = parseInt(btn.getAttribute('data-id')); showInjectionModal(id); }));
+            document.querySelectorAll('[data-action="pending"]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); showConfirmDialog('Mark as pending?', () => markPending(parseInt(btn.getAttribute('data-id')))); }));
+            document.querySelectorAll('[data-action="move"]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); moveToAllPatients(parseInt(btn.getAttribute('data-id'))); }));
+            document.querySelectorAll('[data-action="edit"]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); openEditModal(parseInt(btn.getAttribute('data-id'))); }));
+            document.querySelectorAll('[data-action="delete"]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); showConfirmDialog('Delete permanently?', () => deletePatient(parseInt(btn.getAttribute('data-id')))); }));
+        }
+
+        // ========== MODAL FUNCTIONS ==========
+        function openAddModal() { 
+            currentEditId = null; 
+            document.getElementById('patientForm').reset(); 
+            document.getElementById('deletePatientBtn').style.display = 'none'; 
+            const defaultDueDate = new Date();
+            defaultDueDate.setDate(defaultDueDate.getDate() + 7);
+            document.getElementById('dueDate').value = formatLocalDate(defaultDueDate);
+            document.getElementById('totalDoses').value = 4; 
+            document.getElementById('dosesRemaining').value = 4; 
+            document.getElementById('patientModal').style.display = 'block'; 
+        }
+        
+        function openEditModal(patientId) { 
+            const patient = patients.find(p => p.id === patientId); 
+            if(!patient) return; 
+            currentEditId = patientId; 
+            document.getElementById('modalTitle').innerText = 'Edit Patient'; 
+            document.getElementById('patientName').value = patient['Patient Name'] || ''; 
+            document.getElementById('fileNumber').value = patient['File Number'] || ''; 
+            document.getElementById('address').value = patient['Address'] || ''; 
+            document.getElementById('phone1').value = patient['Phone 1'] || ''; 
+            document.getElementById('phone2').value = patient['Phone 2'] || ''; 
+            document.getElementById('dosePrescribed').value = patient['Dose Prescribed'] || '7.5'; 
+            document.getElementById('totalDoses').value = patient['Total Doses'] || 4; 
+            document.getElementById('dosesRemaining').value = patient['Doses Remaining'] || 4; 
+            document.getElementById('prevInjSite').value = patient['Previous Injection Site'] || ''; 
+            document.getElementById('injSite').value = patient['Injection Site'] || ''; 
+            document.getElementById('dueDate').value = patient['Due Date'] || ''; 
+            document.getElementById('appointmentDateTime').value = patient['Appointment Date & Time'] || ''; 
+            document.getElementById('prevInjDates').value = patient['Previous Injection Dates'] || ''; 
+            document.getElementById('assignmentType').value = patient['Assignment Type'] || 'Permanent'; 
+            document.getElementById('specialInstructions').value = patient['Special Instructions'] || ''; 
+            document.getElementById('adverseEffects').value = patient['Adverse Effects Comments'] || ''; 
+            document.getElementById('deletePatientBtn').style.display = 'block'; 
+            document.getElementById('patientModal').style.display = 'block'; 
+        }
+        
+        async function savePatientFromModal() { 
+            const fileNumber = document.getElementById('fileNumber').value.trim(); 
+            if(!fileNumber) { alert('File Number required'); return; } 
+            
+            const existingPatient = patients.find(p => p['File Number'] === fileNumber && p.id !== currentEditId);
+            if(existingPatient && !currentEditId) { 
+                alert('File Number already exists!'); 
+                return; 
+            }
+            
+            let appointmentDateTime = document.getElementById('appointmentDateTime').value;
+            
+            const patientData = { 
+                'Patient Name': document.getElementById('patientName').value, 
+                'File Number': fileNumber, 
+                'Address': document.getElementById('address').value, 
+                'Phone 1': document.getElementById('phone1').value, 
+                'Phone 2': document.getElementById('phone2').value, 
+                'Dose Prescribed': document.getElementById('dosePrescribed').value, 
+                'Total Doses': document.getElementById('totalDoses').value, 
+                'Doses Remaining': document.getElementById('dosesRemaining').value, 
+                'Previous Injection Site': document.getElementById('prevInjSite').value, 
+                'Injection Site': document.getElementById('injSite').value, 
+                'Due Date': document.getElementById('dueDate').value, 
+                'Appointment Date & Time': appointmentDateTime || null,
+                'Previous Injection Dates': document.getElementById('prevInjDates').value, 
+                'Assignment Type': document.getElementById('assignmentType').value, 
+                'Special Instructions': document.getElementById('specialInstructions').value, 
+                'Adverse Effects Comments': document.getElementById('adverseEffects').value, 
+                'File Status': 'Active', 
+                'Injection Administered': false, 
+                'Appointment Confirmed': false, 
+                'Pending': false, 
+                'Archived': false 
+            }; 
+            
+            let success;
+            if(currentEditId) { 
+                patientData.id = currentEditId;
+                success = await updatePatient(patientData);
+            } else { 
+                success = await addPatient(patientData);
+            }
+            
+            if (success) {
+                closeModal(); 
+                alert('Patient saved successfully!');
+            }
+        }
+        
+        function closeModal() { document.getElementById('patientModal').style.display = 'none'; currentEditId = null; }
+        function showConfirmDialog(msg, cb) { document.getElementById('confirmMessage').innerText = msg; document.getElementById('confirmModal').style.display = 'block'; pendingConfirmCallback = cb; }
+        
+        // ========== IMPORT/EXPORT/REPORT ==========
+        function exportToJSON() { 
+            const blob = new Blob([JSON.stringify(patients, null, 2)], {type:'application/json'}); 
+            const a = document.createElement('a'); 
+            a.href = URL.createObjectURL(blob); 
+            a.download = `backup_${new Date().toISOString().split('T')[0]}.json`; 
+            a.click(); 
+            URL.revokeObjectURL(a.href); 
+            alert(`✅ Exported ${patients.length} patients`); 
+        }
+        
+        function exportToCSV() {
+            if (!patients.length) { alert('No patients to export'); return; }
+            const headers = ['Patient Name','File Number','Address','Phone 1','Phone 2','Dose Prescribed','Total Doses','Doses Remaining','Due Date','Assignment Type','Special Instructions','Comments'];
+            const rows = [headers.join(',')];
+            patients.forEach(p => {
+                const row = headers.map(h => {
+                    let v = p[h] || '';
+                    if (typeof v === 'boolean') v = v ? 'TRUE' : 'FALSE';
+                    if (v.toString().includes(',')) v = `"${v}"`;
+                    return v;
+                });
+                rows.push(row.join(','));
+            });
+            const blob = new Blob([rows.join('\n')], {type:'text/csv'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `patients_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+            alert(`✅ Exported ${patients.length} patients to CSV`);
+        }
+        
+        function importCSV(file) { 
+            const reader = new FileReader(); 
+            reader.onload = async (e) => { 
+                try { 
+                    const rows = e.target.result.split('\n'); 
+                    const headers = rows[0].split(',').map(h => h.trim().replace(/"/g, '')); 
+                    let importedCount = 0; 
+                    for (let i = 1; i < rows.length; i++) { 
+                        if (!rows[i].trim()) continue; 
+                        const values = rows[i].split(',').map(v => v.trim().replace(/"/g, '')); 
+                        const patient = {}; 
+                        headers.forEach((header, idx) => { patient[header] = values[idx] || ''; }); 
+                        if (patient['Patient Name'] && !patients.find(p => p['File Number'] === patient['File Number'])) { 
+                            patient['Doses Remaining'] = patient['Doses Remaining'] || patient['Total Doses'] || 4; 
+                            patient['Injection Administered'] = patient['Injection Administered'] === 'TRUE'; 
+                            patient['Appointment Confirmed'] = patient['Appointment Confirmed'] === 'TRUE'; 
+                            patient['Pending'] = patient['Pending'] === 'TRUE'; 
+                            patient['Archived'] = patient['Archived'] === 'TRUE'; 
+                            await addPatient(patient); 
+                            importedCount++; 
+                        } 
+                    } 
+                    alert(`✅ Imported ${importedCount} patients`); 
+                } catch(err) { alert('Error parsing CSV'); } 
+            }; 
+            reader.readAsText(file); 
+        }
+        
+        function generateReport() { 
+            const field = document.getElementById('reportField').value; 
+            const condition = document.getElementById('reportCondition').value; 
+            const value = document.getElementById('reportValue').value.toLowerCase(); 
+            let filtered = patients.filter(p => { 
+                let fv = p[field]; 
+                if (field === 'due_date') { 
+                    if (!fv) return false; 
+                    const due = parseLocalDate(fv); 
+                    const val = new Date(value); 
+                    if (condition === 'equals') return due.toDateString() === val.toDateString(); 
+                    if (condition === 'greater') return due > val; 
+                    if (condition === 'less') return due < val; 
+                } else if (field === 'dose_prescribed') { 
+                    if (condition === 'equals') return fv === value; 
+                    if (condition === 'greater') return parseFloat(fv) > parseFloat(value); 
+                    if (condition === 'less') return parseFloat(fv) < parseFloat(value); 
+                } else if (field === 'doses_remaining') { 
+                    const rem = parseInt(fv) || 0; 
+                    const val = parseInt(value); 
+                    if (condition === 'equals') return rem === val; 
+                    if (condition === 'greater') return rem > val; 
+                    if (condition === 'less') return rem < val; 
+                } else { 
+                    fv = String(fv || '').toLowerCase(); 
+                    if (condition === 'equals') return fv === value; 
+                    if (condition === 'contains') return fv.includes(value); 
+                } 
+                return false; 
+            }); 
+            if (filtered.length === 0) { 
+                document.getElementById('reportOutput').innerHTML = '<div class="empty-state">📭 No patients match</div>'; 
+                return; 
+            } 
+            let html = `<div style="background:white; border-radius:20px; padding:20px;"><strong style="font-size:18px;">${filtered.length} patients found</strong><button onclick="exportReportToCSV()" class="btn-sm btn-secondary" style="margin-left:12px; background:#e2e8f0;">📥 Export Report</button>`; 
+            const grouped = {}; 
+            filtered.forEach(p => { const d = p['Due Date'] ? parseLocalDate(p['Due Date']).toLocaleDateString() : 'No Date'; if(!grouped[d]) grouped[d] = []; grouped[d].push(p); }); 
+            Object.keys(grouped).sort().forEach(date => { 
+                html += `<div class="date-separator" style="margin-top:16px;">📅 ${date}</div>`; 
+                grouped[date].forEach(p => { 
+                    const total = parseInt(p['Total Doses']) || 4;
+                    const remain = parseInt(p['Doses Remaining']) || total;
+                    html += `<div style="padding:14px; border-bottom:1px solid #e2e8f0; cursor:pointer; transition: all 0.2s;" onclick="openEditModal(${p.id})"><strong>${escapeHtml(p['Patient Name'])}</strong> #${escapeHtml(p['File Number'])}<div style="font-size:12px; color:#64748b; margin-top:4px;">💊 ${p['Dose Prescribed']}mg | 💉 ${total-remain}/${total} given</div></div>`; 
+                }); 
+            }); 
+            html += `</div>`; 
+            document.getElementById('reportOutput').innerHTML = html; 
+            window.lastReportData = filtered; 
+        }
+        
+        function exportReportToCSV() { 
+            if (!window.lastReportData || !window.lastReportData.length) { alert('No report data to export'); return; }
+            const headers = ['Patient Name','File Number','Phone 1','Address','Dose Prescribed','Doses Remaining','Due Date']; 
+            const rows = [headers.join(',')]; 
+            window.lastReportData.forEach(p => { 
+                rows.push(headers.map(h => { let v = p[h] || ''; if (v.includes(',')) v = `"${v}"`; return v; }).join(',')); 
+            }); 
+            const blob = new Blob([rows.join('\n')], {type:'text/csv'}); 
+            const a = document.createElement('a'); 
+            a.href = URL.createObjectURL(blob); 
+            a.download = `report_${new Date().toISOString().split('T')[0]}.csv`; 
+            a.click(); 
+            URL.revokeObjectURL(a.href); 
+        }
+        
+        function quickReport(type) { 
+            let field, condition, value; 
+            if(type === 'dueToday') { field='due_date'; condition='equals'; value=formatLocalDate(new Date()); } 
+            else if(type === 'noRepeatsLeft') { field='doses_remaining'; condition='equals'; value='0'; } 
+            else if(type === 'pendingPatients') { field='pending'; condition='equals'; value='true'; } 
+            else if(type === 'tempPatients') { field='assignment_type'; condition='equals'; value='Temporary'; } 
+            else return; 
+            document.getElementById('reportField').value=field; 
+            document.getElementById('reportCondition').value=condition; 
+            document.getElementById('reportValue').value=value; 
+            generateReport(); 
+        }
+
+        // ========== INITIALIZATION ==========
+        document.addEventListener('DOMContentLoaded', async () => {
+            const connected = await initSupabase();
+            if (connected) {
+                await loadPatients();
+            }
+            
+            // Tab switching
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => { 
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); 
+                btn.classList.add('active'); 
+                currentTab = btn.getAttribute('data-tab'); 
+                searchQuery = ''; 
+                document.getElementById('searchInput').value = ''; 
+                renderCurrentTab(); 
+            }));
+            
+            // Search
+            document.getElementById('searchInput').addEventListener('input', (e) => { if(currentTab !== 'report') { searchQuery = e.target.value; renderCurrentTab(); } });
+            document.getElementById('clearSearchBtn').addEventListener('click', () => { document.getElementById('searchInput').value = ''; searchQuery = ''; renderCurrentTab(); });
+            document.getElementById('refreshBtn').addEventListener('click', () => loadPatients());
+            
+            // Report buttons
+            document.getElementById('generateReportBtn').addEventListener('click', generateReport);
+            document.querySelectorAll('.quick-btn').forEach(btn => btn.addEventListener('click', () => quickReport(btn.getAttribute('data-quick'))));
+            
+            // Data management
+            document.getElementById('importGoogleSheetsBtn').addEventListener('click', importFromGoogleSheets);
+            document.getElementById('exportJSONBtn').addEventListener('click', exportToJSON);
+            document.getElementById('importCSVBtn').addEventListener('click', () => document.getElementById('csvFileInput').click());
+            document.getElementById('csvFileInput').addEventListener('change', (e) => { if(e.target.files[0]) importCSV(e.target.files[0]); e.target.value = ''; });
+            document.getElementById('importPDFBtn').addEventListener('click', () => document.getElementById('pdfFileInput').click());
+            document.getElementById('pdfFileInput').addEventListener('change', (e) => { if(e.target.files[0]) importPDF(e.target.files[0]); e.target.value = ''; });
+            document.getElementById('exportCSVReportBtn').addEventListener('click', exportToCSV);
+            
+            // Patient actions
+            document.getElementById('addPatientBtn').addEventListener('click', openAddModal);
+            
+            // Modal close handlers
+            document.querySelectorAll('.close').forEach(c => c.addEventListener('click', closeModal));
+            document.querySelectorAll('.close-injection-modal').forEach(c => c.addEventListener('click', () => document.getElementById('injectionModal').style.display = 'none'));
+            document.querySelectorAll('.close-appt').forEach(c => c.addEventListener('click', () => document.getElementById('apptEditModal').style.display = 'none'));
+            window.addEventListener('click', (e) => { 
+                if(e.target === document.getElementById('patientModal')) closeModal(); 
+                if(e.target === document.getElementById('confirmModal')) document.getElementById('confirmModal').style.display = 'none'; 
+                if(e.target === document.getElementById('apptEditModal')) document.getElementById('apptEditModal').style.display = 'none';
+                if(e.target === document.getElementById('injectionModal')) document.getElementById('injectionModal').style.display = 'none';
+            });
+            
+            // Form submit
+            document.getElementById('patientForm').addEventListener('submit', (e) => { e.preventDefault(); savePatientFromModal(); });
+            document.getElementById('deletePatientBtn').addEventListener('click', () => { if(currentEditId) showConfirmDialog('Delete?', () => { deletePatient(currentEditId); closeModal(); }); });
+            
+            // Confirmation modal
+            document.getElementById('confirmYes').addEventListener('click', () => { if(pendingConfirmCallback) pendingConfirmCallback(); document.getElementById('confirmModal').style.display = 'none'; pendingConfirmCallback = null; });
+            document.getElementById('confirmNo').addEventListener('click', () => { document.getElementById('confirmModal').style.display = 'none'; pendingConfirmCallback = null; });
+            
+            // Injection modal
+            document.getElementById('confirmInjectionBtn').addEventListener('click', performInjection);
+            document.getElementById('cancelInjectionBtn').addEventListener('click', () => { document.getElementById('injectionModal').style.display = 'none'; pendingInjectionId = null; });
+            
+            // Appointment modal
+            document.getElementById('saveAppointmentBtn').addEventListener('click', saveAppointmentDate);
+            document.getElementById('cancelAppointmentBtn').addEventListener('click', () => { document.getElementById('apptEditModal').style.display = 'none'; pendingAppointmentId = null; });
+            
+            window.openEditModal = openEditModal;
+            window.openAppointmentEditor = openAppointmentEditor;
+            window.exportReportToCSV = exportReportToCSV;
+        });
+    </script>
 </body>
 </html>

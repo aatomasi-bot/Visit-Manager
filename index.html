@@ -36,10 +36,10 @@
                         <button id="refreshBtn" class="btn btn--ghost" aria-label="Refresh">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
                         </button>
-                        <button id="syncStatusBtn" class="sync-status">
+                        <div class="sync-status">
                             <span class="sync-status__dot"></span>
                             <span id="syncStatus">Connected</span>
-                        </button>
+                        </div>
                     </div>
                 </div>
                 <div class="header__search">
@@ -143,7 +143,7 @@
         </div>
     </div>
 
-    <!-- Modals (placed at end for clean DOM) -->
+    <!-- Modals -->
     <div id="injectionModal" class="modal">
         <div class="modal__content modal__content--medium">
             <div class="modal__header">
@@ -255,6 +255,8 @@
             </form>
         </div>
     </div>
+
+    <div id="recordCount" style="display: none;"></div>
 
     <script src="js/app.js"></script>
 </body>

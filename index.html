@@ -694,7 +694,7 @@
         <div class="loading-text">Syncing with database...</div>
     </div>
 
-    <!-- Enhanced Injection Modal with all fields -->
+    <!-- Enhanced Injection Modal -->
     <div id="injectionModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -714,12 +714,12 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>📝 Special Instructions (for this injection)</label>
-                <textarea id="injectionSpecialInstructions" rows="2" style="width:100%; padding: 12px; border-radius: 16px; border: 2px solid #e2e8f0;" placeholder="Any special notes about this injection..."></textarea>
+                <label>📝 Special Instructions</label>
+                <textarea id="injectionSpecialInstructions" rows="2" style="width:100%; padding: 12px; border-radius: 16px; border: 2px solid #e2e8f0;" placeholder="Any special notes..."></textarea>
             </div>
             <div class="form-group">
-                <label>⚠️ Adverse Events / Reactions</label>
-                <textarea id="injectionAdverseEvents" rows="2" style="width:100%; padding: 12px; border-radius: 16px; border: 2px solid #e2e8f0;" placeholder="Record any adverse reactions or side effects..."></textarea>
+                <label>⚠️ Adverse Events</label>
+                <textarea id="injectionAdverseEvents" rows="2" style="width:100%; padding: 12px; border-radius: 16px; border: 2px solid #e2e8f0;" placeholder="Record any adverse reactions..."></textarea>
             </div>
             <div class="modal-footer">
                 <button id="cancelInjectionBtn" class="btn-sm btn-secondary" style="background: #e2e8f0; color: #475569;">Cancel</button>
@@ -982,41 +982,216 @@
             return true;
         }
 
-        // ========== ENHANCED ADDRESS EXTRACTION ==========
-        function extractFullAddress(text) {
-            let fullAddress = '';
+        // ========== FIXED DUE DATE LOGIC WITH MISSED APPOINTMENT HANDLING ==========
+        // Logic:
+        // - If appointment + injection on same day: use injection date (today)
+        // - If appointment passed and NO injection: use appointment date
+        // - Otherwise: use today's date
+        
+        function getReferenceDateForDueDate(patient, injectionGivenToday = true) {
+            const today = new Date().toISOString().split('T')[0];
+            const apptDateStr = patient['Appointment Date & Time'];
+            const apptDateObj = apptDateStr ? new Date(apptDateStr) : null;
+            const todayDate = new Date();
+            const isInjectionAdministered = patient['Injection Administered'] === true;
+            const isAppointmentConfirmed = patient['Appointment Confirmed'] === true;
             
-            const streetPattern = /(\d{1,5}\s+[A-Za-z0-9\s,.'-]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Court|Ct|Place|Pl|Way|Circle|Cir|Rue|Ruelle|Chemin|Boulevard|Boul|Crescent|Cres))/i;
-            const streetMatch = text.match(streetPattern);
-            if (streetMatch) {
-                fullAddress = streetMatch[0].trim();
-            }
-            
-            const cityPattern = /([A-Za-zÀ-ÿ\s.'-]+(?:,?\s*[A-Z]{2})\s*\d{3}\s*\d{3})/i;
-            const cityMatch = text.match(cityPattern);
-            if (cityMatch) {
-                const cityPart = cityMatch[0].trim();
-                if (fullAddress) {
-                    fullAddress += ', ' + cityPart;
-                } else {
-                    fullAddress = cityPart;
+            // Case 1: Same day (appointment and injection on same day)
+            if (isAppointmentConfirmed && isInjectionAdministered && apptDateStr) {
+                const injectionDate = patient['Previous Injection Dates'] ? patient['Previous Injection Dates'].split(',').pop()?.trim() : null;
+                const apptDateOnly = apptDateObj ? apptDateObj.toISOString().split('T')[0] : null;
+                if (injectionDate === apptDateOnly) {
+                    return injectionDate;
                 }
             }
             
-            const aptPattern = /(?:APT|APARTMENT|SUITE|#|UNIT)\s*[A-Z0-9]+/i;
-            const aptMatch = text.match(aptPattern);
-            if (aptMatch && fullAddress) {
-                fullAddress = aptMatch[0] + ' ' + fullAddress;
+            // Case 2: Missed injection - appointment date passed, no injection given
+            if (isAppointmentConfirmed && !isInjectionAdministered && apptDateObj && apptDateObj < todayDate) {
+                return apptDateObj.toISOString().split('T')[0];
             }
             
-            fullAddress = fullAddress
-                .replace(/ADDRESS\/ADRESSE/gi, '')
-                .replace(/CITY\/VILLE/gi, '')
-                .replace(/^\s*[,]?\s*/, '')
-                .replace(/\s+/g, ' ')
-                .trim();
+            // Case 3: Normal - use today's date
+            return injectionGivenToday ? today : today;
+        }
+
+        function calculateNextDueDate(currentDueDate, dosePrescribed, referenceDate) {
+            const weeks = doseToWeeks[dosePrescribed] || 4;
+            const newDate = new Date(referenceDate);
+            newDate.setDate(newDate.getDate() + (weeks * 7));
+            return newDate.toISOString().split('T')[0];
+        }
+
+        // ========== PDF EXTRACTION ==========
+        async function importPDF(file) {
+            const fileInput = document.getElementById('pdfFileInput');
+            const selectedFile = fileInput.files[0];
             
-            return fullAddress;
+            if (!selectedFile || selectedFile.type !== 'application/pdf') {
+                alert('Please select a valid PDF file');
+                return;
+            }
+            
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            document.getElementById('syncStatus').innerHTML = '🔄 Reading PDF...';
+            
+            try {
+                const arrayBuffer = await selectedFile.arrayBuffer();
+                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+                const pdf = await loadingTask.promise;
+                
+                let fullText = '';
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    fullText += textContent.items.map(item => item.str).join(' ') + '\n';
+                }
+                
+                document.getElementById('loadingOverlay').style.display = 'none';
+                
+                if (!fullText.trim()) {
+                    alert('No readable text found in this PDF.');
+                    return;
+                }
+                
+                const extractedData = extractPatientDataFromPDF(fullText);
+                
+                const confirmMsg = `Extracted Patient Information:\n\n` +
+                    `📋 Name: ${extractedData.patientName || '❌ Not found'}\n` +
+                    `🔢 File #: ${extractedData.fileNumber || '❌ Not found'}\n` +
+                    `📍 Address: ${extractedData.address || '❌ Not found'}\n` +
+                    `📞 Phone: ${extractedData.phone1 || '❌ Not found'}\n` +
+                    `💊 Dose: ${extractedData.dosePrescribed || '7.5'} mg\n` +
+                    `📅 Appointment: ${extractedData.appointmentDate || 'Not found'}\n\n` +
+                    `Add this patient?`;
+                
+                if (extractedData.patientName && extractedData.fileNumber) {
+                    if (confirm(confirmMsg)) {
+                        const defaultDueDate = new Date();
+                        defaultDueDate.setDate(defaultDueDate.getDate() + 7);
+                        
+                        let appointmentDateTime = null;
+                        if (extractedData.appointmentDate) {
+                            const apptDate = new Date(extractedData.appointmentDate);
+                            if (!isNaN(apptDate.getTime())) {
+                                appointmentDateTime = apptDate.toISOString();
+                            }
+                        }
+                        
+                        const newPatient = {
+                            'Patient Name': extractedData.patientName,
+                            'File Number': extractedData.fileNumber,
+                            'Address': extractedData.address || '',
+                            'Phone 1': extractedData.phone1 || '',
+                            'Phone 2': extractedData.phone2 || '',
+                            'Dose Prescribed': extractedData.dosePrescribed || '7.5',
+                            'Total Doses': '4',
+                            'Doses Remaining': '4',
+                            'Previous Injection Site': '',
+                            'Injection Site': '',
+                            'Due Date': defaultDueDate.toISOString().split('T')[0],
+                            'Appointment Date & Time': appointmentDateTime,
+                            'Previous Injection Dates': '',
+                            'Assignment Type': 'Permanent',
+                            'Special Instructions': '',
+                            'Adverse Effects Comments': '',
+                            'File Status': 'Active',
+                            'Injection Administered': false,
+                            'Appointment Confirmed': !!extractedData.appointmentDate,
+                            'Pending': false,
+                            'Archived': false
+                        };
+                        
+                        const existing = patients.find(p => p['File Number'] === extractedData.fileNumber);
+                        if (existing) {
+                            if (confirm(`Patient with File # ${extractedData.fileNumber} already exists. Update existing record?`)) {
+                                newPatient.id = existing.id;
+                                await updatePatient(newPatient);
+                                alert(`✅ Patient updated from PDF: ${newPatient['Patient Name']}`);
+                            }
+                        } else {
+                            await addPatient(newPatient);
+                            alert(`✅ Patient added from PDF: ${newPatient['Patient Name']}`);
+                        }
+                    }
+                } else {
+                    alert('Could not extract complete patient information.\n\nMake sure the PDF contains patient name and file number.');
+                }
+                
+                document.getElementById('syncStatus').innerHTML = '✅ PDF processed';
+                
+            } catch (error) {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                console.error('PDF extraction error:', error);
+                alert(`Error reading PDF: ${error.message}`);
+                document.getElementById('syncStatus').innerHTML = '❌ PDF extraction failed';
+            }
+        }
+
+        function extractPatientDataFromPDF(text) {
+            const extracted = {
+                patientName: null,
+                fileNumber: null,
+                address: null,
+                phone1: null,
+                phone2: null,
+                dosePrescribed: null,
+                appointmentDate: null
+            };
+            
+            // Extract Name
+            const nameMatch = text.match(/PATIENT NAME\/NOM DU PATIENT\s*([A-Z][A-Z\s]+[A-Z])/i);
+            if (nameMatch) extracted.patientName = nameMatch[1].trim().replace(/\s+/g, ' ');
+            
+            // Extract File Number
+            const medicumMatch = text.match(/MEDICUM\s*#:\s*(\d+)/i);
+            if (medicumMatch) extracted.fileNumber = medicumMatch[1];
+            
+            // Extract Address
+            let addressText = '';
+            const addressSection = text.match(/ADDRESS\/ADRESSE\s*([A-Za-z0-9\s,.'-]+?)(?=CITY\/VILLE|TELEPHONE|$)/i);
+            if (addressSection) addressText = addressSection[1].trim();
+            
+            const cityPattern = text.match(/CITY\/VILLE\s*([A-Za-zÀ-ÿ\s.'-]+(?:,?\s*[A-Z]{2})?\s*\d{3}\s*\d{3})/i);
+            if (cityPattern && addressText) {
+                addressText += ', ' + cityPattern[1].trim();
+            } else if (cityPattern) {
+                addressText = cityPattern[1].trim();
+            }
+            
+            if (addressText) {
+                addressText = addressText
+                    .replace(/ADDRESS\/ADRESSE/gi, '')
+                    .replace(/CITY\/VILLE/gi, '')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+            }
+            extracted.address = addressText;
+            
+            // Extract Phone
+            const phoneMatch = text.match(/TELEPHONE\/TELEPHONE\s*(\d{3}\s?\d{3}\s?\d{4})/i);
+            if (phoneMatch) extracted.phone1 = phoneMatch[1].replace(/\s/g, '');
+            
+            const phoneSecondaryMatch = text.match(/SECONDARY CONTACT[^0-9]*(\d{3}\s?\d{3}\s?\d{4})/i);
+            if (phoneSecondaryMatch) extracted.phone2 = phoneSecondaryMatch[1].replace(/\s/g, '');
+            
+            // Extract Dose
+            const doseMatch = text.match(/(\d+\.?\d*)\s*mg/i);
+            if (doseMatch && [7.5, 22.5, 30, 45].includes(parseFloat(doseMatch[1]))) {
+                extracted.dosePrescribed = parseFloat(doseMatch[1]).toString();
+            }
+            
+            // Extract Appointment Date
+            const apptMatch = text.match(/injection seulement\s+(\d{1,2})\s+([A-Za-zéè]+)\s+(\d{4})/i);
+            if (apptMatch) {
+                const months = {
+                    'janvier': '01', 'février': '02', 'mars': '03', 'avril': '04', 'mai': '05', 'juin': '06',
+                    'juillet': '07', 'août': '08', 'septembre': '09', 'octobre': '10', 'novembre': '11', 'décembre': '12'
+                };
+                const monthNum = months[apptMatch[2].toLowerCase()] || '01';
+                extracted.appointmentDate = `${apptMatch[3]}-${monthNum}-${apptMatch[1].padStart(2, '0')}`;
+            }
+            
+            return extracted;
         }
 
         // ========== GOOGLE SHEETS IMPORT ==========
@@ -1135,29 +1310,7 @@
             }
         }
 
-        // ========== DOSING LOGIC ==========
-        function calculateNextDueDate(currentDueDate, dosePrescribed, referenceDate) {
-            const weeks = doseToWeeks[dosePrescribed] || 4;
-            const newDate = new Date(referenceDate);
-            newDate.setDate(newDate.getDate() + (weeks * 7));
-            return newDate.toISOString().split('T')[0];
-        }
-        
-        function getReferenceDateForDueDate(patient, injectionGivenToday = true) {
-            const today = new Date().toISOString().split('T')[0];
-            const apptDate = patient['Appointment Date & Time'] ? new Date(patient['Appointment Date & Time']).toISOString().split('T')[0] : null;
-            const isAppointmentConfirmed = patient['Appointment Confirmed'] === true;
-            const todayDate = new Date();
-            const apptDateObj = patient['Appointment Date & Time'] ? new Date(patient['Appointment Date & Time']) : null;
-            const hasAppointmentPassed = apptDateObj && apptDateObj < todayDate;
-            
-            if (hasAppointmentPassed && !patient['Injection Administered'] && isAppointmentConfirmed) {
-                return apptDate;
-            }
-            return injectionGivenToday ? today : today;
-        }
-
-        // ========== FIXED INJECTION FLOW ==========
+        // ========== FIXED INJECTION FLOW (UPDATED DUE DATE LOGIC) ==========
         function showInjectionModal(patientId) {
             pendingInjectionId = patientId;
             const patient = patients.find(p => p.id === patientId);
@@ -1193,7 +1346,6 @@
             if (dosesRemaining <= 0) {
                 alert('No doses remaining! This patient will be moved to Pending tab.');
                 patient['Pending'] = true;
-                // Clear appointment status
                 patient['Appointment Confirmed'] = false;
                 patient['Appointment Date & Time'] = null;
                 await updatePatientInDB(patientId, patient);
@@ -1223,15 +1375,13 @@
             const newDosesRemaining = dosesRemaining - 1;
             patient['Doses Remaining'] = newDosesRemaining.toString();
             
-            // Calculate new due date based on dose prescribed
+            // Use the updated due date logic with missed appointment handling
             const referenceDate = getReferenceDateForDueDate(patient, true);
             const currentDueDate = patient['Due Date'] || today;
             const newDueDate = calculateNextDueDate(currentDueDate, patient['Dose Prescribed'], referenceDate);
             patient['Due Date'] = newDueDate;
             
             patient['Injection Administered'] = true;
-            
-            // IMPORTANT: Remove from Scheduled/Overdue by clearing appointment status
             patient['Appointment Confirmed'] = false;
             patient['Appointment Date & Time'] = null;
             patient['Pending'] = false;
@@ -1250,7 +1400,7 @@
             pendingInjectionId = null;
         }
 
-        // ========== APPOINTMENT CONFIRMATION ==========
+        // ========== APPOINTMENT CONFIRMATION (MOVES TO SCHEDULED TAB) ==========
         function openAppointmentEditor(patientId) {
             pendingAppointmentId = patientId;
             const patient = patients.find(p => p.id === patientId);
@@ -1283,7 +1433,7 @@
                 await loadPatients();
                 
                 const dateDisplay = new Date(newAppointmentDate).toLocaleString();
-                alert(`✅ Appointment confirmed for ${patient['Patient Name']} on ${dateDisplay}`);
+                alert(`✅ Appointment confirmed for ${patient['Patient Name']} on ${dateDisplay}\nPatient moved to Scheduled tab.`);
             }
             
             document.getElementById('apptEditModal').style.display = 'none';
@@ -1292,7 +1442,8 @@
 
         // ========== PATIENT CRUD ==========
         async function addPatient(patientData) {
-            if (patients.find(p => p['File Number'] === patientData['File Number'])) {
+            const existing = patients.find(p => p['File Number'] === patientData['File Number']);
+            if (existing && existing.id !== patientData.id) {
                 alert('File Number already exists!');
                 return false;
             }
@@ -1302,13 +1453,9 @@
         }
         
         async function updatePatient(patientData) {
-            const index = patients.findIndex(p => p.id === patientData.id);
-            if (index !== -1) {
-                const success = await updatePatientInDB(patientData.id, patientData);
-                if (success) await loadPatients();
-                return success;
-            }
-            return false;
+            const success = await updatePatientInDB(patientData.id, patientData);
+            if (success) await loadPatients();
+            return success;
         }
         
         async function deletePatient(patientId) {
@@ -1339,131 +1486,24 @@
             }
         }
 
-        // ========== PDF IMPORT ==========
-        async function importPDF(file) {
-            const fileInput = document.getElementById('pdfFileInput');
-            const selectedFile = fileInput.files[0];
-            
-            if (!selectedFile || selectedFile.type !== 'application/pdf') {
-                alert('Please select a valid PDF file');
-                return;
-            }
-            
-            document.getElementById('loadingOverlay').style.display = 'flex';
-            
-            try {
-                const arrayBuffer = await selectedFile.arrayBuffer();
-                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-                const pdf = await loadingTask.promise;
-                
-                let fullText = '';
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    const page = await pdf.getPage(i);
-                    const textContent = await page.getTextContent();
-                    fullText += textContent.items.map(item => item.str).join(' ') + '\n';
-                }
-                
-                document.getElementById('loadingOverlay').style.display = 'none';
-                
-                if (!fullText.trim()) {
-                    alert('No readable text found in this PDF.');
-                    return;
-                }
-                
-                const extractedData = extractPatientDataFromPDF(fullText);
-                
-                if (extractedData.patientName && extractedData.fileNumber) {
-                    if (confirm(`Extracted Patient:\n\nName: ${extractedData.patientName}\nFile #: ${extractedData.fileNumber}\nAddress: ${extractedData.address || 'Not found'}\nPhone: ${extractedData.phone1 || 'Not found'}\nDose: ${extractedData.dosePrescribed || '7.5'}mg\n\nAdd this patient?`)) {
-                        const defaultDueDate = new Date();
-                        defaultDueDate.setDate(defaultDueDate.getDate() + 7);
-                        
-                        const newPatient = {
-                            'Patient Name': extractedData.patientName,
-                            'File Number': extractedData.fileNumber,
-                            'Address': extractedData.address || '',
-                            'Phone 1': extractedData.phone1 || '',
-                            'Phone 2': extractedData.phone2 || '',
-                            'Dose Prescribed': extractedData.dosePrescribed || '7.5',
-                            'Total Doses': '4',
-                            'Doses Remaining': '4',
-                            'Previous Injection Site': '',
-                            'Injection Site': '',
-                            'Due Date': defaultDueDate.toISOString().split('T')[0],
-                            'Appointment Date & Time': null,
-                            'Previous Injection Dates': '',
-                            'Assignment Type': 'Permanent',
-                            'Special Instructions': '',
-                            'Adverse Effects Comments': '',
-                            'File Status': 'Active',
-                            'Injection Administered': false,
-                            'Appointment Confirmed': false,
-                            'Pending': false,
-                            'Archived': false
-                        };
-                        
-                        await addPatient(newPatient);
-                        alert(`✅ Patient added from PDF: ${newPatient['Patient Name']}`);
-                    }
-                } else {
-                    alert('Could not extract patient information. Make sure the PDF contains patient name and file number.');
-                }
-                
-            } catch (error) {
-                document.getElementById('loadingOverlay').style.display = 'none';
-                console.error('PDF extraction error:', error);
-                alert(`Error reading PDF: ${error.message}`);
-            }
-        }
-
-        function extractPatientDataFromPDF(text) {
-            const extracted = {
-                patientName: null,
-                fileNumber: null,
-                address: null,
-                phone1: null,
-                phone2: null,
-                dosePrescribed: null
-            };
-            
-            const nameMatch = text.match(/(?:PATIENT NAME\/NOM DU PATIENT|PATIENT NAME|NOM DU PATIENT)[\s]*([A-Z][A-Z\s]+[A-Z])/i);
-            if (nameMatch) {
-                extracted.patientName = nameMatch[1].trim().replace(/\s+/g, ' ');
-            }
-            
-            const medicumMatch = text.match(/MEDICUM\s*#:\s*(\d+)/i);
-            if (medicumMatch) {
-                extracted.fileNumber = medicumMatch[1];
-            }
-            
-            extracted.address = extractFullAddress(text);
-            
-            const phonePattern = /(\d{3}[\s-]?\d{3}[\s-]?\d{4})/g;
-            const phones = [...text.matchAll(phonePattern)];
-            if (phones.length > 0) {
-                extracted.phone1 = phones[0][1];
-                if (phones.length > 1) extracted.phone2 = phones[1][1];
-            }
-            
-            const doseMatch = text.match(/(\d+\.?\d*)\s*mg/i);
-            if (doseMatch && [7.5, 22.5, 30, 45].includes(parseFloat(doseMatch[1]))) {
-                extracted.dosePrescribed = parseFloat(doseMatch[1]).toString();
-            }
-            
-            return extracted;
-        }
-
         // ========== FILTERING & SORTING ==========
         function getFilteredPatients() {
             const today = new Date(); today.setHours(0,0,0,0);
             const todayStr = today.toISOString().split('T')[0];
             let filtered = patients.filter(p => {
+                // Archived tab logic
                 if (p['Archived'] && currentTab !== 'archived') return false;
                 if (!p['Archived'] && currentTab === 'archived') return false;
+                
+                // Pending tab logic
                 if (p['Pending'] && currentTab !== 'pending') return false;
                 if (!p['Pending'] && currentTab === 'pending') return false;
-                if (currentTab === 'all' && (p['Archived'] || p['Pending'])) return false;
                 
-                const dueDate = p['Due Date'] ? new Date(p['Due Date']) : null;
+                // All Patients tab: ONLY patients with NO confirmed appointment
+                if (currentTab === 'all') {
+                    return !p['Archived'] && !p['Pending'] && !p['Appointment Confirmed'];
+                }
+                
                 const apptDate = p['Appointment Date & Time'] ? new Date(p['Appointment Date & Time']) : null;
                 const hasConfirmedAppointment = p['Appointment Confirmed'] === true;
                 const isAppointmentToday = apptDate && apptDate.toISOString().split('T')[0] === todayStr;
@@ -1471,10 +1511,8 @@
                 const isOverdueAppointment = apptDate && apptDate < today && !p['Injection Administered'] && hasConfirmedAppointment;
                 
                 switch(currentTab) {
-                    case 'all': 
-                        return !p['Archived'] && !p['Pending'];
                     case 'today': 
-                        return isAppointmentToday && hasConfirmedAppointment && !isOverdueAppointment;
+                        return isAppointmentToday && hasConfirmedAppointment && !isOverdueAppointment && !p['Archived'] && !p['Pending'];
                     case 'scheduled': 
                         return isFutureAppointment && hasConfirmedAppointment === true && !p['Archived'] && !p['Pending'] && !isOverdueAppointment;
                     case 'overdue': 
@@ -1487,6 +1525,7 @@
                         return !p['Archived'];
                 }
             });
+            
             if (searchQuery) { 
                 const q = searchQuery.toLowerCase(); 
                 filtered = filtered.filter(p => (p['Patient Name'] || '').toLowerCase().includes(q) || (p['File Number'] || '').toLowerCase().includes(q)); 
@@ -1544,7 +1583,7 @@
                         ${special ? `<div class="detail-row"><div class="detail-label ins-red">⚠️ Special Instructions:</div><div class="detail-value ins-red">${escapeHtml(special)}</div></div>` : ''}
                         ${patient['Adverse Effects Comments'] ? `<div class="detail-row"><div class="detail-label">Adverse Effects:</div><div class="detail-value">${escapeHtml(patient['Adverse Effects Comments'])}</div></div>` : ''}
                         <div class="action-row">
-                            <button class="action-sm inject-sm" data-id="${patient.id}" data-action="inject">💉 Record Injection (${remain} left)</button>
+                            <button class="action-sm inject-sm" data-id="${patient.id}" data-action="inject">💉 Injection (${remain} left)</button>
                             ${currentTab === 'pending' || currentTab === 'archived' ? `<button class="action-sm move-sm" data-id="${patient.id}" data-action="move">⟳ Move</button>` : `<button class="action-sm pending-sm" data-id="${patient.id}" data-action="pending">⏳ Pending</button>`}
                             <button class="action-sm edit-sm" data-id="${patient.id}" data-action="edit">✎ Edit</button>
                             <button class="action-sm delete-sm" data-id="${patient.id}" data-action="delete">🗑 Delete</button>
@@ -1637,7 +1676,10 @@
             if(!fileNumber) { alert('File Number required'); return; } 
             
             const existingPatient = patients.find(p => p['File Number'] === fileNumber && p.id !== currentEditId);
-            if(existingPatient) { alert('File Number already exists!'); return; }
+            if(existingPatient && !currentEditId) { 
+                alert('File Number already exists!'); 
+                return; 
+            }
             
             let appointmentDateTime = document.getElementById('appointmentDateTime').value;
             if (appointmentDateTime) {

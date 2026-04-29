@@ -13,7 +13,7 @@
     --info: #3b82f6;
     
     /* Neutrals */
-    --gray-50: #f9fafb;
+    --gray-50: #f9fafc;
     --gray-100: #f3f4f6;
     --gray-200: #e5e7eb;
     --gray-300: #d1d5db;
@@ -63,21 +63,22 @@ html {
     scroll-behavior: smooth;
 }
 
+/* Mobile Font Size Increase - 15% larger */
 @media (max-width: 768px) {
     html {
-        font-size: 14px;
+        font-size: 18.4px; /* 16px * 1.15 = 18.4px */
     }
 }
 
 @media (max-width: 480px) {
     html {
-        font-size: 13px;
+        font-size: 18.4px;
     }
 }
 
 body {
     font-family: var(--font-sans);
-    font-size: 0.875rem;
+    font-size: 1rem;
     line-height: 1.5;
     color: var(--gray-800);
     background: linear-gradient(135deg, #f5f7fa 0%, #eef2f6 100%);
@@ -95,7 +96,7 @@ body {
 
 @media (max-width: 768px) {
     .app {
-        padding: 0.75rem;
+        padding: 1rem;
     }
 }
 
@@ -161,7 +162,7 @@ body {
 
 @media (max-width: 480px) {
     .logo__text {
-        font-size: 1.25rem;
+        font-size: 1.35rem;
     }
 }
 
@@ -194,10 +195,10 @@ body {
 
 .search input {
     width: 100%;
-    padding: 0.75rem 2.5rem 0.75rem 2.5rem;
+    padding: 0.875rem 2.5rem 0.875rem 2.5rem;
     border: 1px solid var(--border-light);
     border-radius: 2rem;
-    font-size: 0.875rem;
+    font-size: 1rem;
     background: var(--bg-primary);
     transition: all 0.2s;
 }
@@ -213,7 +214,7 @@ body {
     right: 1rem;
     background: none;
     border: none;
-    font-size: 1rem;
+    font-size: 1.25rem;
     color: var(--gray-400);
     cursor: pointer;
     display: none;
@@ -243,11 +244,11 @@ body {
 }
 
 .tab-btn {
-    padding: 0.625rem 1.25rem;
+    padding: 0.75rem 1.25rem;
     background: transparent;
     border: none;
     border-radius: 2rem;
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
     font-weight: 500;
     color: var(--gray-600);
     cursor: pointer;
@@ -257,8 +258,8 @@ body {
 
 @media (max-width: 640px) {
     .tab-btn {
-        padding: 0.5rem 1rem;
-        font-size: 0.75rem;
+        padding: 0.6rem 1.1rem;
+        font-size: 0.875rem;
     }
 }
 
@@ -280,10 +281,10 @@ body {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.625rem 1.25rem;
+    padding: 0.75rem 1.5rem;
     border: none;
     border-radius: 2rem;
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
@@ -291,8 +292,8 @@ body {
 
 @media (max-width: 640px) {
     .btn {
-        padding: 0.5rem 1rem;
-        font-size: 0.75rem;
+        padding: 0.65rem 1.25rem;
+        font-size: 0.875rem;
     }
 }
 
@@ -365,7 +366,7 @@ body {
 
 @media (max-width: 640px) {
     .patient-card {
-        padding: 1rem;
+        padding: 1.125rem;
     }
 }
 
@@ -386,19 +387,31 @@ body {
     overflow: hidden;
 }
 
+.patient-card.has-special::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 0.25rem;
+    height: 100%;
+    background: linear-gradient(180deg, var(--warning), #ea580c);
+    border-radius: 0 1.25rem 1.25rem 0;
+    pointer-events: none;
+}
+
 .patient-card.has-special::after {
     content: '';
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 40%;
-    background: linear-gradient(to bottom, transparent, rgba(245, 158, 11, 0.08));
+    height: 50%;
+    background: linear-gradient(to bottom, transparent, rgba(245, 158, 11, 0.06));
     pointer-events: none;
     border-radius: 0 0 1.25rem 1.25rem;
 }
 
-/* Patient Card Header - Icons moved for cleaner layout */
+/* Patient Card Header - Icons on Right Side */
 .patient-card__header {
     display: flex;
     justify-content: space-between;
@@ -409,13 +422,13 @@ body {
 }
 
 .patient-name {
-    font-size: clamp(1rem, 4vw, 1.125rem);
+    font-size: clamp(1.125rem, 4.5vw, 1.25rem);
     font-weight: 600;
     color: var(--gray-900);
 }
 
 .patient-file {
-    font-size: 0.75rem;
+    font-size: 0.85rem;
     color: var(--gray-500);
     margin-left: 0.5rem;
     font-weight: 400;
@@ -425,9 +438,9 @@ body {
 .badge {
     display: inline-flex;
     align-items: center;
-    padding: 0.25rem 0.625rem;
+    padding: 0.3rem 0.75rem;
     border-radius: 2rem;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 500;
     gap: 0.25rem;
 }
@@ -449,14 +462,14 @@ body {
 
 /* Patient Card Body */
 .patient-address {
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
     color: var(--gray-600);
     margin-bottom: 0.5rem;
     word-break: break-word;
 }
 
 .patient-due {
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     font-weight: 500;
     color: var(--primary);
     margin-bottom: 0.5rem;
@@ -473,7 +486,7 @@ body {
 
 .progress__bar {
     flex: 1;
-    height: 0.375rem;
+    height: 0.5rem;
     background: var(--gray-200);
     border-radius: 1rem;
     overflow: hidden;
@@ -488,13 +501,13 @@ body {
 }
 
 .progress__text {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 500;
     color: var(--gray-600);
     white-space: nowrap;
 }
 
-/* Action Icons - Cleaner Design, Positioned on Right Side */
+/* Action Icons - Improved Navigation Icon */
 .patient-actions {
     display: flex;
     gap: 0.5rem;
@@ -502,8 +515,8 @@ body {
 }
 
 .action-icon {
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 2.5rem;
+    height: 2.5rem;
     border-radius: 50%;
     display: inline-flex;
     align-items: center;
@@ -515,14 +528,15 @@ body {
 
 @media (max-width: 480px) {
     .action-icon {
-        width: 2rem;
-        height: 2rem;
+        width: 2.25rem;
+        height: 2.25rem;
     }
 }
 
 .action-icon--call {
     background: #dcfce7;
     color: var(--success);
+    font-size: 1.25rem;
 }
 
 .action-icon--call:hover {
@@ -530,14 +544,22 @@ body {
     transform: scale(1.05);
 }
 
+/* Improved Navigation Icon - Car/Directions style */
 .action-icon--map {
     background: #dbeafe;
     color: var(--info);
+    font-size: 1.25rem;
 }
 
 .action-icon--map:hover {
     background: #bfdbfe;
     transform: scale(1.05);
+}
+
+/* The actual navigation icon content - using a better direction arrow */
+.action-icon--map svg {
+    width: 1.25rem;
+    height: 1.25rem;
 }
 
 /* Expanded View */
@@ -550,7 +572,7 @@ body {
 
 .detail-row {
     display: flex;
-    padding: 0.5rem 0;
+    padding: 0.6rem 0;
     border-bottom: 1px solid var(--gray-100);
     flex-wrap: wrap;
     gap: 0.5rem;
@@ -560,7 +582,7 @@ body {
     width: 8rem;
     font-weight: 500;
     color: var(--gray-600);
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
 }
 
 @media (max-width: 480px) {
@@ -572,7 +594,7 @@ body {
 .detail-value {
     flex: 1;
     color: var(--gray-800);
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
     word-break: break-word;
 }
 
@@ -585,10 +607,10 @@ body {
 }
 
 .action-btn {
-    padding: 0.5rem 1rem;
+    padding: 0.6rem 1.2rem;
     border-radius: 2rem;
     border: none;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
@@ -596,8 +618,8 @@ body {
 
 @media (max-width: 480px) {
     .action-btn {
-        padding: 0.4rem 0.8rem;
-        font-size: 0.7rem;
+        padding: 0.5rem 1rem;
+        font-size: 0.75rem;
     }
 }
 
@@ -635,10 +657,10 @@ body {
     cursor: pointer;
     margin-left: 0.5rem;
     background: linear-gradient(135deg, var(--primary), var(--secondary));
-    padding: 0.25rem 0.75rem;
+    padding: 0.3rem 0.8rem;
     border-radius: 1rem;
     color: white;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
@@ -652,11 +674,11 @@ body {
 /* Date Separator */
 .date-separator {
     background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-50) 100%);
-    padding: 0.5rem 1rem;
+    padding: 0.6rem 1rem;
     border-radius: 2rem;
     margin: 1rem 0 0.5rem;
     display: inline-block;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     font-weight: 600;
     color: var(--gray-600);
 }
@@ -666,10 +688,10 @@ body {
    ======================================== */
 .input, .select, .textarea {
     width: 100%;
-    padding: 0.625rem 0.875rem;
+    padding: 0.75rem 1rem;
     border: 1px solid var(--border-light);
     border-radius: 0.75rem;
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
     font-family: var(--font-sans);
     transition: all 0.2s;
 }
@@ -686,7 +708,7 @@ body {
 
 .form-group label {
     display: block;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     font-weight: 500;
     color: var(--gray-600);
     margin-bottom: 0.25rem;
@@ -803,6 +825,7 @@ body {
     margin-bottom: 1rem;
     font-weight: 600;
     color: var(--gray-800);
+    font-size: 1rem;
 }
 
 .modal__info {
@@ -810,7 +833,7 @@ body {
     background: var(--primary-light);
     border-radius: 0.75rem;
     margin-bottom: 1rem;
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
     color: var(--primary);
 }
 
@@ -819,6 +842,7 @@ body {
     color: var(--gray-600);
     line-height: 1.5;
     white-space: pre-line;
+    font-size: 1rem;
 }
 
 /* ========================================
@@ -850,7 +874,7 @@ body {
 
 .loading-text {
     color: white;
-    font-size: 0.875rem;
+    font-size: 1rem;
 }
 
 @keyframes spin {
@@ -875,6 +899,7 @@ body {
 
 .empty-state p {
     color: var(--gray-500);
+    font-size: 1rem;
 }
 
 /* ========================================
@@ -897,7 +922,7 @@ body {
 }
 
 .card__title {
-    font-size: 1rem;
+    font-size: 1.125rem;
     font-weight: 600;
     color: var(--gray-800);
 }
@@ -950,11 +975,11 @@ body {
 }
 
 .quick-btn {
-    padding: 0.375rem 0.875rem;
+    padding: 0.5rem 1rem;
     background: var(--gray-100);
     border: 1px solid var(--border-light);
     border-radius: 2rem;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
@@ -985,10 +1010,11 @@ body {
 .report-item__title {
     font-weight: 600;
     color: var(--gray-800);
+    font-size: 0.9375rem;
 }
 
 .report-item__subtitle {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     color: var(--gray-500);
     margin-top: 0.25rem;
 }

@@ -22,7 +22,7 @@
 
         body {
             font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: white;
             min-height: 100vh;
             padding: 20px;
             padding-bottom: 80px;
@@ -35,21 +35,16 @@
 
         /* Premium Header */
         .header {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(10px);
-            padding: 20px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 24px;
             border-radius: 32px;
-            margin-bottom: 20px;
-            box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            margin-bottom: 24px;
+            box-shadow: 0 10px 30px -10px rgba(102, 126, 234, 0.3);
         }
 
         .header h1 {
             font-size: 28px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            background-clip: text;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: white;
             margin-bottom: 16px;
             font-weight: 700;
             letter-spacing: -0.5px;
@@ -63,7 +58,7 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 10px;
-            color: #64748b;
+            color: rgba(255, 255, 255, 0.9);
             font-weight: 500;
         }
 
@@ -85,21 +80,21 @@
         .search-wrapper input {
             flex: 1;
             padding: 12px 16px;
-            border: 2px solid #e2e8f0;
+            border: 2px solid rgba(255, 255, 255, 0.2);
             border-radius: 28px;
             font-size: 14px;
-            background: #ffffff;
+            background: rgba(255, 255, 255, 0.95);
             transition: all 0.3s ease;
             font-weight: 500;
         }
 
         .search-wrapper input:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: white;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
         }
 
-        /* Premium Buttons */
+        /* Buttons */
         .btn-sm {
             padding: 10px 18px;
             border: none;
@@ -112,35 +107,34 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            background: white;
+            color: #667eea;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
         }
 
         .btn-secondary {
-            background: white;
-            color: #475569;
-            border: 2px solid #e2e8f0;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         .btn-secondary:hover {
-            background: #f8fafc;
-            border-color: #cbd5e1;
+            background: rgba(255, 255, 255, 0.3);
         }
 
         .btn-outline {
-            background: transparent;
-            color: #475569;
-            border: 2px solid #e2e8f0;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         .btn-outline:hover {
-            background: #f8fafc;
+            background: rgba(255, 255, 255, 0.25);
         }
 
         .btn-danger {
@@ -155,7 +149,7 @@
 
         .add-btn {
             width: 100%;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             padding: 14px;
             font-size: 16px;
             border-radius: 40px;
@@ -165,15 +159,15 @@
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
 
         .add-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
         }
 
-        /* Premium Tabs */
+        /* Tabs */
         .tabs {
             display: flex;
             gap: 8px;
@@ -186,9 +180,8 @@
 
         .tab-btn {
             padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
             border-radius: 40px;
             cursor: pointer;
             font-size: 13px;
@@ -205,7 +198,7 @@
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
 
-        /* Premium Cards */
+        /* Cards */
         .patient-list {
             display: flex;
             flex-direction: column;
@@ -213,28 +206,28 @@
         }
 
         .patient-card {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(10px);
+            background: white;
             border-radius: 24px;
             padding: 18px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
             cursor: pointer;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            border: 1px solid #e2e8f0;
             transition: all 0.3s ease;
         }
 
         .patient-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.15);
+            border-color: #cbd5e1;
         }
 
         .patient-card.expanded {
-            background: white;
+            background: #fafcff;
             border-left: 4px solid #667eea;
         }
 
         .date-separator {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
             padding: 8px 16px;
             border-radius: 20px;
             margin: 12px 0;
@@ -242,7 +235,7 @@
             color: #4c51bf;
             font-size: 13px;
             display: inline-block;
-            backdrop-filter: blur(5px);
+            border: 1px solid #e2e8f0;
         }
 
         .collapsed-view {
@@ -275,6 +268,7 @@
             font-size: 13px;
             color: #64748b;
             margin-top: 4px;
+            line-height: 1.4;
         }
 
         .due-date {
@@ -445,7 +439,7 @@
             color: white;
         }
 
-        /* Premium Modals */
+        /* Modals */
         .modal {
             display: none;
             position: fixed;
@@ -656,11 +650,11 @@
             <div class="report-section" style="padding: 8px;">
                 <div class="report-title" style="font-weight: 700; font-size: 20px; margin-bottom: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">📊 Data Management & Reports</div>
                 <div class="data-buttons" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
-                    <button id="importGoogleSheetsBtn" class="btn-sm btn-primary">📊 Import from Google Sheets</button>
-                    <button id="importCSVBtn" class="btn-sm btn-secondary">📄 Import CSV</button>
-                    <button id="importPDFBtn" class="btn-sm btn-secondary">📑 Import PDF</button>
-                    <button id="exportJSONBtn" class="btn-sm btn-secondary">📥 Export Backup</button>
-                    <button id="exportCSVReportBtn" class="btn-sm btn-secondary">📊 Export All to CSV</button>
+                    <button id="importGoogleSheetsBtn" class="btn-sm btn-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">📊 Import from Google Sheets</button>
+                    <button id="importCSVBtn" class="btn-sm btn-secondary" style="background: #e2e8f0; color: #475569;">📄 Import CSV</button>
+                    <button id="importPDFBtn" class="btn-sm btn-secondary" style="background: #e2e8f0; color: #475569;">📑 Import PDF</button>
+                    <button id="exportJSONBtn" class="btn-sm btn-secondary" style="background: #e2e8f0; color: #475569;">📥 Export Backup</button>
+                    <button id="exportCSVReportBtn" class="btn-sm btn-secondary" style="background: #e2e8f0; color: #475569;">📊 Export All to CSV</button>
                     <input type="file" id="csvFileInput" accept=".csv" style="display:none">
                     <input type="file" id="pdfFileInput" accept=".pdf" style="display:none">
                 </div>
@@ -681,7 +675,7 @@
                         <option value="less">Less Than</option>
                     </select>
                     <input type="text" id="reportValue" placeholder="Value" style="flex:1; padding: 12px; border-radius: 28px; border: 2px solid #e2e8f0;">
-                    <button id="generateReportBtn" class="btn-sm btn-primary">Generate</button>
+                    <button id="generateReportBtn" class="btn-sm btn-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">Generate</button>
                 </div>
                 <div class="quick-reports" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
                     <button class="quick-btn" data-quick="dueToday" style="padding: 8px 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 28px; cursor: pointer; font-weight: 600;">📅 Due Today</button>
@@ -700,17 +694,18 @@
         <div class="loading-text">Syncing with database...</div>
     </div>
 
-    <!-- Injection Modal -->
+    <!-- Enhanced Injection Modal with all fields -->
     <div id="injectionModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>💉 Record Injection</h2>
+                <h2>💉 Confirm Injection</h2>
                 <span class="close-injection-modal">&times;</span>
             </div>
             <div id="injectionPatientName" style="margin-bottom: 16px; padding: 12px; background: #f8fafc; border-radius: 16px; font-weight: 600;"></div>
+            <div id="injectionCurrentInfo" style="margin-bottom: 16px; padding: 8px; background: #e0e7ff; border-radius: 12px; font-size: 13px; color: #4f46e5;"></div>
             <div class="form-group">
                 <label>Injection Site *</label>
-                <select id="injectionSiteSelect" style="width:100%; padding: 12px; border-radius: 16px; border: 2px solid #e2e8f0;">
+                <select id="injectionSiteSelect" style="width:100%; padding: 12px; border-radius: 16px; border: 2px solid #e2e8f0;" required>
                     <option value="">Select injection site...</option>
                     <option value="Right Side">Right Side</option>
                     <option value="Left Side">Left Side</option>
@@ -719,16 +714,16 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>📝 Special Instructions</label>
-                <textarea id="injectionSpecialInstructions" rows="2" style="width:100%; padding: 12px; border-radius: 16px; border: 2px solid #e2e8f0;"></textarea>
+                <label>📝 Special Instructions (for this injection)</label>
+                <textarea id="injectionSpecialInstructions" rows="2" style="width:100%; padding: 12px; border-radius: 16px; border: 2px solid #e2e8f0;" placeholder="Any special notes about this injection..."></textarea>
             </div>
             <div class="form-group">
-                <label>⚠️ Adverse Events</label>
-                <textarea id="injectionAdverseEvents" rows="2" style="width:100%; padding: 12px; border-radius: 16px; border: 2px solid #e2e8f0;"></textarea>
+                <label>⚠️ Adverse Events / Reactions</label>
+                <textarea id="injectionAdverseEvents" rows="2" style="width:100%; padding: 12px; border-radius: 16px; border: 2px solid #e2e8f0;" placeholder="Record any adverse reactions or side effects..."></textarea>
             </div>
             <div class="modal-footer">
-                <button id="cancelInjectionBtn" class="btn-sm btn-secondary">Cancel</button>
-                <button id="confirmInjectionBtn" class="btn-sm btn-primary">Confirm Injection</button>
+                <button id="cancelInjectionBtn" class="btn-sm btn-secondary" style="background: #e2e8f0; color: #475569;">Cancel</button>
+                <button id="confirmInjectionBtn" class="btn-sm btn-primary" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">Confirm Injection</button>
             </div>
         </div>
     </div>
@@ -746,8 +741,8 @@
                 <small style="color:#64748b; font-size:11px;">Setting this date will automatically confirm the appointment</small>
             </div>
             <div class="modal-footer">
-                <button id="saveAppointmentBtn" class="btn-sm btn-primary">Save & Confirm</button>
-                <button id="cancelAppointmentBtn" class="btn-sm btn-secondary">Cancel</button>
+                <button id="saveAppointmentBtn" class="btn-sm btn-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">Save & Confirm</button>
+                <button id="cancelAppointmentBtn" class="btn-sm btn-secondary" style="background: #e2e8f0; color: #475569;">Cancel</button>
             </div>
         </div>
     </div>
@@ -757,8 +752,8 @@
             <h3 style="margin-bottom: 16px;">Confirm Action</h3>
             <p id="confirmMessage" style="margin: 16px 0; color: #475569;"></p>
             <div style="display: flex; gap: 12px; justify-content: center;">
-                <button id="confirmYes" class="btn-sm btn-primary">Yes</button>
-                <button id="confirmNo" class="btn-sm btn-secondary">No</button>
+                <button id="confirmYes" class="btn-sm btn-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">Yes</button>
+                <button id="confirmNo" class="btn-sm btn-secondary" style="background: #e2e8f0; color: #475569;">No</button>
             </div>
         </div>
     </div>
@@ -807,7 +802,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" id="deletePatientBtn" class="btn-sm btn-danger" style="display:none;">Delete</button>
-                    <button type="submit" class="btn-sm btn-primary">Save Patient</button>
+                    <button type="submit" class="btn-sm btn-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">Save Patient</button>
                 </div>
             </form>
         </div>
@@ -816,8 +811,8 @@
     <script>
         // ========== SUPABASE CONFIGURATION ==========
         // REPLACE WITH YOUR ACTUAL SUPABASE CREDENTIALS
-        const SUPABASE_URL = "https://wqlbmtjbjloxpvsbeqyb.supabase.co";
-        const SUPABASE_ANON_KEY = "sb_publishable_gcyK2z_8lvbOgHNcJfdX1g_8QCWJ_Xi";
+        const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_YOUR_KEY_HERE";
         
         // Google Sheets CSV URL for import
         const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSYgD018ww2Mbkud6ZYmZHop7EXxcm_0Zl4V9bB2AaY4r4xXTWChAW6v-gUyjD4-2Qmg4H8O0kxryCf/pub?output=csv";
@@ -921,11 +916,19 @@
             const dbPatient = {};
             for (const [displayName, dbName] of Object.entries(columnMapping)) {
                 let value = patientData[displayName];
-                // Fix empty timestamp issue
-                if (dbName === 'appointment_date_time' && (!value || value === '')) {
-                    value = null;
+                if (dbName === 'appointment_date_time') {
+                    if (!value || value === '') {
+                        value = null;
+                    } else {
+                        const dateObj = new Date(value);
+                        if (!isNaN(dateObj.getTime())) {
+                            value = dateObj.toISOString();
+                        } else {
+                            value = null;
+                        }
+                    }
                 }
-                dbPatient[dbName] = value !== undefined ? value : null;
+                dbPatient[dbName] = value !== undefined && value !== '' ? value : null;
             }
             
             const { error } = await _supabase.from('patients').insert([dbPatient]);
@@ -943,10 +946,19 @@
             const dbPatient = {};
             for (const [displayName, dbName] of Object.entries(columnMapping)) {
                 let value = patientData[displayName];
-                if (dbName === 'appointment_date_time' && (!value || value === '')) {
-                    value = null;
+                if (dbName === 'appointment_date_time') {
+                    if (!value || value === '') {
+                        value = null;
+                    } else {
+                        const dateObj = new Date(value);
+                        if (!isNaN(dateObj.getTime())) {
+                            value = dateObj.toISOString();
+                        } else {
+                            value = null;
+                        }
+                    }
                 }
-                dbPatient[dbName] = value !== undefined ? value : null;
+                dbPatient[dbName] = value !== undefined && value !== '' ? value : null;
             }
             
             const { error } = await _supabase.from('patients').update(dbPatient).eq('id', id);
@@ -970,6 +982,43 @@
             return true;
         }
 
+        // ========== ENHANCED ADDRESS EXTRACTION ==========
+        function extractFullAddress(text) {
+            let fullAddress = '';
+            
+            const streetPattern = /(\d{1,5}\s+[A-Za-z0-9\s,.'-]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Court|Ct|Place|Pl|Way|Circle|Cir|Rue|Ruelle|Chemin|Boulevard|Boul|Crescent|Cres))/i;
+            const streetMatch = text.match(streetPattern);
+            if (streetMatch) {
+                fullAddress = streetMatch[0].trim();
+            }
+            
+            const cityPattern = /([A-Za-zÀ-ÿ\s.'-]+(?:,?\s*[A-Z]{2})\s*\d{3}\s*\d{3})/i;
+            const cityMatch = text.match(cityPattern);
+            if (cityMatch) {
+                const cityPart = cityMatch[0].trim();
+                if (fullAddress) {
+                    fullAddress += ', ' + cityPart;
+                } else {
+                    fullAddress = cityPart;
+                }
+            }
+            
+            const aptPattern = /(?:APT|APARTMENT|SUITE|#|UNIT)\s*[A-Z0-9]+/i;
+            const aptMatch = text.match(aptPattern);
+            if (aptMatch && fullAddress) {
+                fullAddress = aptMatch[0] + ' ' + fullAddress;
+            }
+            
+            fullAddress = fullAddress
+                .replace(/ADDRESS\/ADRESSE/gi, '')
+                .replace(/CITY\/VILLE/gi, '')
+                .replace(/^\s*[,]?\s*/, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+            
+            return fullAddress;
+        }
+
         // ========== GOOGLE SHEETS IMPORT ==========
         async function importFromGoogleSheets() {
             if (!confirm('Import patients from Google Sheets? This will add new patients without deleting existing ones.')) return;
@@ -985,6 +1034,7 @@
                 
                 let importedCount = 0;
                 let duplicateCount = 0;
+                let errorCount = 0;
                 
                 for (let i = 1; i < rows.length; i++) {
                     if (!rows[i].trim()) continue;
@@ -1013,39 +1063,59 @@
                     });
                     
                     if (sheetPatient['Patient Name'] && sheetPatient['Patient Name'] !== 'Patient Name') {
-                        // Check if already exists
                         const existing = patients.find(p => p['File Number'] === sheetPatient['File Number']);
                         if (!existing) {
-                            // Prepare data for database
-                            const defaultDueDate = new Date();
-                            defaultDueDate.setDate(defaultDueDate.getDate() + 7);
-                            
-                            const newPatient = {
-                                'Patient Name': sheetPatient['Patient Name'],
-                                'File Number': sheetPatient['File Number'] || `IMP_${Date.now()}_${i}`,
-                                'Address': sheetPatient['Address'] || '',
-                                'Phone 1': sheetPatient['Phone 1'] || '',
-                                'Phone 2': sheetPatient['Phone 2'] || '',
-                                'Dose Prescribed': sheetPatient['Dose Prescribed'] || '7.5',
-                                'Total Doses': sheetPatient['Total Doses'] || '4',
-                                'Doses Remaining': sheetPatient['Doses Repeats Left'] || sheetPatient['Doses Remaining'] || '4',
-                                'Previous Injection Site': sheetPatient['Previous Injection Site'] || '',
-                                'Injection Site': sheetPatient['Injection Site'] || '',
-                                'Due Date': sheetPatient['Due Date'] || defaultDueDate.toISOString().split('T')[0],
-                                'Appointment Date & Time': sheetPatient['Appointment Date & Time'] || '',
-                                'Previous Injection Dates': sheetPatient['Previous Injection Dates'] || '',
-                                'Assignment Type': sheetPatient['Assignment Type'] || 'Permanent',
-                                'Special Instructions': sheetPatient['Special Instructions'] || '',
-                                'Adverse Effects Comments': sheetPatient['Adverse Effects Comments'] || '',
-                                'File Status': 'Active',
-                                'Injection Administered': sheetPatient['Injection Administered'] === 'TRUE',
-                                'Appointment Confirmed': sheetPatient['Appointment Confirmed'] === 'TRUE',
-                                'Pending': sheetPatient['Pending'] === 'TRUE',
-                                'Archived': sheetPatient['Archived'] === 'TRUE'
-                            };
-                            
-                            const success = await addPatientToDB(newPatient);
-                            if (success) importedCount++;
+                            try {
+                                let appointmentDate = null;
+                                if (sheetPatient['Appointment Date & Time']) {
+                                    const parsedDate = new Date(sheetPatient['Appointment Date & Time']);
+                                    if (!isNaN(parsedDate.getTime())) {
+                                        appointmentDate = parsedDate.toISOString();
+                                    }
+                                }
+                                
+                                let dueDate = null;
+                                if (sheetPatient['Due Date']) {
+                                    const parsedDue = new Date(sheetPatient['Due Date']);
+                                    if (!isNaN(parsedDue.getTime())) {
+                                        dueDate = parsedDue.toISOString().split('T')[0];
+                                    }
+                                }
+                                
+                                const defaultDueDate = new Date();
+                                defaultDueDate.setDate(defaultDueDate.getDate() + 7);
+                                
+                                const newPatient = {
+                                    'Patient Name': sheetPatient['Patient Name'],
+                                    'File Number': sheetPatient['File Number'] || `IMP_${Date.now()}_${i}`,
+                                    'Address': sheetPatient['Address'] || '',
+                                    'Phone 1': sheetPatient['Phone 1'] || '',
+                                    'Phone 2': sheetPatient['Phone 2'] || '',
+                                    'Dose Prescribed': sheetPatient['Dose Prescribed'] || '7.5',
+                                    'Total Doses': sheetPatient['Total Doses'] || '4',
+                                    'Doses Remaining': sheetPatient['Doses Repeats Left'] || sheetPatient['Doses Remaining'] || '4',
+                                    'Previous Injection Site': sheetPatient['Previous Injection Site'] || '',
+                                    'Injection Site': sheetPatient['Injection Site'] || '',
+                                    'Due Date': dueDate || defaultDueDate.toISOString().split('T')[0],
+                                    'Appointment Date & Time': appointmentDate,
+                                    'Previous Injection Dates': sheetPatient['Previous Injection Dates'] || '',
+                                    'Assignment Type': sheetPatient['Assignment Type'] || 'Permanent',
+                                    'Special Instructions': sheetPatient['Special Instructions'] || '',
+                                    'Adverse Effects Comments': sheetPatient['Adverse Effects Comments'] || '',
+                                    'File Status': 'Active',
+                                    'Injection Administered': sheetPatient['Injection Administered'] === 'TRUE',
+                                    'Appointment Confirmed': sheetPatient['Appointment Confirmed'] === 'TRUE',
+                                    'Pending': sheetPatient['Pending'] === 'TRUE',
+                                    'Archived': sheetPatient['Archived'] === 'TRUE'
+                                };
+                                
+                                const success = await addPatientToDB(newPatient);
+                                if (success) importedCount++;
+                                else errorCount++;
+                            } catch (err) {
+                                console.error('Error importing row:', err);
+                                errorCount++;
+                            }
                         } else {
                             duplicateCount++;
                         }
@@ -1053,7 +1123,7 @@
                 }
                 
                 await loadPatients();
-                alert(`✅ Import complete!\n\nNew patients added: ${importedCount}\nDuplicates skipped: ${duplicateCount}`);
+                alert(`✅ Import complete!\n\nNew patients added: ${importedCount}\nDuplicates skipped: ${duplicateCount}\nErrors: ${errorCount}`);
                 document.getElementById('syncStatus').innerHTML = `✅ Imported ${importedCount} patients`;
                 
             } catch (error) {
@@ -1076,25 +1146,28 @@
         function getReferenceDateForDueDate(patient, injectionGivenToday = true) {
             const today = new Date().toISOString().split('T')[0];
             const apptDate = patient['Appointment Date & Time'] ? new Date(patient['Appointment Date & Time']).toISOString().split('T')[0] : null;
-            const injectionDate = patient['Previous Injection Dates'] ? patient['Previous Injection Dates'].split(',').pop()?.trim() : null;
-            const isInjectionConfirmed = patient['Injection Administered'] === true;
             const isAppointmentConfirmed = patient['Appointment Confirmed'] === true;
             const todayDate = new Date();
             const apptDateObj = patient['Appointment Date & Time'] ? new Date(patient['Appointment Date & Time']) : null;
             const hasAppointmentPassed = apptDateObj && apptDateObj < todayDate;
             
-            if (isAppointmentConfirmed && isInjectionConfirmed && injectionDate === apptDate) return injectionDate;
-            if (hasAppointmentPassed && !isInjectionConfirmed && isAppointmentConfirmed) return apptDate;
+            if (hasAppointmentPassed && !patient['Injection Administered'] && isAppointmentConfirmed) {
+                return apptDate;
+            }
             return injectionGivenToday ? today : today;
         }
 
-        // ========== INJECTION FLOW ==========
+        // ========== FIXED INJECTION FLOW ==========
         function showInjectionModal(patientId) {
             pendingInjectionId = patientId;
             const patient = patients.find(p => p.id === patientId);
             if (!patient) return;
             
-            document.getElementById('injectionPatientName').innerHTML = `Patient: <strong>${escapeHtml(patient['Patient Name'])}</strong> (${patient['Dose Prescribed']}mg, ${patient['Doses Remaining']} doses left)`;
+            const dosesRemaining = parseInt(patient['Doses Remaining']) || 0;
+            const weeksToAdd = doseToWeeks[patient['Dose Prescribed']] || 4;
+            
+            document.getElementById('injectionPatientName').innerHTML = `Patient: <strong>${escapeHtml(patient['Patient Name'])}</strong>`;
+            document.getElementById('injectionCurrentInfo').innerHTML = `💊 ${patient['Dose Prescribed']}mg | 📅 ${dosesRemaining} doses left | ⏰ Next due: +${weeksToAdd} weeks`;
             document.getElementById('injectionSiteSelect').value = '';
             document.getElementById('injectionSpecialInstructions').value = '';
             document.getElementById('injectionAdverseEvents').value = '';
@@ -1120,6 +1193,9 @@
             if (dosesRemaining <= 0) {
                 alert('No doses remaining! This patient will be moved to Pending tab.');
                 patient['Pending'] = true;
+                // Clear appointment status
+                patient['Appointment Confirmed'] = false;
+                patient['Appointment Date & Time'] = null;
                 await updatePatientInDB(patientId, patient);
                 await loadPatients();
                 document.getElementById('injectionModal').style.display = 'none';
@@ -1147,21 +1223,25 @@
             const newDosesRemaining = dosesRemaining - 1;
             patient['Doses Remaining'] = newDosesRemaining.toString();
             
-            if (newDosesRemaining > 0) {
-                const referenceDate = getReferenceDateForDueDate(patient, true);
-                const currentDueDate = patient['Due Date'] || today;
-                patient['Due Date'] = calculateNextDueDate(currentDueDate, patient['Dose Prescribed'], referenceDate);
-            }
+            // Calculate new due date based on dose prescribed
+            const referenceDate = getReferenceDateForDueDate(patient, true);
+            const currentDueDate = patient['Due Date'] || today;
+            const newDueDate = calculateNextDueDate(currentDueDate, patient['Dose Prescribed'], referenceDate);
+            patient['Due Date'] = newDueDate;
             
             patient['Injection Administered'] = true;
+            
+            // IMPORTANT: Remove from Scheduled/Overdue by clearing appointment status
+            patient['Appointment Confirmed'] = false;
+            patient['Appointment Date & Time'] = null;
             patient['Pending'] = false;
             patient['Archived'] = false;
             
             if (newDosesRemaining === 0) {
                 patient['Pending'] = true;
-                alert(`✅ Injection administered at ${injectionSite}.\n\n${patient['Patient Name']} has completed all ${totalDoses} doses.`);
+                alert(`✅ Injection administered at ${injectionSite}.\n\n${patient['Patient Name']} has completed all ${totalDoses} doses and has been moved to Pending tab.`);
             } else {
-                alert(`✅ Injection administered at ${injectionSite}.\n\nDoses remaining: ${newDosesRemaining}\nNew due date: ${patient['Due Date'] || 'Not set'}`);
+                alert(`✅ Injection administered at ${injectionSite}.\n\n💊 Dose: ${patient['Dose Prescribed']}mg\n📅 New due date: ${new Date(newDueDate).toLocaleDateString()}\n💉 Doses remaining: ${newDosesRemaining}`);
             }
             
             await updatePatientInDB(patientId, patient);
@@ -1309,7 +1389,7 @@
                             'Previous Injection Site': '',
                             'Injection Site': '',
                             'Due Date': defaultDueDate.toISOString().split('T')[0],
-                            'Appointment Date & Time': null, // Fix: use null instead of empty string
+                            'Appointment Date & Time': null,
                             'Previous Injection Dates': '',
                             'Assignment Type': 'Permanent',
                             'Special Instructions': '',
@@ -1346,18 +1426,23 @@
             };
             
             const nameMatch = text.match(/(?:PATIENT NAME\/NOM DU PATIENT|PATIENT NAME|NOM DU PATIENT)[\s]*([A-Z][A-Z\s]+[A-Z])/i);
-            if (nameMatch) extracted.patientName = nameMatch[1].trim().replace(/\s+/g, ' ');
+            if (nameMatch) {
+                extracted.patientName = nameMatch[1].trim().replace(/\s+/g, ' ');
+            }
             
             const medicumMatch = text.match(/MEDICUM\s*#:\s*(\d+)/i);
-            if (medicumMatch) extracted.fileNumber = medicumMatch[1];
+            if (medicumMatch) {
+                extracted.fileNumber = medicumMatch[1];
+            }
             
-            const addressMatch = text.match(/ADDRESS\/ADRESSE[\s]*([A-Za-z0-9\s,.-]+?)(?:CITY|VILLE|$)/i);
-            if (addressMatch) extracted.address = addressMatch[1].trim();
+            extracted.address = extractFullAddress(text);
             
             const phonePattern = /(\d{3}[\s-]?\d{3}[\s-]?\d{4})/g;
             const phones = [...text.matchAll(phonePattern)];
-            if (phones.length > 0) extracted.phone1 = phones[0][1];
-            if (phones.length > 1) extracted.phone2 = phones[1][1];
+            if (phones.length > 0) {
+                extracted.phone1 = phones[0][1];
+                if (phones.length > 1) extracted.phone2 = phones[1][1];
+            }
             
             const doseMatch = text.match(/(\d+\.?\d*)\s*mg/i);
             if (doseMatch && [7.5, 22.5, 30, 45].includes(parseFloat(doseMatch[1]))) {
@@ -1383,16 +1468,23 @@
                 const hasConfirmedAppointment = p['Appointment Confirmed'] === true;
                 const isAppointmentToday = apptDate && apptDate.toISOString().split('T')[0] === todayStr;
                 const isFutureAppointment = apptDate && apptDate > today;
-                const isOverdue = apptDate && apptDate < today && !p['Injection Administered'] && hasConfirmedAppointment;
+                const isOverdueAppointment = apptDate && apptDate < today && !p['Injection Administered'] && hasConfirmedAppointment;
                 
                 switch(currentTab) {
-                    case 'all': return !p['Archived'] && !p['Pending'] && !hasConfirmedAppointment;
-                    case 'today': return isAppointmentToday && hasConfirmedAppointment && !isOverdue;
-                    case 'scheduled': return isFutureAppointment && hasConfirmedAppointment && !p['Archived'] && !p['Pending'];
-                    case 'overdue': return isOverdue && !p['Archived'] && !p['Pending'];
-                    case 'pending': return p['Pending'] && !p['Archived'];
-                    case 'archived': return p['Archived'];
-                    default: return !p['Archived'];
+                    case 'all': 
+                        return !p['Archived'] && !p['Pending'];
+                    case 'today': 
+                        return isAppointmentToday && hasConfirmedAppointment && !isOverdueAppointment;
+                    case 'scheduled': 
+                        return isFutureAppointment && hasConfirmedAppointment === true && !p['Archived'] && !p['Pending'] && !isOverdueAppointment;
+                    case 'overdue': 
+                        return isOverdueAppointment && !p['Archived'] && !p['Pending'];
+                    case 'pending': 
+                        return p['Pending'] && !p['Archived'];
+                    case 'archived': 
+                        return p['Archived'];
+                    default: 
+                        return !p['Archived'];
                 }
             });
             if (searchQuery) { 
@@ -1452,7 +1544,7 @@
                         ${special ? `<div class="detail-row"><div class="detail-label ins-red">⚠️ Special Instructions:</div><div class="detail-value ins-red">${escapeHtml(special)}</div></div>` : ''}
                         ${patient['Adverse Effects Comments'] ? `<div class="detail-row"><div class="detail-label">Adverse Effects:</div><div class="detail-value">${escapeHtml(patient['Adverse Effects Comments'])}</div></div>` : ''}
                         <div class="action-row">
-                            <button class="action-sm inject-sm" data-id="${patient.id}" data-action="inject">💉 Injection (${remain} left)</button>
+                            <button class="action-sm inject-sm" data-id="${patient.id}" data-action="inject">💉 Record Injection (${remain} left)</button>
                             ${currentTab === 'pending' || currentTab === 'archived' ? `<button class="action-sm move-sm" data-id="${patient.id}" data-action="move">⟳ Move</button>` : `<button class="action-sm pending-sm" data-id="${patient.id}" data-action="pending">⏳ Pending</button>`}
                             <button class="action-sm edit-sm" data-id="${patient.id}" data-action="edit">✎ Edit</button>
                             <button class="action-sm delete-sm" data-id="${patient.id}" data-action="delete">🗑 Delete</button>
@@ -1547,6 +1639,18 @@
             const existingPatient = patients.find(p => p['File Number'] === fileNumber && p.id !== currentEditId);
             if(existingPatient) { alert('File Number already exists!'); return; }
             
+            let appointmentDateTime = document.getElementById('appointmentDateTime').value;
+            if (appointmentDateTime) {
+                const dateObj = new Date(appointmentDateTime);
+                if (!isNaN(dateObj.getTime())) {
+                    appointmentDateTime = dateObj.toISOString();
+                } else {
+                    appointmentDateTime = null;
+                }
+            } else {
+                appointmentDateTime = null;
+            }
+            
             const patientData = { 
                 'Patient Name': document.getElementById('patientName').value, 
                 'File Number': fileNumber, 
@@ -1559,7 +1663,7 @@
                 'Previous Injection Site': document.getElementById('prevInjSite').value, 
                 'Injection Site': document.getElementById('injSite').value, 
                 'Due Date': document.getElementById('dueDate').value, 
-                'Appointment Date & Time': document.getElementById('appointmentDateTime').value || null,
+                'Appointment Date & Time': appointmentDateTime,
                 'Previous Injection Dates': document.getElementById('prevInjDates').value, 
                 'Assignment Type': document.getElementById('assignmentType').value, 
                 'Special Instructions': document.getElementById('specialInstructions').value, 
@@ -1683,7 +1787,7 @@
                 document.getElementById('reportOutput').innerHTML = '<div class="empty-state">📭 No patients match</div>'; 
                 return; 
             } 
-            let html = `<div style="background:white; border-radius:20px; padding:20px;"><strong style="font-size:18px;">${filtered.length} patients found</strong><button onclick="exportReportToCSV()" class="btn-sm btn-secondary" style="margin-left:12px;">📥 Export Report</button>`; 
+            let html = `<div style="background:white; border-radius:20px; padding:20px;"><strong style="font-size:18px;">${filtered.length} patients found</strong><button onclick="exportReportToCSV()" class="btn-sm btn-secondary" style="margin-left:12px; background:#e2e8f0;">📥 Export Report</button>`; 
             const grouped = {}; 
             filtered.forEach(p => { const d = p['Due Date'] ? new Date(p['Due Date']).toLocaleDateString() : 'No Date'; if(!grouped[d]) grouped[d] = []; grouped[d].push(p); }); 
             Object.keys(grouped).sort().forEach(date => { 

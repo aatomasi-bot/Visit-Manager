@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Patient Dosing Tracker</title>
     <!-- Supabase Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -309,12 +308,11 @@
     <script>
         // ========== SUPABASE CONFIGURATION ==========
         // REPLACE THESE WITH YOUR ACTUAL SUPABASE CREDENTIALS
-        // From your Supabase dashboard: Project Settings > API
         const SUPABASE_URL = "https://wqlbmtjbjloxpvsbeqyb.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_gcyK2z_8lvbOgHNcJfdX1g_8QCWJ_Xi";
         
         // Global variables
-        let supabase = null;
+        let _supabase = null;
         let patients = [];
         let currentEditId = null;
         let pendingConfirmCallback = null;
@@ -325,7 +323,7 @@
 
         const doseToWeeks = { '7.5': 4, '22.5': 12, '30': 16, '45': 24 };
         
-        // Column mapping between display names and database column names
+        // Column mapping
         const columnMapping = {
             'Patient Name': 'patient_name',
             'File Number': 'file_number',
@@ -358,9 +356,9 @@
             }
             
             try {
-                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
                 // Test connection
-                const { data, error } = await supabase.from('patients').select('count', { count: 'exact', head: true });
+                const { data, error } = await _supabase.from('patients').select('count', { count: 'exact', head: true });
                 if (error) throw error;
                 document.getElementById('syncStatus').innerHTML = '✅ Connected to database';
                 return true;
@@ -373,13 +371,13 @@
 
         // ========== DATABASE OPERATIONS ==========
         async function loadPatients() {
-            if (!supabase) return;
+            if (!_supabase) return;
             
             document.getElementById('loadingOverlay').style.display = 'flex';
             document.getElementById('syncStatus').innerHTML = '🔄 Loading patients...';
             
             try {
-                const { data, error } = await supabase
+                const { data, error } = await _supabase
                     .from('patients')
                     .select('*')
                     .order('created_at', { ascending: false });
@@ -409,14 +407,14 @@
         }
 
         async function addPatientToDB(patientData) {
-            if (!supabase) return false;
+            if (!_supabase) return false;
             
             const dbPatient = {};
             for (const [displayName, dbName] of Object.entries(columnMapping)) {
                 dbPatient[dbName] = patientData[displayName] !== undefined ? patientData[displayName] : null;
             }
             
-            const { error } = await supabase.from('patients').insert([dbPatient]);
+            const { error } = await _supabase.from('patients').insert([dbPatient]);
             
             if (error) {
                 alert('Error adding patient: ' + error.message);
@@ -426,14 +424,14 @@
         }
 
         async function updatePatientInDB(id, patientData) {
-            if (!supabase) return false;
+            if (!_supabase) return false;
             
             const dbPatient = {};
             for (const [displayName, dbName] of Object.entries(columnMapping)) {
                 dbPatient[dbName] = patientData[displayName] !== undefined ? patientData[displayName] : null;
             }
             
-            const { error } = await supabase.from('patients').update(dbPatient).eq('id', id);
+            const { error } = await _supabase.from('patients').update(dbPatient).eq('id', id);
             
             if (error) {
                 alert('Error updating patient: ' + error.message);
@@ -443,9 +441,9 @@
         }
 
         async function deletePatientFromDB(id) {
-            if (!supabase) return false;
+            if (!_supabase) return false;
             
-            const { error } = await supabase.from('patients').delete().eq('id', id);
+            const { error } = await _supabase.from('patients').delete().eq('id', id);
             
             if (error) {
                 alert('Error deleting patient: ' + error.message);
@@ -651,7 +649,7 @@
             }
         }
 
-        // ========== ENHANCED PDF IMPORT ==========
+        // ========== PDF IMPORT ==========
         async function importPDF(file) {
             const fileInput = document.getElementById('pdfFileInput');
             const selectedFile = fileInput.files[0];
@@ -718,7 +716,6 @@
                     }
                 } else {
                     alert('Could not extract patient information. Make sure the PDF contains patient name and file number.');
-                    console.log('Extracted text preview:', fullText.substring(0, 500));
                 }
                 
             } catch (error) {
@@ -937,7 +934,6 @@
             const fileNumber = document.getElementById('fileNumber').value.trim(); 
             if(!fileNumber) { alert('File Number required'); return; } 
             
-            // Check for duplicate file number
             const existingPatient = patients.find(p => p['File Number'] === fileNumber && p.id !== currentEditId);
             if(existingPatient) { alert('File Number already exists!'); return; }
             
